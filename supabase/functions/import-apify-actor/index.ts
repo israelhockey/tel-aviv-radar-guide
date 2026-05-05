@@ -29,31 +29,56 @@ Deno.serve(async (req) => {
     let datasetId: string | null = null;
 
     if (mode === "run") {
-      // run-sync-get-dataset-items returns the dataset items array directly (JSON)
-      const r = await fetch(
-        `https://api.apify.com/v2/acts/${encodeURIComponent(actor_id)}/run-sync-get-dataset-items?token=${APIFY}&timeout=180&clean=true`,
+      // Start the actor asynchronously, then poll up to ~120s for completion.
+      const startR = await fetch(
+        `https://api.apify.com/v2/acts/${encodeURIComponent(actor_id)}/runs?token=${APIFY}`,
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input ?? {}) },
       );
-      const text = await r.text();
-      if (!r.ok) {
-        const msg = r.status === 402
+      const startText = await startR.text();
+      if (!startR.ok) {
+        const msg = startR.status === 402
           ? `This Apify actor requires a paid plan or you're out of compute credits. Try a free actor like "apify/website-content-crawler".`
-          : r.status === 401 || r.status === 403
-          ? `Apify rejected the API key (${r.status}). Verify APIFY_API_KEY.`
-          : r.status === 404
+          : startR.status === 401 || startR.status === 403
+          ? `Apify rejected the API key (${startR.status}). Verify APIFY_API_KEY.`
+          : startR.status === 404
           ? `Actor "${actor_id}" not found. Check the format (username~actor-name) and access.`
-          : `Apify run failed ${r.status}: ${text.slice(0, 200)}`;
+          : `Apify start failed ${startR.status}: ${startText.slice(0, 200)}`;
         await sb.from("automation_runs").update({ status: "error", error: msg, finished_at: new Date().toISOString() }).eq("id", run!.id);
-        return ok({ error: msg, apify_status: r.status }, 200);
+        return ok({ error: msg, apify_status: startR.status }, 200);
       }
-      try {
-        const parsed = text.trim() ? JSON.parse(text) : [];
-        items = Array.isArray(parsed) ? parsed : [];
-      } catch {
-        const msg = `Apify returned non-JSON response (${text.length} bytes). Actor may have failed silently.`;
+      let runInfo: { id?: string; defaultDatasetId?: string; status?: string } = {};
+      try { runInfo = JSON.parse(startText)?.data ?? {}; } catch { /* ignore */ }
+      const runId = runInfo.id;
+      datasetId = runInfo.defaultDatasetId ?? null;
+      if (!runId) {
+        const msg = "Apify did not return a run id.";
         await sb.from("automation_runs").update({ status: "error", error: msg, finished_at: new Date().toISOString() }).eq("id", run!.id);
         return ok({ error: msg }, 200);
       }
+      // Poll up to ~120s
+      const deadline = Date.now() + 120_000;
+      let status = runInfo.status ?? "RUNNING";
+      while (Date.now() < deadline && (status === "RUNNING" || status === "READY")) {
+        await new Promise((r) => setTimeout(r, 4000));
+        const sr = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY}`);
+        if (!sr.ok) break;
+        try {
+          const j = await sr.json();
+          status = j?.data?.status ?? status;
+          datasetId = j?.data?.defaultDatasetId ?? datasetId;
+        } catch { break; }
+      }
+      if (status !== "SUCCEEDED") {
+        const msg = `Apify run still ${status} after 120s. It will keep running on Apify; use "Use last successful run" later to import results, or lower the input size (e.g. fewer pages/events).`;
+        await sb.from("automation_runs").update({ status: "error", error: msg, finished_at: new Date().toISOString() }).eq("id", run!.id);
+        return ok({ error: msg, run_id: runId, apify_status: status }, 200);
+      }
+      if (!datasetId) {
+        return ok({ error: "Run succeeded but no dataset id." }, 200);
+      }
+      const dr = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY}&clean=true&limit=200`);
+      if (!dr.ok) return ok({ error: `Dataset fetch failed ${dr.status}` }, 200);
+      try { items = await dr.json(); } catch { items = []; }
     } else {
       const r = await fetch(`https://api.apify.com/v2/acts/${encodeURIComponent(actor_id)}/runs/last?token=${APIFY}&status=SUCCEEDED`);
       const text = await r.text();
