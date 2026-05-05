@@ -25,55 +25,58 @@ Deno.serve(async (req) => {
       job: `apify:${actor_id}`, source_id: source_id ?? null, status: "running",
     }).select().single();
 
+    let items: ApifyItem[] = [];
     let datasetId: string | null = null;
+
     if (mode === "run") {
-      // Run actor synchronously and get dataset id
+      // run-sync-get-dataset-items returns the dataset items array directly (JSON)
       const r = await fetch(
-        `https://api.apify.com/v2/acts/${encodeURIComponent(actor_id)}/run-sync?token=${APIFY}&timeout=120`,
+        `https://api.apify.com/v2/acts/${encodeURIComponent(actor_id)}/run-sync-get-dataset-items?token=${APIFY}&timeout=180&clean=true`,
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(input ?? {}) },
       );
+      const text = await r.text();
       if (!r.ok) {
-        const t = await r.text();
         const msg = r.status === 402
-          ? `This Apify actor is not free on your plan, or you've run out of compute credits. Open the actor on apify.com and check pricing/billing, or try a different actor.`
+          ? `This Apify actor requires a paid plan or you're out of compute credits. Try a free actor like "apify/website-content-crawler".`
           : r.status === 401 || r.status === 403
-          ? `Apify rejected the API key (${r.status}). Verify APIFY_API_KEY is correct.`
+          ? `Apify rejected the API key (${r.status}). Verify APIFY_API_KEY.`
           : r.status === 404
-          ? `Actor "${actor_id}" not found. Check the format (e.g. "username~actor-name") and that you have access.`
-          : `Apify run failed ${r.status}: ${t.slice(0, 200)}`;
+          ? `Actor "${actor_id}" not found. Check the format (username~actor-name) and access.`
+          : `Apify run failed ${r.status}: ${text.slice(0, 200)}`;
         await sb.from("automation_runs").update({ status: "error", error: msg, finished_at: new Date().toISOString() }).eq("id", run!.id);
         return ok({ error: msg, apify_status: r.status }, 200);
       }
-      const j = await r.json();
-      datasetId = j?.data?.defaultDatasetId ?? null;
+      try {
+        const parsed = text.trim() ? JSON.parse(text) : [];
+        items = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        const msg = `Apify returned non-JSON response (${text.length} bytes). Actor may have failed silently.`;
+        await sb.from("automation_runs").update({ status: "error", error: msg, finished_at: new Date().toISOString() }).eq("id", run!.id);
+        return ok({ error: msg }, 200);
+      }
     } else {
-      // Fetch last successful run's dataset
       const r = await fetch(`https://api.apify.com/v2/acts/${encodeURIComponent(actor_id)}/runs/last?token=${APIFY}&status=SUCCEEDED`);
+      const text = await r.text();
       if (!r.ok) {
-        const t = await r.text();
         const msg = r.status === 404
-          ? `No successful runs found for "${actor_id}". Run it once on apify.com first, or switch to "Run actor now" mode.`
-          : r.status === 401 || r.status === 403
-          ? `Apify rejected the API key (${r.status}).`
-          : `Could not fetch last run (${r.status}): ${t.slice(0, 200)}`;
+          ? `No successful runs for "${actor_id}". Run it once on apify.com first, or switch to "Run actor now".`
+          : `Could not fetch last run (${r.status}): ${text.slice(0, 200)}`;
         await sb.from("automation_runs").update({ status: "error", error: msg, finished_at: new Date().toISOString() }).eq("id", run!.id);
         return ok({ error: msg, apify_status: r.status }, 200);
       }
-      const j = await r.json();
-      datasetId = j?.data?.defaultDatasetId ?? null;
+      try {
+        datasetId = JSON.parse(text)?.data?.defaultDatasetId ?? null;
+      } catch {
+        return ok({ error: "Apify returned invalid JSON for last run." }, 200);
+      }
+      if (!datasetId) {
+        return ok({ error: "No dataset id on last run." }, 200);
+      }
+      const dr = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY}&clean=true&limit=200`);
+      if (!dr.ok) return ok({ error: `Dataset fetch failed ${dr.status}` }, 200);
+      items = await dr.json();
     }
 
-    if (!datasetId) {
-      await sb.from("automation_runs").update({ status: "error", error: "No dataset id", finished_at: new Date().toISOString() }).eq("id", run!.id);
-      return err("No dataset id from actor", 502);
-    }
-
-    const dr = await fetch(`https://api.apify.com/v2/datasets/${datasetId}/items?token=${APIFY}&clean=true&limit=200`);
-    if (!dr.ok) {
-      await sb.from("automation_runs").update({ status: "error", error: `Dataset ${dr.status}`, finished_at: new Date().toISOString() }).eq("id", run!.id);
-      return err(`Dataset fetch failed ${dr.status}`, 502);
-    }
-    const items: ApifyItem[] = await dr.json();
 
     let out = 0;
     for (const raw of items) {
