@@ -18,6 +18,10 @@ const ImportCenter = () => {
   const [runs, setRuns] = useState<Run[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [apifyJson, setApifyJson] = useState("");
+  const [actorId, setActorId] = useState("");
+  const [actorMode, setActorMode] = useState<"last" | "run">("last");
+  const [actorInput, setActorInput] = useState("");
+  const [newsQuery, setNewsQuery] = useState('"Tel Aviv"');
 
   const load = async () => {
     const [s, r] = await Promise.all([
@@ -52,6 +56,35 @@ const ImportCenter = () => {
     load();
   };
 
+  const runActor = async () => {
+    if (!actorId.trim()) return toast.error("Actor ID required (e.g. user~actor-name)");
+    let input: unknown = undefined;
+    if (actorMode === "run" && actorInput.trim()) {
+      try { input = JSON.parse(actorInput); } catch { return toast.error("Actor input must be valid JSON"); }
+    }
+    setBusy("actor");
+    const { data, error } = await supabase.functions.invoke("import-apify-actor", {
+      body: { actor_id: actorId.trim(), mode: actorMode, input },
+    });
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    if (data?.error) return toast.error(data.error);
+    toast.success(`Pulled ${data?.items_in ?? 0} items, created ${data?.items_out ?? 0} drafts.`);
+    load();
+  };
+
+  const runNewsApi = async () => {
+    setBusy("news");
+    const { data, error } = await supabase.functions.invoke("import-newsapi", {
+      body: { query: newsQuery },
+    });
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    if (data?.error) return toast.error(data.error);
+    toast.success(`Found ${data?.items_in ?? 0} articles, created ${data?.items_out ?? 0} drafts.`);
+    load();
+  };
+
   return (
     <AdminShell>
       <h1 className="font-display text-4xl font-black tracking-tight">Import center</h1>
@@ -60,6 +93,8 @@ const ImportCenter = () => {
       <Tabs defaultValue="rss" className="mt-8">
         <TabsList>
           <TabsTrigger value="rss">RSS sources</TabsTrigger>
+          <TabsTrigger value="newsapi">NewsAPI</TabsTrigger>
+          <TabsTrigger value="actor">Apify actor</TabsTrigger>
           <TabsTrigger value="apify">Apify paste</TabsTrigger>
           <TabsTrigger value="manual">Manual</TabsTrigger>
           <TabsTrigger value="runs">Recent runs</TabsTrigger>
@@ -83,6 +118,43 @@ const ImportCenter = () => {
               </Button>
             </Card>
           ))}
+        </TabsContent>
+
+        <TabsContent value="newsapi" className="mt-4">
+          <Card className="p-5 border-2 space-y-3">
+            <div>
+              <Label className="text-xs uppercase tracking-widest">Search query</Label>
+              <Input value={newsQuery} onChange={(e) => setNewsQuery(e.target.value)} className="mt-2" placeholder='"Tel Aviv"' />
+              <p className="text-xs text-muted-foreground mt-2">
+                Pulls articles from NewsAPI.org and filters for Tel Aviv mentions. Saved as drafts.
+              </p>
+            </div>
+            <Button onClick={runNewsApi} disabled={busy === "news"} className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold uppercase tracking-wider">
+              {busy === "news" ? "Fetching…" : "Fetch from NewsAPI"}
+            </Button>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="actor" className="mt-4">
+          <Card className="p-5 border-2 space-y-3">
+            <div>
+              <Label className="text-xs uppercase tracking-widest">Apify actor ID</Label>
+              <Input value={actorId} onChange={(e) => setActorId(e.target.value)} className="mt-2 font-mono" placeholder="username~actor-name" />
+            </div>
+            <div className="flex gap-4 text-sm">
+              <label className="flex items-center gap-2"><input type="radio" checked={actorMode === "last"} onChange={() => setActorMode("last")} /> Use last successful run</label>
+              <label className="flex items-center gap-2"><input type="radio" checked={actorMode === "run"} onChange={() => setActorMode("run")} /> Run actor now</label>
+            </div>
+            {actorMode === "run" && (
+              <div>
+                <Label className="text-xs uppercase tracking-widest">Actor input (JSON, optional)</Label>
+                <Textarea rows={6} value={actorInput} onChange={(e) => setActorInput(e.target.value)} className="font-mono text-xs mt-2" placeholder='{"startUrls":[{"url":"..."}]}' />
+              </div>
+            )}
+            <Button onClick={runActor} disabled={busy === "actor" || !actorId} className="bg-foreground text-background hover:bg-foreground/90 font-bold uppercase tracking-wider">
+              {busy === "actor" ? "Running…" : "Pull from Apify"}
+            </Button>
+          </Card>
         </TabsContent>
 
         <TabsContent value="apify" className="mt-4">
