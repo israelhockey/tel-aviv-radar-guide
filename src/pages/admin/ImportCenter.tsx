@@ -22,6 +22,9 @@ const ImportCenter = () => {
   const [actorMode, setActorMode] = useState<"last" | "run">("last");
   const [actorInput, setActorInput] = useState("");
   const [newsQuery, setNewsQuery] = useState('"Tel Aviv"');
+  const [govResource, setGovResource] = useState("");
+  const [govType, setGovType] = useState("event");
+  const [govFieldMap, setGovFieldMap] = useState('{\n  "title": "",\n  "summary": "",\n  "url": "",\n  "starts_at": "",\n  "venue": "",\n  "address": ""\n}');
 
   const load = async () => {
     const [s, r] = await Promise.all([
