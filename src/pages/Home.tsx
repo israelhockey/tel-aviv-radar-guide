@@ -125,7 +125,7 @@ const EmptyState = () => (
         </Link>
       </div>
     </div>
-  </section>
+  </div>
 );
 
 export default Home;
