@@ -18,6 +18,10 @@ const ImportCenter = () => {
   const [runs, setRuns] = useState<Run[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [apifyJson, setApifyJson] = useState("");
+  const [actorId, setActorId] = useState("");
+  const [actorMode, setActorMode] = useState<"last" | "run">("last");
+  const [actorInput, setActorInput] = useState("");
+  const [newsQuery, setNewsQuery] = useState('"Tel Aviv"');
 
   const load = async () => {
     const [s, r] = await Promise.all([
