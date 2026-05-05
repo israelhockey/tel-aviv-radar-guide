@@ -8,14 +8,39 @@ import type { Database } from "@/integrations/supabase/types";
 type Item = Database["public"]["Tables"]["content_items"]["Row"];
 type CT = Database["public"]["Enums"]["content_type"];
 
-const TITLES: Record<string, { title: string; subtitle: string; types: CT[]; freeOnly?: boolean }> = {
+type Window = "today" | "week" | "weekend" | "all";
+
+const TITLES: Record<string, { title: string; subtitle: string; types: CT[]; freeOnly?: boolean; window?: Window }> = {
   news: { title: "Local News", subtitle: "What's moving in the city", types: ["news"] },
-  events: { title: "Tonight & this week", subtitle: "Concerts, parties, talks, markets", types: ["event"] },
+  events: { title: "Tonight & this week", subtitle: "Concerts, parties, talks, markets", types: ["event", "nightlife"], window: "week" },
   food: { title: "Food & Drink", subtitle: "Openings, restaurants, bakeries, markets", types: ["food", "opening"] },
-  nightlife: { title: "Nightlife", subtitle: "Clubs, bars, late-night", types: ["nightlife"] },
+  nightlife: { title: "Nightlife", subtitle: "Clubs, bars, late-night", types: ["nightlife"], window: "week" },
   business: { title: "Business & Startups", subtitle: "Local economy & operators", types: ["business"] },
-  weekend: { title: "The Weekend Guide", subtitle: "Friday to Sunday in Tel Aviv", types: ["guide", "event"] },
-  free: { title: "Free things to do", subtitle: "All ₪0 — markets, talks, yoga, beach", types: ["event","guide"], freeOnly: true },
+  weekend: { title: "The Weekend Guide", subtitle: "Friday to Sunday in Tel Aviv", types: ["guide", "event"], window: "weekend" },
+  free: { title: "Free things to do", subtitle: "All ₪0 — markets, talks, yoga, beach", types: ["event","guide"], freeOnly: true, window: "week" },
+};
+
+const getWindow = (w: Window): [Date, Date] => {
+  const now = new Date();
+  const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+  if (w === "today") {
+    const end = new Date(startOfToday); end.setDate(end.getDate() + 1);
+    return [now, end];
+  }
+  if (w === "week") {
+    const end = new Date(startOfToday); end.setDate(end.getDate() + 7);
+    return [now, end];
+  }
+  const dow = now.getDay();
+  const fri = new Date(startOfToday);
+  if (dow === 5 || dow === 6 || dow === 0) {
+    const back = dow === 0 ? 2 : dow - 5;
+    fri.setDate(startOfToday.getDate() - back);
+  } else {
+    fri.setDate(startOfToday.getDate() + ((5 - dow + 7) % 7));
+  }
+  const mon = new Date(fri); mon.setDate(mon.getDate() + 3);
+  return [fri, mon];
 };
 
 const Category = () => {
@@ -29,11 +54,22 @@ const Category = () => {
     document.title = `${meta.title} — TLV Radar`;
     (async () => {
       setLoading(true);
-      let q = supabase.from("content_items").select("*").eq("status", "published")
-        .in("type", meta.types).order("published_at", { ascending: false }).limit(60);
+      const q = supabase.from("content_items").select("*").eq("status", "published")
+        .in("type", meta.types).limit(120);
       const { data } = await q;
       let rows = data ?? [];
       if (meta.freeOnly) rows = rows.filter(r => /free|חינם|^0$|₪0/i.test(r.price ?? ""));
+      if (meta.window && meta.window !== "all") {
+        const [from, to] = getWindow(meta.window);
+        rows = rows.filter(r => {
+          if (!r.starts_at) return r.type === "guide";
+          const t = new Date(r.starts_at).getTime();
+          return t >= from.getTime() && t < to.getTime();
+        });
+        rows.sort((a, b) => new Date(a.starts_at ?? 0).getTime() - new Date(b.starts_at ?? 0).getTime());
+      } else {
+        rows.sort((a, b) => new Date(b.published_at ?? 0).getTime() - new Date(a.published_at ?? 0).getTime());
+      }
       setItems(rows);
       setLoading(false);
     })();
