@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ContentCard } from "@/components/site/ContentCard";
@@ -18,7 +18,7 @@ const TITLES: Record<string, { title: string; subtitle: string; types: CT[] }> =
 };
 
 const Category = () => {
-  const { slug = "" } = useParams();
+  const slug = useLocation().pathname.replace(/^\//, "");
   const meta = TITLES[slug];
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
