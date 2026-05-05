@@ -56,6 +56,35 @@ const ImportCenter = () => {
     load();
   };
 
+  const runActor = async () => {
+    if (!actorId.trim()) return toast.error("Actor ID required (e.g. user~actor-name)");
+    let input: unknown = undefined;
+    if (actorMode === "run" && actorInput.trim()) {
+      try { input = JSON.parse(actorInput); } catch { return toast.error("Actor input must be valid JSON"); }
+    }
+    setBusy("actor");
+    const { data, error } = await supabase.functions.invoke("import-apify-actor", {
+      body: { actor_id: actorId.trim(), mode: actorMode, input },
+    });
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    if (data?.error) return toast.error(data.error);
+    toast.success(`Pulled ${data?.items_in ?? 0} items, created ${data?.items_out ?? 0} drafts.`);
+    load();
+  };
+
+  const runNewsApi = async () => {
+    setBusy("news");
+    const { data, error } = await supabase.functions.invoke("import-newsapi", {
+      body: { query: newsQuery },
+    });
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    if (data?.error) return toast.error(data.error);
+    toast.success(`Found ${data?.items_in ?? 0} articles, created ${data?.items_out ?? 0} drafts.`);
+    load();
+  };
+
   return (
     <AdminShell>
       <h1 className="font-display text-4xl font-black tracking-tight">Import center</h1>
