@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Mail } from "lucide-react";
 import { toast } from "sonner";
 
-export const NewsletterForm = ({ variant = "light" }: { variant?: "light" | "dark" }) => {
+export const NewsletterForm = ({
+  variant = "light",
+  cta = "Subscribe",
+}: { variant?: "light" | "dark"; cta?: string }) => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -12,37 +14,43 @@ export const NewsletterForm = ({ variant = "light" }: { variant?: "light" | "dar
     e.preventDefault();
     if (!email) return;
     setLoading(true);
-    const { error } = await supabase
-      .from("subscribers")
-      .insert({ email: email.trim().toLowerCase(), source: "site_footer" });
+    const { error } = await supabase.from("subscribers").insert({
+      email: email.trim().toLowerCase(), source: "site",
+    });
     setLoading(false);
     if (error) {
-      if (error.code === "23505") {
-        toast.success("You're already subscribed.");
-      } else {
-        toast.error(error.message);
-      }
+      if (error.code === "23505") toast.success("You're already subscribed.");
+      else toast.error(error.message);
       return;
     }
-    toast.success("Subscribed. See you tomorrow morning.");
+    toast.success("Subscribed. See you Thursday.");
     setEmail("");
   };
 
+  const inputClasses = variant === "dark"
+    ? "bg-white text-foreground placeholder:text-muted-foreground"
+    : "bg-white text-foreground placeholder:text-muted-foreground border border-border";
+
   return (
-    <form onSubmit={submit} className="flex gap-2">
-      <Input
-        type="email"
-        required
-        placeholder="you@telaviv.email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className={variant === "dark"
-          ? "bg-primary-foreground/10 border-primary-foreground/30 text-primary-foreground placeholder:text-primary-foreground/50"
-          : ""}
-      />
-      <Button type="submit" disabled={loading} className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold uppercase tracking-wider">
-        {loading ? "..." : "Join"}
-      </Button>
+    <form onSubmit={submit} className="flex items-center rounded-full p-1 bg-white shadow-sm">
+      <div className="flex-1 flex items-center gap-2 px-4">
+        <Mail className="h-4 w-4 text-muted-foreground" />
+        <input
+          type="email"
+          required
+          placeholder="Enter your email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className={`flex-1 h-10 outline-none text-sm ${inputClasses}`}
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={loading}
+        className="h-10 rounded-full bg-accent px-5 text-sm font-bold text-accent-foreground hover:bg-accent/90 transition disabled:opacity-60"
+      >
+        {loading ? "…" : cta}
+      </button>
     </form>
   );
 };

@@ -14,6 +14,7 @@ import ReviewQueue from "./pages/admin/ReviewQueue";
 import ContentAdmin from "./pages/admin/ContentAdmin";
 import NewsletterAdmin from "./pages/admin/NewsletterAdmin";
 import SourcesAdmin from "./pages/admin/SourcesAdmin";
+import Newsletter from "./pages/Newsletter";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,8 @@ const App = () => (
           <Route path="/nightlife" element={<Category />} />
           <Route path="/business" element={<Category />} />
           <Route path="/weekend" element={<Category />} />
+          <Route path="/free" element={<Category />} />
+          <Route path="/newsletter" element={<Newsletter />} />
           <Route path="/post/:slug" element={<Post />} />
           <Route path="/submit" element={<Submit />} />
           <Route path="/auth" element={<Auth />} />
