@@ -34,8 +34,15 @@ Deno.serve(async (req) => {
       );
       if (!r.ok) {
         const t = await r.text();
-        await sb.from("automation_runs").update({ status: "error", error: `Apify run ${r.status}: ${t.slice(0,200)}`, finished_at: new Date().toISOString() }).eq("id", run!.id);
-        return err(`Apify run failed ${r.status}`, 502);
+        const msg = r.status === 402
+          ? `This Apify actor is not free on your plan, or you've run out of compute credits. Open the actor on apify.com and check pricing/billing, or try a different actor.`
+          : r.status === 401 || r.status === 403
+          ? `Apify rejected the API key (${r.status}). Verify APIFY_API_KEY is correct.`
+          : r.status === 404
+          ? `Actor "${actor_id}" not found. Check the format (e.g. "username~actor-name") and that you have access.`
+          : `Apify run failed ${r.status}: ${t.slice(0, 200)}`;
+        await sb.from("automation_runs").update({ status: "error", error: msg, finished_at: new Date().toISOString() }).eq("id", run!.id);
+        return ok({ error: msg, apify_status: r.status }, 200);
       }
       const j = await r.json();
       datasetId = j?.data?.defaultDatasetId ?? null;
@@ -43,8 +50,14 @@ Deno.serve(async (req) => {
       // Fetch last successful run's dataset
       const r = await fetch(`https://api.apify.com/v2/acts/${encodeURIComponent(actor_id)}/runs/last?token=${APIFY}&status=SUCCEEDED`);
       if (!r.ok) {
-        await sb.from("automation_runs").update({ status: "error", error: `Apify last run ${r.status}`, finished_at: new Date().toISOString() }).eq("id", run!.id);
-        return err(`Could not fetch last run (${r.status})`, 502);
+        const t = await r.text();
+        const msg = r.status === 404
+          ? `No successful runs found for "${actor_id}". Run it once on apify.com first, or switch to "Run actor now" mode.`
+          : r.status === 401 || r.status === 403
+          ? `Apify rejected the API key (${r.status}).`
+          : `Could not fetch last run (${r.status}): ${t.slice(0, 200)}`;
+        await sb.from("automation_runs").update({ status: "error", error: msg, finished_at: new Date().toISOString() }).eq("id", run!.id);
+        return ok({ error: msg, apify_status: r.status }, 200);
       }
       const j = await r.json();
       datasetId = j?.data?.defaultDatasetId ?? null;
