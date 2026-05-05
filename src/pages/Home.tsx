@@ -33,14 +33,42 @@ const Home = () => {
     })();
   }, []);
 
-  const tonight = items.filter(i => i.type === "event" || i.type === "nightlife").slice(0, 3);
-  const weekend = items.filter(i => i.type === "event" || i.type === "guide").slice(0, 6);
+  // Date helpers (local time)
+  const now = new Date();
+  const startOfToday = new Date(now); startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = new Date(startOfToday); endOfToday.setDate(endOfToday.getDate() + 1);
+  // Weekend in Israel = Fri (5) → Sun (0). Find next Fri 00:00 → following Mon 00:00.
+  const dow = now.getDay();
+  const daysToFri = (5 - dow + 7) % 7; // 0 if today is Fri
+  const friStart = new Date(startOfToday); friStart.setDate(friStart.getDate() + daysToFri);
+  const monStart = new Date(friStart); monStart.setDate(monStart.getDate() + 3);
+  // If we're already in the weekend window, anchor it to the current Fri.
+  if (dow === 5 || dow === 6 || dow === 0) {
+    const back = dow === 0 ? 2 : dow - 5;
+    friStart.setDate(startOfToday.getDate() - back);
+    monStart.setTime(friStart.getTime()); monStart.setDate(monStart.getDate() + 3);
+  }
+  const inRange = (i: Item, from: Date, to: Date) => {
+    if (!i.starts_at) return false;
+    const t = new Date(i.starts_at).getTime();
+    return t >= from.getTime() && t < to.getTime();
+  };
+  const byStart = (a: Item, b: Item) =>
+    new Date(a.starts_at ?? 0).getTime() - new Date(b.starts_at ?? 0).getTime();
+
+  const eventish = items.filter(i => i.type === "event" || i.type === "nightlife");
+  const tonight = eventish.filter(i => inRange(i, now, endOfToday)).sort(byStart).slice(0, 3);
+  const weekend = items
+    .filter(i => i.type === "event" || i.type === "guide")
+    .filter(i => i.type === "guide" || inRange(i, friStart, monStart))
+    .sort(byStart).slice(0, 6);
   const briefs = items.filter(i => ["news","business","food"].includes(i.type)).slice(0, 4);
   const food = items.filter(i => i.type === "food" || i.type === "opening").slice(0, 4);
   const business = items.filter(i => i.type === "business").slice(0, 3);
   const trending = items.slice(0, 5);
   const free = items.filter(i => /free|חינם/i.test(i.price ?? "") || /yoga|market/i.test(i.title)).slice(0, 3);
   const openings = items.filter(i => i.type === "opening" || /opens|new/i.test(i.title)).slice(0, 3);
+
 
   return (
     <SiteLayout>
