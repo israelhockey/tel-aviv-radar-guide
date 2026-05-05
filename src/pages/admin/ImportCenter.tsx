@@ -88,8 +88,38 @@ const ImportCenter = () => {
     load();
   };
 
-  return (
-    <AdminShell>
+  const APIFY_PRESETS = [
+    { id: "fb-events-tlv", label: "Facebook Events — Tel Aviv", actor: "apify/facebook-events-scraper", input: { searchQueries: ["Tel Aviv"], maxEvents: 50 } },
+    { id: "timeout-tlv", label: "Time Out Tel Aviv", actor: "apify/website-content-crawler", input: { startUrls: [{ url: "https://www.timeout.com/israel/tel-aviv/things-to-do" }, { url: "https://www.timeout.com/israel/tel-aviv/restaurants" }], maxCrawlPages: 30 } },
+    { id: "secret-tlv", label: "Secret Tel Aviv", actor: "apify/website-content-crawler", input: { startUrls: [{ url: "https://www.secrettelaviv.com/events" }, { url: "https://www.secrettelaviv.com/magazine" }], maxCrawlPages: 30 } },
+  ];
+
+  const runPreset = async (p: typeof APIFY_PRESETS[number]) => {
+    setBusy(p.id);
+    const { data, error } = await supabase.functions.invoke("import-apify-actor", {
+      body: { actor_id: p.actor, mode: "run", input: p.input },
+    });
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    if (data?.error) return toast.error(data.error);
+    toast.success(`${p.label}: ${data?.items_in ?? 0} items, ${data?.items_out ?? 0} drafts.`);
+    load();
+  };
+
+  const runGov = async () => {
+    if (!govResource.trim()) return toast.error("Resource ID required");
+    let field_map = {};
+    try { field_map = JSON.parse(govFieldMap); } catch { return toast.error("Field map must be valid JSON"); }
+    setBusy("gov");
+    const { data, error } = await supabase.functions.invoke("import-tlv-gov", {
+      body: { resource_id: govResource.trim(), type: govType, field_map },
+    });
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    if (data?.error) return toast.error(data.error);
+    toast.success(`Pulled ${data?.items_in ?? 0} rows, created ${data?.items_out ?? 0} drafts.`);
+    load();
+  };
       <h1 className="font-display text-4xl font-black tracking-tight">Import center</h1>
       <p className="text-muted-foreground mt-1">Pull content from RSS, Apify scrapers, or manual paste. Items land as drafts in the review queue.</p>
 
