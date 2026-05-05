@@ -7,10 +7,7 @@ export default {
   theme: {
     container: { center: true, padding: "1.5rem", screens: { "2xl": "1280px" } },
     extend: {
-      fontFamily: {
-        display: ['Fraunces', 'Georgia', 'serif'],
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-      },
+      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -22,10 +19,23 @@ export default {
         destructive: { DEFAULT: "hsl(var(--destructive))", foreground: "hsl(var(--destructive-foreground))" },
         muted: { DEFAULT: "hsl(var(--muted))", foreground: "hsl(var(--muted-foreground))" },
         accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
-        highlight: { DEFAULT: "hsl(var(--highlight))", foreground: "hsl(var(--highlight-foreground))" },
         sea: { DEFAULT: "hsl(var(--sea))", foreground: "hsl(var(--sea-foreground))" },
         popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
         card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
+        cat: {
+          music: "hsl(var(--cat-music))",
+          dj: "hsl(var(--cat-dj))",
+          art: "hsl(var(--cat-art))",
+          food: "hsl(var(--cat-food))",
+          news: "hsl(var(--cat-news))",
+          bars: "hsl(var(--cat-bars))",
+          restaurants: "hsl(var(--cat-restaurants))",
+          popups: "hsl(var(--cat-popups))",
+          city: "hsl(var(--cat-city))",
+          business: "hsl(var(--cat-business))",
+          free: "hsl(var(--cat-free))",
+          cafe: "hsl(var(--cat-cafe))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
@@ -41,12 +51,10 @@ export default {
       keyframes: {
         "accordion-down": { from: { height: "0" }, to: { height: "var(--radix-accordion-content-height)" } },
         "accordion-up": { from: { height: "var(--radix-accordion-content-height)" }, to: { height: "0" } },
-        "marquee": { from: { transform: "translateX(0)" }, to: { transform: "translateX(-50%)" } },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "marquee": "marquee 40s linear infinite",
       },
     },
   },

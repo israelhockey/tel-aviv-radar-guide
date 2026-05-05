@@ -1,55 +1,46 @@
 import { NavLink, Link } from "react-router-dom";
-import { Radio } from "lucide-react";
+import { Search } from "lucide-react";
+import { Logo } from "./Logo";
 
 const NAV = [
-  { to: "/news", label: "News" },
-  { to: "/events", label: "Events" },
-  { to: "/food", label: "Food" },
-  { to: "/nightlife", label: "Nightlife" },
-  { to: "/business", label: "Business" },
+  { to: "/events", label: "Tonight" },
   { to: "/weekend", label: "Weekend" },
+  { to: "/food", label: "Food & Drink" },
+  { to: "/nightlife", label: "Nightlife" },
+  { to: "/free", label: "Free" },
+  { to: "/business", label: "Business" },
+  { to: "/news", label: "Local News" },
+  { to: "/newsletter", label: "Newsletter" },
 ];
 
-export const SiteHeader = () => {
-  const today = new Date().toLocaleDateString("en-GB", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-  });
-
-  return (
-    <header className="border-b-2 border-foreground bg-background">
-      <div className="container-page flex items-center justify-between py-2 text-[11px] uppercase tracking-widest">
-        <span>{today} · Tel Aviv</span>
-        <Link to="/submit" className="hidden sm:inline hover:text-accent">Submit an event →</Link>
-      </div>
-      <div className="rule" />
-      <div className="container-page flex flex-col items-center py-6">
-        <Link to="/" className="flex items-center gap-3 group">
-          <span className="inline-flex h-9 w-9 items-center justify-center bg-accent text-accent-foreground poster-shadow">
-            <Radio className="h-5 w-5" strokeWidth={2.5} />
-          </span>
-          <span className="font-display text-5xl sm:text-6xl font-black leading-none tracking-tighter">
-            TLV<span className="text-accent">·</span>RADAR
-          </span>
-        </Link>
-        <p className="mt-2 text-xs uppercase tracking-[0.3em] text-muted-foreground">
-          What's happening in Tel Aviv today
-        </p>
-      </div>
-      <div className="rule" />
-      <nav className="container-page flex flex-wrap items-center justify-center gap-x-6 gap-y-1 py-3 text-sm font-semibold uppercase tracking-wider">
+export const SiteHeader = () => (
+  <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
+    <div className="container-page flex items-center justify-between gap-6 py-4">
+      <Logo />
+      <nav className="hidden lg:flex items-center gap-7 text-[14px] font-semibold text-foreground/80">
         {NAV.map((n) => (
           <NavLink
             key={n.to}
             to={n.to}
             className={({ isActive }) =>
-              `transition-colors hover:text-accent ${isActive ? "text-accent" : "text-foreground"}`
+              `transition-colors hover:text-foreground ${isActive ? "text-foreground" : ""}`
             }
           >
             {n.label}
           </NavLink>
         ))}
       </nav>
-      <div className="rule border-t" />
-    </header>
-  );
-};
+      <div className="flex items-center gap-3">
+        <button aria-label="Search" className="h-10 w-10 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition">
+          <Search className="h-4 w-4" />
+        </button>
+        <Link
+          to="/weekend"
+          className="hidden sm:inline-flex h-10 items-center rounded-full bg-accent px-5 text-sm font-bold text-accent-foreground hover:bg-accent/90 transition"
+        >
+          Get the Weekend Guide
+        </Link>
+      </div>
+    </div>
+  </header>
+);

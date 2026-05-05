@@ -1,104 +1,104 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,800;9..144,900&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* TLV Radar — editorial Tel Aviv local media design system.
-   Inspired by sun-bleached Bauhaus, warm sand, Mediterranean blue, kiosk-poster red.
-   All colors HSL. */
+/* TLV Radar — clean editorial local-media UI.
+   White surfaces, navy ink, orange CTA, colorful category badges. */
 
 @layer base {
   :root {
-    --background: 38 40% 96%;          /* warm sand paper */
-    --foreground: 220 25% 12%;          /* deep ink */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;          /* deep navy ink */
 
-    --card: 38 50% 99%;
-    --card-foreground: 220 25% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    --popover: 38 50% 99%;
-    --popover-foreground: 220 25% 12%;
+    --primary: 222 47% 11%;             /* navy */
+    --primary-foreground: 0 0% 100%;
 
-    --primary: 220 80% 18%;             /* mediterranean ink blue */
-    --primary-foreground: 38 50% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --secondary: 38 30% 90%;
-    --secondary-foreground: 220 25% 12%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
 
-    --muted: 38 25% 92%;
-    --muted-foreground: 220 10% 38%;
+    --accent: 18 95% 55%;               /* TLV orange CTA */
+    --accent-foreground: 0 0% 100%;
 
-    --accent: 14 88% 55%;               /* kiosk red-orange */
-    --accent-foreground: 38 50% 98%;
+    --sea: 211 100% 50%;                /* TLV brand blue (logo / weekend bar) */
+    --sea-foreground: 0 0% 100%;
 
-    --highlight: 45 95% 55%;            /* tel aviv yellow sun */
-    --highlight-foreground: 220 25% 12%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
-    --sea: 195 75% 42%;                 /* sea blue */
-    --sea-foreground: 38 50% 98%;
+    --border: 220 14% 91%;
+    --input: 220 14% 91%;
+    --ring: 222 47% 11%;
 
-    --destructive: 0 75% 48%;
-    --destructive-foreground: 38 50% 98%;
+    --radius: 0.75rem;
 
-    --border: 38 20% 85%;
-    --input: 38 20% 85%;
-    --ring: 220 80% 18%;
+    /* Category badge colors */
+    --cat-music: 264 80% 62%;       /* purple */
+    --cat-dj: 14 90% 52%;           /* red-orange */
+    --cat-art: 145 60% 45%;         /* green */
+    --cat-food: 28 95% 55%;         /* orange */
+    --cat-news: 211 100% 50%;       /* blue */
+    --cat-bars: 210 60% 50%;        /* steel blue */
+    --cat-restaurants: 211 100% 50%;
+    --cat-popups: 264 80% 62%;
+    --cat-city: 211 100% 50%;
+    --cat-business: 145 60% 45%;
+    --cat-free: 28 95% 55%;
+    --cat-cafe: 14 90% 52%;
 
-    --radius: 0.25rem;
-
-    --shadow-sharp: 4px 4px 0 hsl(220 25% 12%);
-    --shadow-poster: 6px 6px 0 hsl(14 88% 55%);
-    --gradient-sun: linear-gradient(135deg, hsl(45 95% 55%), hsl(14 88% 55%));
-    --gradient-sea: linear-gradient(180deg, hsl(195 75% 42%), hsl(220 80% 18%));
+    --shadow-card: 0 1px 3px 0 hsl(220 14% 80% / 0.4), 0 1px 2px -1px hsl(220 14% 80% / 0.4);
+    --shadow-pop: 0 10px 25px -5px hsl(222 47% 11% / 0.1);
   }
 
   .dark {
-    --background: 220 25% 8%;
-    --foreground: 38 40% 96%;
-    --card: 220 25% 11%;
-    --card-foreground: 38 40% 96%;
-    --popover: 220 25% 11%;
-    --popover-foreground: 38 40% 96%;
-    --primary: 45 95% 55%;
-    --primary-foreground: 220 25% 8%;
-    --secondary: 220 20% 16%;
-    --secondary-foreground: 38 40% 96%;
-    --muted: 220 20% 14%;
-    --muted-foreground: 38 15% 65%;
-    --accent: 14 88% 55%;
-    --accent-foreground: 38 50% 98%;
-    --highlight: 45 95% 55%;
-    --highlight-foreground: 220 25% 12%;
-    --sea: 195 75% 42%;
-    --sea-foreground: 38 50% 98%;
-    --destructive: 0 75% 48%;
-    --destructive-foreground: 38 50% 98%;
-    --border: 220 20% 20%;
-    --input: 220 20% 20%;
-    --ring: 45 95% 55%;
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 222 30% 18%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 30% 16%;
+    --muted-foreground: 215 16% 70%;
+    --accent: 18 95% 55%;
+    --accent-foreground: 0 0% 100%;
+    --sea: 211 100% 50%;
+    --sea-foreground: 0 0% 100%;
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 222 30% 20%;
+    --input: 222 30% 20%;
+    --ring: 210 40% 98%;
   }
 }
 
 @layer base {
   * { @apply border-border; }
+  html { font-family: 'Inter', system-ui, sans-serif; }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
-    font-feature-settings: "ss01", "cv11";
+    font-feature-settings: "cv11", "ss01";
   }
-  h1, h2, h3, h4, .font-display {
-    font-family: 'Fraunces', Georgia, serif;
-    font-optical-sizing: auto;
-    letter-spacing: -0.02em;
-  }
+  h1, h2, h3, h4 { letter-spacing: -0.02em; }
 }
 
 @layer components {
-  .container-page { @apply mx-auto w-full max-w-6xl px-4 sm:px-6; }
-  .kicker {
-    @apply inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.18em];
+  .container-page { @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8; }
+  .card-soft { @apply bg-card rounded-2xl border border-border; box-shadow: var(--shadow-card); }
+  .pill { @apply inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition; }
+  .badge-cat {
+    @apply inline-block rounded-md px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white;
   }
-  .poster-shadow { box-shadow: var(--shadow-sharp); }
-  .poster-shadow-accent { box-shadow: var(--shadow-poster); }
-  .rule { @apply border-t-2 border-foreground; }
 }
