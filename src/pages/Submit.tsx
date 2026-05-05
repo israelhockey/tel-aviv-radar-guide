@@ -1,0 +1,79 @@
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { SiteLayout } from "@/components/site/SiteLayout";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+
+const Submit = () => {
+  const [form, setForm] = useState({
+    title: "", description: "", venue: "", neighborhood: "",
+    starts_at: "", url: "", contact_name: "", contact_email: "",
+  });
+  const [loading, setLoading] = useState(false);
+
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm({ ...form, [k]: e.target.value });
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.from("submitted_items").insert({
+      type: "event",
+      title: form.title,
+      description: form.description,
+      venue: form.venue || null,
+      neighborhood: form.neighborhood || null,
+      starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
+      url: form.url || null,
+      contact_name: form.contact_name || null,
+      contact_email: form.contact_email || null,
+    });
+    setLoading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Submitted. The editors will review it.");
+    setForm({ title: "", description: "", venue: "", neighborhood: "", starts_at: "", url: "", contact_name: "", contact_email: "" });
+  };
+
+  return (
+    <SiteLayout>
+      <header className="container-page py-10 border-b-2 border-foreground">
+        <p className="kicker text-accent">Submit</p>
+        <h1 className="font-display text-5xl sm:text-6xl font-black tracking-tighter mt-2">Add an event</h1>
+        <p className="mt-2 text-muted-foreground max-w-xl">
+          Got a gig, opening, market, talk, or party? Tell us. Editors review every submission before it goes live.
+        </p>
+      </header>
+      <form onSubmit={submit} className="container-page py-8 max-w-2xl space-y-4">
+        <Field label="Event title *"><Input required value={form.title} onChange={set("title")} /></Field>
+        <Field label="Description *"><Textarea required rows={5} value={form.description} onChange={set("description")} /></Field>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Field label="Venue"><Input value={form.venue} onChange={set("venue")} /></Field>
+          <Field label="Neighborhood"><Input value={form.neighborhood} onChange={set("neighborhood")} placeholder="e.g. Florentin" /></Field>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Field label="Starts at"><Input type="datetime-local" value={form.starts_at} onChange={set("starts_at")} /></Field>
+          <Field label="Link / tickets"><Input type="url" value={form.url} onChange={set("url")} /></Field>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <Field label="Your name"><Input value={form.contact_name} onChange={set("contact_name")} /></Field>
+          <Field label="Your email"><Input type="email" value={form.contact_email} onChange={set("contact_email")} /></Field>
+        </div>
+        <Button type="submit" disabled={loading} className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold uppercase tracking-wider h-12 px-8">
+          {loading ? "Submitting…" : "Submit event"}
+        </Button>
+      </form>
+    </SiteLayout>
+  );
+};
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div className="space-y-2">
+    <Label className="text-xs uppercase tracking-widest">{label}</Label>
+    {children}
+  </div>
+);
+
+export default Submit;
