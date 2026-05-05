@@ -120,18 +120,68 @@ const ImportCenter = () => {
     toast.success(`Pulled ${data?.items_in ?? 0} rows, created ${data?.items_out ?? 0} drafts.`);
     load();
   };
+
+  return (
+    <AdminShell>
       <h1 className="font-display text-4xl font-black tracking-tight">Import center</h1>
       <p className="text-muted-foreground mt-1">Pull content from RSS, Apify scrapers, or manual paste. Items land as drafts in the review queue.</p>
 
-      <Tabs defaultValue="rss" className="mt-8">
-        <TabsList>
+      <Tabs defaultValue="presets" className="mt-8">
+        <TabsList className="flex-wrap h-auto">
+          <TabsTrigger value="presets">Quick presets</TabsTrigger>
           <TabsTrigger value="rss">RSS sources</TabsTrigger>
           <TabsTrigger value="newsapi">NewsAPI</TabsTrigger>
+          <TabsTrigger value="gov">TLV Open Data</TabsTrigger>
           <TabsTrigger value="actor">Apify actor</TabsTrigger>
           <TabsTrigger value="apify">Apify paste</TabsTrigger>
           <TabsTrigger value="manual">Manual</TabsTrigger>
           <TabsTrigger value="runs">Recent runs</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="presets" className="mt-4 space-y-3">
+          <p className="text-sm text-muted-foreground">One-click pulls from preconfigured Apify actors. Each runs the actor live with Tel Aviv inputs.</p>
+          {APIFY_PRESETS.map((p) => (
+            <Card key={p.id} className="p-4 flex items-center justify-between border-2">
+              <div>
+                <p className="font-bold">{p.label}</p>
+                <p className="text-xs text-muted-foreground font-mono">{p.actor}</p>
+              </div>
+              <Button onClick={() => runPreset(p)} disabled={busy === p.id} className="bg-accent text-accent-foreground hover:bg-accent/90 font-bold uppercase tracking-wider">
+                {busy === p.id ? "Running…" : "Pull now"}
+              </Button>
+            </Card>
+          ))}
+        </TabsContent>
+
+        <TabsContent value="gov" className="mt-4">
+          <Card className="p-5 border-2 space-y-3">
+            <div>
+              <Label className="text-xs uppercase tracking-widest">CKAN resource ID (data.gov.il)</Label>
+              <Input value={govResource} onChange={(e) => setGovResource(e.target.value)} className="mt-2 font-mono" placeholder="e.g. 1c47b94c-...-..." />
+              <p className="text-xs text-muted-foreground mt-2">
+                Find datasets at <a href="https://data.gov.il/dataset" target="_blank" rel="noreferrer" className="underline">data.gov.il/dataset</a>. Open one → API → copy the resource id.
+              </p>
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-widest">Type</Label>
+              <select value={govType} onChange={(e) => setGovType(e.target.value)} className="w-full h-10 px-3 border border-input rounded bg-background mt-2">
+                {["event","news","opening","food","nightlife","business","guide"].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+            <div>
+              <Label className="text-xs uppercase tracking-widest">Field mapping (JSON)</Label>
+              <Textarea rows={8} value={govFieldMap} onChange={(e) => setGovFieldMap(e.target.value)} className="font-mono text-xs mt-2" />
+              <p className="text-xs text-muted-foreground mt-2">
+                Map CKAN row column names → our fields. Leave blank for unused. Auto-filtered for Tel Aviv mentions (Hebrew + English).
+              </p>
+            </div>
+            <Button onClick={runGov} disabled={busy === "gov" || !govResource} className="bg-foreground text-background hover:bg-foreground/90 font-bold uppercase tracking-wider">
+              {busy === "gov" ? "Pulling…" : "Pull from data.gov.il"}
+            </Button>
+          </Card>
+        </TabsContent>
+
+
 
         <TabsContent value="rss" className="mt-4 space-y-3">
           {sources.filter(s => s.kind === "rss").length === 0 && (
