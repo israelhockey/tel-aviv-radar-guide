@@ -93,6 +93,8 @@ const ImportCenter = () => {
       <Tabs defaultValue="rss" className="mt-8">
         <TabsList>
           <TabsTrigger value="rss">RSS sources</TabsTrigger>
+          <TabsTrigger value="newsapi">NewsAPI</TabsTrigger>
+          <TabsTrigger value="actor">Apify actor</TabsTrigger>
           <TabsTrigger value="apify">Apify paste</TabsTrigger>
           <TabsTrigger value="manual">Manual</TabsTrigger>
           <TabsTrigger value="runs">Recent runs</TabsTrigger>
