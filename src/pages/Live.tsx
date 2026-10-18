@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Bike, CalendarDays, CloudRain, LocateFixed, Plane, Search, Bus as BusIcon, TrainFront, UtensilsCrossed, Waves, X } from "lucide-react";
+import { Bike, CalendarDays, Car, SquareParking, CloudRain, LocateFixed, Plane, Search, Bus as BusIcon, TrainFront, UtensilsCrossed, Waves, X } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n, type StringKey } from "@/lib/i18n";
 import { BEACHES, TLV_CENTER } from "@/lib/live/geo";
-import { useAircraft, useBeaches, useBuses, useEventsFeed, usePlaces, useRail, useRain } from "@/lib/live/hooks";
+import { useAircraft, useBeaches, useBuses, useEventsFeed, useParking, usePlaces, useRail, useRain, useTelofan, useTraffic } from "@/lib/live/hooks";
 import { inRange } from "@/lib/live/when";
 import { loadMapLibre, type MapLibre } from "@/lib/live/maplibre";
 import { liveColors, mapStyleFor } from "@/lib/live/mapStyle";
@@ -13,18 +13,20 @@ import { useTheme } from "@/lib/theme";
 import { busIcon, planeIcon } from "@/lib/live/mapIcons";
 import { openStateAt } from "@/lib/live/openingHours";
 import { placeKindLabel } from "@/lib/live/places";
-import { isEveningOut, fetchBusTrip, fetchFlightInfo, lineRoutePath, seaState, type Aircraft, type Bus, type BusTrip, type FeedEvent, type FlightInfo, type Place } from "@/lib/live/sources";
+import { isEveningOut, fetchBusTrip, fetchFlightInfo, lineRoutePath, seaState, type Aircraft, type Bus, type BusTrip, type FeedEvent, type FlightInfo, type Place, type CarPark, type BikeDock, type Jam, type RoadReport } from "@/lib/live/sources";
 import { WhereTo, type WhereResult } from "@/components/radar/WhereTo";
 import { fmtClock, minutesAgo } from "@/lib/live/format";
 
-type LayerId = "events" | "buses" | "rail" | "flights" | "food" | "bikes" | "beaches" | "rain";
+type LayerId = "events" | "traffic" | "buses" | "rail" | "flights" | "food" | "parking" | "bikes" | "beaches" | "rain";
 
 const LAYERS: { id: LayerId; key: StringKey; icon: typeof BusIcon; color: string }[] = [
   { id: "events", key: "live.events", icon: CalendarDays, color: "#7048e8" },
+  { id: "traffic", key: "live.traffic", icon: Car, color: "#e8590c" },
   { id: "buses", key: "live.buses", icon: BusIcon, color: "#0b63e5" },
   { id: "rail", key: "live.rail", icon: TrainFront, color: "#e03131" },
   { id: "flights", key: "live.flights", icon: Plane, color: "#ff5a1f" },
   { id: "food", key: "live.food", icon: UtensilsCrossed, color: "#e8590c" },
+  { id: "parking", key: "live.parking", icon: SquareParking, color: "#1971c2" },
   { id: "bikes", key: "live.bikes", icon: Bike, color: "#2f9e44" },
   { id: "beaches", key: "live.beaches", icon: Waves, color: "#0f8a9d" },
   { id: "rain", key: "live.rain", icon: CloudRain, color: "#5c7cfa" },
@@ -37,7 +39,9 @@ const MAP_LAYERS: Record<LayerId, string[]> = {
   buses: ["buses-glow", "buses-dot", "buses-icon", "buses-label", "trip-route", "trip-ahead", "trip-casing", "trip-trail"],
   flights: ["flights-icon", "flights-label"],
   food: ["food-closed", "food-open"],
-  bikes: ["bikes"],
+  bikes: ["bikes", "bikes-count"],
+  traffic: ["traffic-casing", "traffic", "traffic-reports"],
+  parking: ["parking", "parking-label"],
   beaches: ["beaches", "beaches-label"],
   rain: ["rain"],
 };
@@ -47,7 +51,11 @@ type Selected =
   | { kind: "plane"; plane: Aircraft }
   | { kind: "place"; place: Place }
   | { kind: "beach"; id: string }
-  | { kind: "event"; event: FeedEvent };
+  | { kind: "event"; event: FeedEvent }
+  | { kind: "park"; park: CarPark }
+  | { kind: "dock"; dock: BikeDock }
+  | { kind: "jam"; jam: Jam }
+  | { kind: "report"; report: RoadReport };
 
 const fc = (features: unknown[]) => ({ type: "FeatureCollection", features });
 const line = (coordinates: [number, number][], properties: Record<string, unknown> = {}) => ({
@@ -82,7 +90,7 @@ const Live = () => {
   const [ready, setReady] = useState(false);
   const [mapError, setMapError] = useState(false);
   const [on, setOn] = useState<Record<LayerId, boolean>>({
-    events: true, buses: true, rail: true, flights: true, food: true, bikes: false, beaches: true, rain: false,
+    events: true, traffic: false, buses: true, rail: true, flights: true, food: true, parking: false, bikes: false, beaches: true, rain: false,
   });
   const [selected, setSelected] = useState<Selected | null>(null);
   const [tick, setTick] = useState(0); // re-evaluates "open now" every minute
@@ -93,7 +101,10 @@ const Live = () => {
 
   const buses = useBuses(on.buses);
   const aircraft = useAircraft(on.flights);
-  const places = usePlaces(on.food || on.bikes);
+  const places = usePlaces(on.food);
+  const traffic = useTraffic(on.traffic);
+  const parking = useParking(on.parking);
+  const docks = useTelofan(on.bikes);
   const beaches = useBeaches();
   const rain = useRain(on.rain);
   const eventsFeed = useEventsFeed();
@@ -114,7 +125,10 @@ const Live = () => {
   const tweenPlanes = useRef(createTweener(1200));
 
   // Full objects behind each feature id, for the detail panel.
-  const lookup = useRef({ buses: new Map<string, Bus>(), planes: new Map<string, Aircraft>(), places: new Map<string, Place>(), events: new Map<string, FeedEvent>() });
+  const lookup = useRef({
+    buses: new Map<string, Bus>(), planes: new Map<string, Aircraft>(), places: new Map<string, Place>(), events: new Map<string, FeedEvent>(),
+    parks: new Map<string, CarPark>(), docks: new Map<string, BikeDock>(), jams: [] as Jam[], reports: [] as RoadReport[],
+  });
 
   /* ---------- create the map (again whenever day turns to night) ---------- */
   useEffect(() => {
@@ -155,7 +169,30 @@ const Live = () => {
           map.addImage("radar-plane", planeIcon(C.plane), { pixelRatio: 2 });
 
           const empty = fc([]);
-          for (const id of ["events", "buses", "flights", "food", "bikes", "beaches", "me", "rail-lines", "rail-stations", "trip-route", "trip-ahead", "trip-trail", "sel", "where", "flight-path"]) map.addSource(id, { type: "geojson", data: empty });
+          for (const id of ["events", "buses", "flights", "food", "bikes", "beaches", "me", "rail-lines", "rail-stations", "traffic", "traffic-reports", "parking", "trip-route", "trip-ahead", "trip-trail", "sel", "where", "flight-path"]) map.addSource(id, { type: "geojson", data: empty });
+
+          // Traffic jams reported by Waze drivers, shared by the city: yellow slow, red stopped.
+          map.addLayer({
+            id: "traffic-casing", type: "line", source: "traffic",
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: { "line-color": C.halo, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 3, 16, 10], "line-opacity": 0.8 },
+          });
+          map.addLayer({
+            id: "traffic", type: "line", source: "traffic",
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: {
+              "line-color": ["step", ["get", "level"], "#fab005", 2, "#fd7e14", 3, "#f03e3e", 4, "#c92a2a", 5, "#862e9c"],
+              "line-width": ["interpolate", ["linear"], ["zoom"], 11, 2, 16, 6],
+            },
+          });
+          map.addLayer({
+            id: "traffic-reports", type: "circle", source: "traffic-reports", minzoom: 12,
+            paint: {
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 12, 3.5, 16, 7],
+              "circle-color": ["match", ["get", "type"], "ROAD_CLOSED", "#c92a2a", "ACCIDENT", "#f03e3e", "JAM", "#fd7e14", "#fab005"],
+              "circle-stroke-color": C.halo, "circle-stroke-width": 2,
+            },
+          });
 
           // Light rail lines in their official colours; heavy rail thinner and dashed.
           map.addLayer({
@@ -195,12 +232,33 @@ const Live = () => {
               "circle-stroke-color": C.halo, "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 13, 0, 15, 1],
             },
           });
+          // Tel-O-Fun docks: green with bikes to take, grey when empty.
           map.addLayer({
             id: "bikes", type: "circle", source: "bikes",
             paint: {
-              "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 3, 15, 6],
-              "circle-color": C.bike, "circle-stroke-color": C.halo, "circle-stroke-width": 1.5,
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 2.5, 14, 5, 16, 9],
+              "circle-color": ["case", [">", ["get", "bikes"], 0], C.bike, "#adb5bd"],
+              "circle-stroke-color": C.halo, "circle-stroke-width": 1.5,
             },
+          });
+          map.addLayer({
+            id: "bikes-count", type: "symbol", source: "bikes", minzoom: 15,
+            layout: { "text-field": ["to-string", ["get", "bikes"]], "text-font": ["Noto Sans Regular"], "text-size": 10, "text-allow-overlap": true },
+            paint: { "text-color": "#ffffff" },
+          });
+          // City car parks with their live sign: free, a few left, full.
+          map.addLayer({
+            id: "parking", type: "circle", source: "parking",
+            paint: {
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 5, 15, 10],
+              "circle-color": ["match", ["get", "status"], "free", "#2f9e44", "few", "#f08c00", "full", "#e03131", "#868e96"],
+              "circle-stroke-color": C.halo, "circle-stroke-width": 2,
+            },
+          });
+          map.addLayer({
+            id: "parking-label", type: "symbol", source: "parking",
+            layout: { "text-field": "P", "text-font": ["Noto Sans Regular"], "text-size": ["interpolate", ["linear"], ["zoom"], 11, 8, 15, 13], "text-allow-overlap": true },
+            paint: { "text-color": "#ffffff" },
           });
           map.addLayer({
             id: "events-halo", type: "circle", source: "events",
@@ -334,7 +392,10 @@ const Live = () => {
           pick("flights-icon", (p) => { const a = lookup.current.planes.get(String(p.id)); if (a) setSelected({ kind: "plane", plane: a }); });
           pick("food-open", (p) => { const pl = lookup.current.places.get(String(p.id)); if (pl) setSelected({ kind: "place", place: pl }); });
           pick("food-closed", (p) => { const pl = lookup.current.places.get(String(p.id)); if (pl) setSelected({ kind: "place", place: pl }); });
-          pick("bikes", (p) => { const pl = lookup.current.places.get(String(p.id)); if (pl) setSelected({ kind: "place", place: pl }); });
+          pick("bikes", (p) => { const d = lookup.current.docks.get(String(p.id)); if (d) setSelected({ kind: "dock", dock: d }); });
+          pick("parking", (p) => { const k = lookup.current.parks.get(String(p.id)); if (k) setSelected({ kind: "park", park: k }); });
+          pick("traffic", (p) => { const j = lookup.current.jams[Number(p.i)]; if (j) setSelected({ kind: "jam", jam: j }); });
+          pick("traffic-reports", (p) => { const r = lookup.current.reports[Number(p.i)]; if (r) setSelected({ kind: "report", report: r }); });
           pick("beaches", (p) => setSelected({ kind: "beach", id: String(p.id) }));
           pick("events", (p) => { const ev = lookup.current.events.get(String(p.id)); if (ev) setSelected({ kind: "event", event: ev }); });
 
@@ -368,21 +429,17 @@ const Live = () => {
   }, [ready, aircraft.data]);
 
   const foodCounts = useMemo(() => {
-    if (!places.data) return { open: 0, bikes: 0, features: [] as unknown[], bikeFeatures: [] as unknown[] };
+    if (!places.data) return { open: 0, features: [] as unknown[] };
     const now = new Date();
     let open = 0;
     const features: unknown[] = [];
-    const bikeFeatures: unknown[] = [];
     for (const p of places.data) {
-      if (p.kind === "bicycle_rental") {
-        bikeFeatures.push(pt(p.lon, p.lat, { id: p.id }));
-        continue;
-      }
+      if (p.kind === "bicycle_rental") continue; // live Tel-O-Fun docks are their own layer
       const state = openStateAt(p.hours, now).status;
       if (state === "open") open++;
       features.push(pt(p.lon, p.lat, { id: p.id, state }));
     }
-    return { open, bikes: bikeFeatures.length, features, bikeFeatures };
+    return { open, features };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [places.data, tick]);
 
@@ -390,7 +447,6 @@ const Live = () => {
     if (!ready || !places.data) return;
     lookup.current.places = new Map(places.data.map((p) => [p.id, p]));
     mapRef.current?.getSource("food")?.setData(fc(foodCounts.features));
-    mapRef.current?.getSource("bikes")?.setData(fc(foodCounts.bikeFeatures));
   }, [ready, places.data, foodCounts]);
 
   useEffect(() => {
@@ -426,6 +482,28 @@ const Live = () => {
       })),
     );
   }, [ready, tonightEvents]);
+
+  useEffect(() => {
+    if (!ready || !docks.data) return;
+    lookup.current.docks = new Map(docks.data.map((d) => [String(d.id), d]));
+    mapRef.current?.getSource("bikes")?.setData(fc(docks.data.map((d) => pt(d.lon, d.lat, { id: String(d.id), bikes: d.bikes + d.ebikes }))));
+  }, [ready, docks.data]);
+
+  useEffect(() => {
+    if (!ready || !parking.data) return;
+    lookup.current.parks = new Map(parking.data.map((k) => [k.id, k]));
+    mapRef.current?.getSource("parking")?.setData(fc(parking.data.map((k) => pt(k.lon, k.lat, { id: k.id, status: k.status }))));
+  }, [ready, parking.data]);
+
+  useEffect(() => {
+    if (!ready || !traffic.data) return;
+    lookup.current.jams = traffic.data.jams;
+    lookup.current.reports = traffic.data.reports;
+    mapRef.current?.getSource("traffic")?.setData(fc(traffic.data.jams.map((j, i) => ({
+      type: "Feature", geometry: { type: "MultiLineString", coordinates: j.path }, properties: { i, level: j.level },
+    }))));
+    mapRef.current?.getSource("traffic-reports")?.setData(fc(traffic.data.reports.map((r, i) => pt(r.lon, r.lat, { i, type: r.type }))));
+  }, [ready, traffic.data]);
 
   useEffect(() => {
     if (!ready || !rail.data) return;
@@ -577,7 +655,7 @@ const Live = () => {
   };
 
   const status = (id: LayerId): string => {
-    const q = { events: eventsFeed, buses, rail, flights: aircraft, food: places, bikes: places, beaches, rain }[id];
+    const q = { events: eventsFeed, traffic, buses, rail, flights: aircraft, food: places, parking, bikes: docks, beaches, rain }[id];
     if (!on[id]) return "";
     if (q.isError && !q.data) return "!";
     if (id === "rain") return q.isLoading ? "…" : "";
@@ -587,7 +665,9 @@ const Live = () => {
     if (id === "buses") return String(buses.data!.buses.length);
     if (id === "flights") return String(aircraft.data!.length);
     if (id === "food") return String(foodCounts.open);
-    if (id === "bikes") return String(foodCounts.bikes);
+    if (id === "bikes") return String(docks.data!.reduce((n, d) => n + d.bikes + d.ebikes, 0));
+    if (id === "traffic") return String(traffic.data!.jams.length);
+    if (id === "parking") return String(parking.data!.filter((k) => k.status === "free" || k.status === "few").length);
     if (id === "beaches") return String(BEACHES.length);
     return "";
   };
@@ -833,6 +913,38 @@ const DetailPanel = ({ selected, onClose, beaches, trip, tripLoading, flight, li
     if (e.free) rows.push(["", t("on.free")]);
     else if (e.priceFrom != null) rows.push(["", `${t("on.from")}${lang === "he" ? "" : " "}₪${Math.round(e.priceFrom)}`]);
     link = e.url;
+  } else if (selected.kind === "park") {
+    const k = selected.park;
+    title = k.name;
+    rows.push(["", t(`park.${k.status}` as StringKey)]);
+    if (k.statusAt) rows.push([t("live.position"), `${minutesAgo(new Date(k.statusAt).toISOString())} ${t("live.minutes")}`]);
+    if (k.address) rows.push(["", k.address]);
+    if (k.dayRate) rows.push([t("park.day"), k.dayRate]);
+    if (k.nightRate) rows.push([t("park.night"), k.nightRate]);
+    if (k.dailyMax) rows.push([t("park.max"), k.dailyMax]);
+    if (k.hours) rows.push([t("live.hours"), k.hours]);
+    if (k.notes) rows.push(["", k.notes]);
+    link = `https://www.google.com/maps/dir/?api=1&destination=${k.lat},${k.lon}`;
+  } else if (selected.kind === "dock") {
+    const d = selected.dock;
+    title = `Tel-O-Fun · ${d.name}`;
+    rows.push([t("dock.bikes"), String(d.bikes)]);
+    if (d.ebikes) rows.push([t("dock.ebikes"), String(d.ebikes)]);
+    rows.push([t("dock.free"), String(d.docks)]);
+    link = `https://www.google.com/maps/dir/?api=1&destination=${d.lat},${d.lon}&travelmode=walking`;
+  } else if (selected.kind === "jam") {
+    const j = selected.jam;
+    title = j.street || t("live.traffic");
+    rows.push(["", t(`jam.l${Math.min(5, Math.max(1, j.level))}` as StringKey)]);
+    if (j.kmh > 0) rows.push([t("live.speed"), `${Math.round(j.kmh)} km/h`]);
+    if (j.delay > 0) rows.push([t("jam.delay"), `+${Math.round(j.delay / 60)} ${t("live.minutes")}`]);
+    rows.push(["", t("jam.source")]);
+  } else if (selected.kind === "report") {
+    const r = selected.report;
+    title = t((({ ROAD_CLOSED: "rep.closed", ACCIDENT: "rep.accident", JAM: "rep.jam" } as Record<string, StringKey>)[r.type] ?? "rep.hazard"));
+    if (r.street) rows.push(["", r.street]);
+    if (r.since) rows.push([t("rep.since"), new Intl.DateTimeFormat(lang === "he" ? "he-IL" : "en-GB", { timeZone: "Asia/Jerusalem", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(r.since))]);
+    rows.push(["", t("jam.source")]);
   } else if (selected.kind === "place") {
     const p = selected.place;
     title = (lang === "en" && p.nameEn) || p.name || t("live.dockBikes");
