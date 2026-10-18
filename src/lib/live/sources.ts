@@ -17,8 +17,11 @@ const withTimeout = async (url: string, init?: RequestInit) => {
   }
 };
 
-// Try the source directly from the browser; if that fails (CORS, network), go through
-// our own Supabase edge function, which forwards only to an allow-list of open data hosts.
+// Our Cloudflare Worker relay (workers/live-proxy/worker.js) for open-data hosts that block
+// browser requests. Empty until the worker is deployed; set it to the worker's URL.
+export const RELAY_URL = "";
+
+// Try the source directly from the browser; if that fails (CORS, network), go through the relay.
 const getJSON = async <T,>(url: string, init?: { method?: "GET" | "POST"; body?: string; contentType?: string }): Promise<T> => {
   const requestInit: RequestInit | undefined = init?.method === "POST"
     ? { method: "POST", body: init.body, headers: { "Content-Type": init.contentType ?? "application/x-www-form-urlencoded" } }
@@ -26,6 +29,11 @@ const getJSON = async <T,>(url: string, init?: { method?: "GET" | "POST"; body?:
   try {
     return (await withTimeout(url, requestInit)) as T;
   } catch (direct) {
+    if (RELAY_URL) {
+      try {
+        return (await withTimeout(`${RELAY_URL}?url=${encodeURIComponent(url)}`, requestInit)) as T;
+      } catch { /* fall through to the Supabase function */ }
+    }
     const { data, error } = await supabase.functions.invoke("live-proxy", {
       body: { url, method: init?.method ?? "GET", body: init?.body, contentType: init?.contentType },
     });
