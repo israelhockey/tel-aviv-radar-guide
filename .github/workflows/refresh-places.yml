@@ -1,0 +1,36 @@
+name: Refresh places from OpenStreetMap
+
+on:
+  schedule:
+    - cron: "17 1 * * *" # every night, 04:17 Israel summer time
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-places
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/fetch-places.mjs
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- public/data/places.json && git ls-files --error-unmatch public/data/places.json >/dev/null 2>&1; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "tlv-radar-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/places.json
+          git commit -m "Refresh places from OpenStreetMap"
+          git pull --rebase origin main
+          git push

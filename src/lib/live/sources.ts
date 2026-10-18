@@ -181,6 +181,8 @@ export const fetchBuses = async (): Promise<{ buses: Bus[]; newest: string | nul
   const query = async (minutes: number) => {
     const u = new URL(`${STRIDE}/siri_vehicle_locations/list`);
     u.searchParams.set("recorded_at_time_from", new Date(Date.now() - minutes * 60000).toISOString());
+    // Upper bound too: the feed contains a few rows with bogus far-future timestamps.
+    u.searchParams.set("recorded_at_time_to", new Date(Date.now() + 60000).toISOString());
     u.searchParams.set("lat__greater_or_equal", String(TLV_BBOX.south));
     u.searchParams.set("lat__lower_or_equal", String(TLV_BBOX.north));
     u.searchParams.set("lon__greater_or_equal", String(TLV_BBOX.west));
@@ -256,6 +258,19 @@ export const fetchPlaces = async (): Promise<Place[]> => {
     if (cached && Date.now() - cached.at < PLACES_TTL_MS && Array.isArray(cached.places)) return cached.places;
   } catch { /* storage unavailable */ }
 
+  // 1) The nightly snapshot committed to the site by GitHub Actions (same origin, no CORS).
+  try {
+    const res = await fetch("/data/places.json", { cache: "no-cache" });
+    if (res.ok) {
+      const snap = await res.json();
+      if (Array.isArray(snap.places) && snap.places.length) {
+        try { localStorage.setItem(PLACES_CACHE_KEY, JSON.stringify({ at: Date.now(), places: snap.places })); } catch { /* quota */ }
+        return snap.places as Place[];
+      }
+    }
+  } catch { /* fall through to a live query */ }
+
+  // 2) A live Overpass query, directly or through our proxy.
   const b = `${TLV_BBOX.south},${TLV_BBOX.west},${TLV_BBOX.north},${TLV_BBOX.east}`;
   const q = `[out:json][timeout:40];(nwr["amenity"~"^(restaurant|cafe|bar|pub|fast_food|ice_cream|biergarten)$"](${b});nwr["amenity"="bicycle_rental"](${b}););out center tags;`;
 
