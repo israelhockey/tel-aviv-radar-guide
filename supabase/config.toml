@@ -1,1 +1,3 @@
 project_id = "gvkcoqrlhdjgbfcptphx"
+[functions.live-proxy]
+verify_jwt = false

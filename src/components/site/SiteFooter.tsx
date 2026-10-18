@@ -1,54 +1,43 @@
 import { Link } from "react-router-dom";
-import { Instagram, Facebook, Send } from "lucide-react";
-import { NewsletterForm } from "./NewsletterForm";
+import { useI18n } from "@/lib/i18n";
 import { Logo } from "./Logo";
 
-export const SiteFooter = () => (
-  <footer className="mt-16 border-t border-border bg-background">
-    {/* Blue weekend CTA bar */}
-    <div className="bg-[hsl(220_85%_22%)] text-white">
-      <div className="container-page py-6 grid gap-4 md:grid-cols-[1fr,auto] items-center">
+export const SiteFooter = () => {
+  const { lang, t } = useI18n();
+  const he = lang === "he";
+  return (
+    <footer className="mt-16 border-t border-border">
+      <div className="container-page py-10 grid gap-8 md:grid-cols-[1.4fr,1fr,1fr]">
         <div>
-          <h3 className="text-xl sm:text-2xl font-extrabold tracking-tight">Get the TLV Weekend Guide every Thursday</h3>
-          <p className="text-sm text-white/75 mt-1">The best events, openings, and things to do in Tel Aviv — straight to your inbox.</p>
+          <Logo />
+          <p className="text-sm text-muted-foreground mt-3 max-w-sm">
+            {he
+              ? "מדריך חינמי ועצמאי לתל אביב-יפו, שנבנה על מידע פתוח."
+              : "A free, independent guide to Tel Aviv-Yafo, built on open data."}
+          </p>
         </div>
-        <div className="md:w-[420px]"><NewsletterForm variant="dark" cta="Get the Guide" /></div>
-      </div>
-    </div>
-
-    <div className="container-page py-10 grid gap-10 md:grid-cols-4">
-      <div className="md:col-span-2">
-        <Logo />
-        <p className="text-sm text-muted-foreground mt-3 max-w-sm">
-          The local media engine for Tel Aviv. Daily news, events, food, nightlife and the weekend guide.
-        </p>
-        <div className="flex items-center gap-4 mt-5 text-foreground/60">
-          <span className="text-sm font-semibold text-foreground">Follow TLV Radar</span>
-          <Instagram className="h-5 w-5" />
-          <Facebook className="h-5 w-5" />
-          <Send className="h-5 w-5" />
-        </div>
-      </div>
-      <div>
-        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Sections</p>
         <ul className="space-y-2 text-sm">
-          {[["Tonight","/events"],["Weekend","/weekend"],["Food & Drink","/food"],["Nightlife","/nightlife"],["Business","/business"],["Local News","/news"]].map(([l,h])=>(
-            <li key={h}><Link to={h} className="hover:text-accent">{l}</Link></li>
+          {(["/events", "/weekend", "/food", "/nightlife", "/news"] as const).map((to, i) => (
+            <li key={to}>
+              <Link to={to} className="hover:text-sea">
+                {t((["nav.whatson", "nav.weekend", "nav.food", "nav.nightlife", "nav.news"] as const)[i])}
+              </Link>
+            </li>
           ))}
         </ul>
-      </div>
-      <div>
-        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">About</p>
         <ul className="space-y-2 text-sm">
-          <li><Link to="/submit" className="hover:text-accent">Submit an event</Link></li>
-          <li><Link to="/auth" className="hover:text-accent">Editor login</Link></li>
+          <li><Link to="/submit" className="hover:text-sea">{t("nav.submit")}</Link></li>
+          <li><Link to="/newsletter" className="hover:text-sea">{t("nav.newsletter")}</Link></li>
+          <li><Link to="/auth" className="hover:text-sea">{he ? "כניסת עורכים" : "Editor login"}</Link></li>
         </ul>
       </div>
-    </div>
-    <div className="border-t border-border">
-      <div className="container-page py-4 text-xs text-muted-foreground">
-        © {new Date().getFullYear()} TLV Radar — Independent local media
+      <div className="border-t border-border">
+        <p className="container-page py-4 text-xs text-muted-foreground pb-24 md:pb-4">
+          {he
+            ? "מידע: OpenStreetMap, Open-Meteo, אוטובוס פתוח (הסדנא לידע ציבורי), Hebcal, adsb.lol, RainViewer."
+            : "Data: OpenStreetMap contributors, Open-Meteo, Open Bus (Public Knowledge Workshop), Hebcal, adsb.lol, RainViewer."}
+        </p>
       </div>
-    </div>
-  </footer>
-);
+    </footer>
+  );
+};

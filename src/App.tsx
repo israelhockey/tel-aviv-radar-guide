@@ -3,7 +3,9 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Home from "./pages/Home";
+import Now from "./pages/Now";
+import Live from "./pages/Live";
+import { I18nProvider } from "@/lib/i18n";
 import Category from "./pages/Category";
 import Post from "./pages/Post";
 import Submit from "./pages/Submit";
@@ -17,16 +19,20 @@ import SourcesAdmin from "./pages/admin/SourcesAdmin";
 import Newsletter from "./pages/Newsletter";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { refetchOnWindowFocus: true, retry: 2 } },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <I18nProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Now />} />
+          <Route path="/live" element={<Live />} />
           <Route path="/news" element={<Category />} />
           <Route path="/events" element={<Category />} />
           <Route path="/food" element={<Category />} />
@@ -48,6 +54,7 @@ const App = () => (
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+    </I18nProvider>
   </QueryClientProvider>
 );
 
