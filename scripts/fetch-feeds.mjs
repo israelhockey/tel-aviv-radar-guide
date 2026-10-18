@@ -140,6 +140,20 @@ const fetchEvents = async () => {
 const VENUES_PATH = "public/data/venues.json";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+// Extra search terms for venues Nominatim doesn't find by their Hebrew listing name:
+// English names as tagged in OpenStreetMap, plus well-known street addresses.
+const VENUE_ALIASES = {
+  "מועדון הבארבי": ["Barby", "קיבוץ גלויות 52, תל אביב"],
+  "תיאטרון הקאמרי": ["Cameri Theatre", "שדרות שאול המלך 30, תל אביב"],
+  "תיאטרון בית ליסין תל אביב": ["Beit Lessin Theatre", "בית ליסין"],
+  "מועדון גגרין": ["Gagarin", "גגרין"],
+  "אוזן בר תל-אביב יפו": ["Ozen Bar", "אוזן בר"],
+  "קומדי בר תל אביב": ["Comedy Bar", "קומדי בר"],
+  "סטנד אפ פקטורי - ת\"א": ["Stand Up Factory", "סטנדאפ פקטורי"],
+  "גריי תל אביב": ["Gray", "גריי"],
+  "AMAMA, תל אביב-יפו": ["AMAMA"],
+};
+
 const geocodeVenues = async (events) => {
   let cache = {};
   try { cache = JSON.parse(await readFile(VENUES_PATH, "utf8")); } catch { /* first run */ }
@@ -155,6 +169,7 @@ const geocodeVenues = async (events) => {
     const bare = (ev.venue ?? "").replace(/(תל[\s-]?אביב(-?\s?יפו)?|ת"א|tel[\s-]?aviv)/gi, "").replace(/[-–,()\s]+$/g, "").replace(/^[-–,()\s]+/g, "").trim();
     const street = (ev.address ?? "").split(",")[0].trim();
     const queries = [
+      ...(VENUE_ALIASES[k] ?? []),
       [ev.venue, ev.address].filter(Boolean).join(", "),
       bare,
       bare && `${bare}, תל אביב`,
