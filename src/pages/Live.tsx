@@ -139,7 +139,7 @@ const Live = () => {
           // line-dasharray can't vary per feature, so trains get their own dashed layer.
           map.addLayer({
             id: "rail-train", type: "line", source: "rail-lines", filter: ["==", ["get", "kind"], "train"],
-            paint: { "line-color": ["get", "colour"], "line-width": ["interpolate", ["linear"], ["zoom"], 11, 1, 16, 2.5], "line-dasharray": [2, 1.5], "line-opacity": 0.8 },
+            paint: { "line-color": phase === "day" ? "#6b7a90" : "#9fb0c8", "line-width": ["interpolate", ["linear"], ["zoom"], 11, 1, 16, 2.5], "line-dasharray": [2, 1.5], "line-opacity": 0.8 },
           });
           map.addLayer({
             id: "rail-line", type: "line", source: "rail-lines", filter: ["==", ["get", "kind"], "light_rail"],
