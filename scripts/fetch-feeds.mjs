@@ -119,6 +119,56 @@ const fetchEvents = async () => {
   return { events, report };
 };
 
+/* ------------------------------ venue geocoding ------------------------------ */
+// Venues are looked up once in OpenStreetMap's Nominatim (max 1 request/second, per its usage
+// policy) and cached in public/data/venues.json. Misses are retried after a week.
+
+const VENUES_PATH = "public/data/venues.json";
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const geocodeVenues = async (events) => {
+  let cache = {};
+  try { cache = JSON.parse(await readFile(VENUES_PATH, "utf8")); } catch { /* first run */ }
+  const weekAgo = Date.now() - 7 * 24 * 3600_000;
+  const keyOf = (e) => (e.venue ?? e.address ?? "").trim();
+  const todo = [...new Set(events.filter((e) => e.lat == null).map(keyOf).filter(Boolean))]
+    .filter((k) => !cache[k] || (cache[k].lat == null && new Date(cache[k].checked).getTime() < weekAgo))
+    .slice(0, 40); // stay well inside the rate limit per run
+  for (const k of todo) {
+    const ev = events.find((e) => keyOf(e) === k);
+    const queries = [
+      [ev.venue, ev.address].filter(Boolean).join(", "),
+      `${ev.venue ?? ""}, תל אביב`,
+      ev.address,
+    ].filter(Boolean);
+    let hit = null;
+    for (const q of queries) {
+      const u = new URL("https://nominatim.openstreetmap.org/search");
+      u.searchParams.set("q", q);
+      u.searchParams.set("format", "jsonv2");
+      u.searchParams.set("limit", "1");
+      u.searchParams.set("countrycodes", "il");
+      u.searchParams.set("viewbox", "34.735,32.135,34.83,32.025");
+      u.searchParams.set("bounded", "1");
+      try {
+        const res = await fetch(u, { headers: { "User-Agent": "TLV-Radar/1.0 (free public city guide; github.com/israelhockey)" } });
+        const rows = res.ok ? await res.json() : [];
+        if (rows[0]) hit = { lat: Number(rows[0].lat), lon: Number(rows[0].lon) };
+      } catch { /* try next form */ }
+      await sleep(1100);
+      if (hit) break;
+    }
+    cache[k] = { ...(hit ?? { lat: null, lon: null }), checked: new Date().toISOString() };
+  }
+  for (const e of events) {
+    const c = cache[keyOf(e)];
+    if (e.lat == null && c?.lat != null) { e.lat = c.lat; e.lon = c.lon; }
+  }
+  const sorted = Object.fromEntries(Object.entries(cache).sort(([a], [b]) => a.localeCompare(b)));
+  await writeFile(VENUES_PATH, JSON.stringify(sorted, null, 1) + "\n");
+  return todo.length;
+};
+
 /* ------------------------------ news ------------------------------ */
 
 const NEWS_SOURCES = [
@@ -131,8 +181,15 @@ const NEWS_SOURCES = [
   { id: "globes", name: "גלובס", url: "https://www.globes.co.il/webservice/rss/rssfeeder.asmx/FeederNode?iID=2", lang: "he" },
 ];
 
-// What makes a headline a Tel Aviv story.
-const LOCAL_RE = /תל[\s-]?אביב|ת"א|תל אביב-יפו|יפו|פלורנטין|דיזנגוף|רוטשילד|נווה צדק|רמת אביב|כיכר רבין|הנמל|נמל תל אביב|חולדאי|הרכבת הקלה|tel[\s-]?aviv|jaffa|florentin|dizengoff|rothschild|neve tzedek|ramat aviv|rabin square|huldai|light rail/i;
+// What makes a headline a Tel Aviv story. Hebrew has no \b, so place names must stand alone,
+// optionally with a one-letter prefix (ב/ל/מ/ה/ו/ש/כ) — "יפו" must not match inside other words.
+const HE_PLACES = [
+  'תל[\\s-]?אביב', 'ת"א', 'ת״א', 'יפו', 'פלורנטין', 'דיזנגוף', 'נווה צדק', 'רמת אביב', 'כיכר רבין',
+  'נמל תל אביב', 'שדרות רוטשילד', 'חולדאי', 'כרם התימנים', 'שוק הכרמל', 'הצפון הישן', 'שכונת התקווה', 'עזריאלי',
+];
+const HE_RE = new RegExp(`(?<![\\u0590-\\u05FF])(?:[בלמהושכ]|וב|ול|מה|שב|וה)?(?:${HE_PLACES.join("|")})(?![\\u0590-\\u05FF])`);
+const EN_RE = /\b(tel[\s-]?aviv|jaffa|yafo|florentin|dizengoff|rothschild boulevard|neve tzedek|ramat aviv|rabin square|huldai|carmel market|azrieli)\b/i;
+const isLocal = (text) => HE_RE.test(text) || EN_RE.test(text);
 
 const parseRss = (xml) =>
   [...xml.matchAll(/<item[\s>][\s\S]*?<\/item>/gi)].map((m) => {
@@ -151,7 +208,7 @@ const fetchNews = async () => {
       let kept = 0;
       for (const r of rows) {
         if (!r.title || !r.link) continue;
-        if (!src.local && !LOCAL_RE.test(`${r.title} ${r.description}`)) continue;
+        if (!src.local && !isLocal(`${r.title} ${r.description.slice(0, 300)}`)) continue;
         const published = r.pubDate ? new Date(r.pubDate) : null;
         items.push({
           id: `${src.id}:${r.link.replace(/[?#].*$/, "")}`,
@@ -190,6 +247,8 @@ const [{ events, report: er }, { news, report: nr }] = await Promise.all([fetchE
 console.log([...er, ...nr].join("\n"));
 
 await mkdir("public/data", { recursive: true });
+const looked = await geocodeVenues(events);
+console.log(`Geocoded ${looked} new venues; ${events.filter((e) => e.lat != null).length}/${events.length} events placed.`);
 const ev = await keepPrevious("public/data/events.json", "events", events);
 const nw = await keepPrevious("public/data/news.json", "news", news);
 // Only rewrite a file when its content changed, so the repo isn't committed to every run.
