@@ -23,6 +23,7 @@ jobs:
       - run: node scripts/probe-sources.mjs
         env:
           PROBE_URLS: ${{ inputs.urls }}
+          PROBE_HEAD: "5000"
       - name: Save report to the diagnostics branch
         run: |
           cp probe-results.json /tmp/probe-results.json
