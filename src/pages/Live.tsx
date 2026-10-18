@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bike, CalendarDays, CloudRain, LocateFixed, Plane, Bus as BusIcon, UtensilsCrossed, Waves, X } from "lucide-react";
+import { Bike, CalendarDays, CloudRain, LocateFixed, Plane, Bus as BusIcon, TrainFront, UtensilsCrossed, Waves, X } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n, type StringKey } from "@/lib/i18n";
 import { BEACHES, TLV_CENTER } from "@/lib/live/geo";
-import { useAircraft, useBeaches, useBuses, useEventsFeed, usePlaces, useRain } from "@/lib/live/hooks";
+import { useAircraft, useBeaches, useBuses, useEventsFeed, usePlaces, useRail, useRain } from "@/lib/live/hooks";
 import { inRange } from "@/lib/live/when";
 import { loadMapLibre, type MapLibre } from "@/lib/live/maplibre";
 import { liveColors, mapStyleFor } from "@/lib/live/mapStyle";
@@ -15,11 +15,12 @@ import { placeKindLabel } from "@/lib/live/places";
 import { seaState, type Aircraft, type Bus, type FeedEvent, type Place } from "@/lib/live/sources";
 import { fmtClock, minutesAgo } from "@/lib/live/format";
 
-type LayerId = "events" | "buses" | "flights" | "food" | "bikes" | "beaches" | "rain";
+type LayerId = "events" | "buses" | "rail" | "flights" | "food" | "bikes" | "beaches" | "rain";
 
 const LAYERS: { id: LayerId; key: StringKey; icon: typeof BusIcon; color: string }[] = [
   { id: "events", key: "live.events", icon: CalendarDays, color: "#7048e8" },
   { id: "buses", key: "live.buses", icon: BusIcon, color: "#0b63e5" },
+  { id: "rail", key: "live.rail", icon: TrainFront, color: "#e03131" },
   { id: "flights", key: "live.flights", icon: Plane, color: "#ff5a1f" },
   { id: "food", key: "live.food", icon: UtensilsCrossed, color: "#e8590c" },
   { id: "bikes", key: "live.bikes", icon: Bike, color: "#2f9e44" },
@@ -30,6 +31,7 @@ const LAYERS: { id: LayerId; key: StringKey; icon: typeof BusIcon; color: string
 // Map layer ids that belong to each toggle.
 const MAP_LAYERS: Record<LayerId, string[]> = {
   events: ["events-halo", "events"],
+  rail: ["rail-glow", "rail-train", "rail-line", "rail-stations", "rail-stations-label"],
   buses: ["buses-glow", "buses-dot", "buses-icon", "buses-label"],
   flights: ["flights-icon", "flights-label"],
   food: ["food-closed", "food-open"],
@@ -57,7 +59,7 @@ const Live = () => {
   const [ready, setReady] = useState(false);
   const [mapError, setMapError] = useState(false);
   const [on, setOn] = useState<Record<LayerId, boolean>>({
-    events: true, buses: true, flights: true, food: true, bikes: false, beaches: true, rain: false,
+    events: true, buses: true, rail: true, flights: true, food: true, bikes: false, beaches: true, rain: false,
   });
   const [selected, setSelected] = useState<Selected | null>(null);
   const [tick, setTick] = useState(0); // re-evaluates "open now" every minute
@@ -68,6 +70,7 @@ const Live = () => {
   const beaches = useBeaches();
   const rain = useRain(on.rain);
   const eventsFeed = useEventsFeed();
+  const rail = useRail();
   const { phase } = useTheme();
 
   useEffect(() => {
@@ -125,7 +128,33 @@ const Live = () => {
           map.addImage("radar-plane", planeIcon(C.plane), { pixelRatio: 2 });
 
           const empty = fc([]);
-          for (const id of ["events", "buses", "flights", "food", "bikes", "beaches", "me"]) map.addSource(id, { type: "geojson", data: empty });
+          for (const id of ["events", "buses", "flights", "food", "bikes", "beaches", "me", "rail-lines", "rail-stations"]) map.addSource(id, { type: "geojson", data: empty });
+
+          // Light rail lines in their official colours; heavy rail thinner and dashed.
+          map.addLayer({
+            id: "rail-glow", type: "line", source: "rail-lines", filter: ["==", ["get", "kind"], "light_rail"],
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: { "line-color": ["get", "colour"], "line-width": ["interpolate", ["linear"], ["zoom"], 11, 6, 16, 16], "line-opacity": phase === "day" ? 0.15 : 0.3, "line-blur": 6 },
+          });
+          // line-dasharray can't vary per feature, so trains get their own dashed layer.
+          map.addLayer({
+            id: "rail-train", type: "line", source: "rail-lines", filter: ["==", ["get", "kind"], "train"],
+            paint: { "line-color": ["get", "colour"], "line-width": ["interpolate", ["linear"], ["zoom"], 11, 1, 16, 2.5], "line-dasharray": [2, 1.5], "line-opacity": 0.8 },
+          });
+          map.addLayer({
+            id: "rail-line", type: "line", source: "rail-lines", filter: ["==", ["get", "kind"], "light_rail"],
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: { "line-color": ["get", "colour"], "line-width": ["interpolate", ["linear"], ["zoom"], 11, 2, 16, 5], "line-opacity": 0.95 },
+          });
+          map.addLayer({
+            id: "rail-stations", type: "circle", source: "rail-stations", minzoom: 12.5,
+            paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 12.5, 2.5, 16, 6], "circle-color": C.halo, "circle-stroke-color": C.text, "circle-stroke-width": 1.5 },
+          });
+          map.addLayer({
+            id: "rail-stations-label", type: "symbol", source: "rail-stations", minzoom: 14.5,
+            layout: { "text-field": ["get", lang === "he" ? "nameHe" : "name"], "text-font": ["Noto Sans Regular"], "text-size": 11, "text-offset": [0, 1.2], "text-anchor": "top" },
+            paint: { "text-color": C.text, "text-halo-color": C.halo, "text-halo-width": 1.5 },
+          });
 
           map.addLayer({
             id: "food-closed", type: "circle", source: "food", filter: ["!=", ["get", "state"], "open"], minzoom: 13,
@@ -328,6 +357,12 @@ const Live = () => {
     );
   }, [ready, tonightEvents]);
 
+  useEffect(() => {
+    if (!ready || !rail.data) return;
+    mapRef.current?.getSource("rail-lines")?.setData(rail.data.lines);
+    mapRef.current?.getSource("rail-stations")?.setData(rail.data.stations);
+  }, [ready, rail.data]);
+
   /* ---------- rain radar raster ---------- */
   useEffect(() => {
     const map = mapRef.current;
@@ -369,10 +404,11 @@ const Live = () => {
   };
 
   const status = (id: LayerId): string => {
-    const q = { events: eventsFeed, buses, flights: aircraft, food: places, bikes: places, beaches, rain }[id];
+    const q = { events: eventsFeed, buses, rail, flights: aircraft, food: places, bikes: places, beaches, rain }[id];
     if (!on[id]) return "";
     if (q.isError && !q.data) return "!";
     if (id === "rain") return q.isLoading ? "…" : "";
+    if (id === "rail") return "";
     if (q.isLoading || !q.data) return "…";
     if (id === "events") return String(tonightEvents.length);
     if (id === "buses") return String(buses.data!.buses.length);

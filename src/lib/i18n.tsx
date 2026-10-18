@@ -58,6 +58,7 @@ const STRINGS = {
 
   // live map
   "live.buses": { en: "Buses", he: "אוטובוסים" },
+  "live.rail": { en: "Rail", he: "רכבות" },
   "live.flights": { en: "Flights", he: "טיסות" },
   "live.food": { en: "Open now", he: "פתוח עכשיו" },
   "live.bikes": { en: "Bike docks", he: "תחנות אופניים" },

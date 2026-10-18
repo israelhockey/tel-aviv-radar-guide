@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  fetchAir, fetchAircraft, fetchBeaches, fetchBuses, fetchEventsFeed, fetchHebrewDate, fetchNewsFeed, fetchPlaces, fetchRainTiles, fetchShabbat, fetchWeather,
+  fetchAir, fetchAircraft, fetchBeaches, fetchBuses, fetchEventsFeed, fetchHebrewDate, fetchNewsFeed, fetchPlaces, fetchRail, fetchRainTiles, fetchShabbat, fetchWeather,
 } from "./sources";
 
 const MIN = 60_000;
@@ -22,3 +22,4 @@ export const useRain = (enabled = true) =>
   useQuery({ queryKey: ["rain"], queryFn: fetchRainTiles, enabled, refetchInterval: 10 * MIN, staleTime: 5 * MIN, retry: 1 });
 export const useEventsFeed = () => useQuery({ queryKey: ["events-feed"], queryFn: fetchEventsFeed, staleTime: 10 * MIN, refetchInterval: 30 * MIN });
 export const useNewsFeed = () => useQuery({ queryKey: ["news-feed"], queryFn: fetchNewsFeed, staleTime: 10 * MIN, refetchInterval: 15 * MIN });
+export const useRail = () => useQuery({ queryKey: ["rail"], queryFn: fetchRail, staleTime: 12 * 60 * MIN });

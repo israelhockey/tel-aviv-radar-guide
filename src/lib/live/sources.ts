@@ -384,3 +384,14 @@ export const fetchNewsFeed = async (): Promise<{ updated: string | null; news: F
   const j = await res.json();
   return { updated: j.updated ?? null, news: j.news ?? [] };
 };
+
+/* ---------------- Rail lines and stations (nightly OpenStreetMap snapshot) ---------------- */
+
+export type RailData = { lines: { type: "FeatureCollection"; features: unknown[] }; stations: { type: "FeatureCollection"; features: unknown[] } };
+
+export const fetchRail = async (): Promise<RailData | null> => {
+  const res = await fetch("/data/rail.json", { cache: "no-cache" });
+  if (!res.ok) return null; // not generated yet
+  const j = await res.json();
+  return { lines: j.lines, stations: j.stations };
+};
