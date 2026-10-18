@@ -1,0 +1,20 @@
+name: Build check
+
+on:
+  push:
+    branches: [main]
+    paths: ["src/**", "index.html", "package.json", "vite.config.ts", "tailwind.config.ts", ".github/workflows/build-check.yml"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: npx tsc --noEmit -p tsconfig.app.json || echo "::warning::type errors (non-blocking)"
+      - run: npm run build
