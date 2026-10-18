@@ -431,7 +431,8 @@ const ogImage = async (url) => {
 };
 
 const summarize = (text) => {
-  const s = text.replace(/\s+/g, " ").replace(/The post .* appeared first on .*$/i, "").trim();
+  // Some feeds escape their HTML twice; decode again so tags and entities don't leak into the text.
+  const s = decode(text).replace(/<[^>]*>?/g, " ").replace(/&#?\w+;/g, " ").replace(/\s+/g, " ").replace(/The post .* appeared first on .*$/i, "").trim();
   return s.length > 200 ? `${s.slice(0, 197).replace(/\s+\S*$/, "")}…` : s || null;
 };
 

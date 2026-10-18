@@ -6,9 +6,10 @@ import {
   useBeachForecast, useBuses, useCinema, useEventsFeed, useHolidays, useNewsFeed, useParking, usePlaces, useShabbat, useTraffic,
 } from "@/lib/live/hooks";
 import { openStateAt } from "@/lib/live/openingHours";
-import { inRange, nightKey } from "@/lib/live/when";
+import { inRange } from "@/lib/live/when";
 import { fmtClock, fmtWeekday } from "@/lib/live/format";
 import { isEveningOut, type FeedEvent } from "@/lib/live/sources";
+import { distanceMeters, TLV_CENTER } from "@/lib/live/geo";
 import { CAT_BG } from "./PosterCard";
 import { relTime } from "./NewsCard";
 
@@ -58,7 +59,8 @@ export const HomeBoard = () => {
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(now);
   const beachHours = (beach.data ?? []).filter((h) => h.time.startsWith(today) && h.isDay);
   const best = beachHours.length ? beachHours.reduce((a, b) => (b.score > a.score ? b : a)) : null;
-  const nowHour = beachHours.find((h) => Number(h.time.slice(11, 13)) === Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jerusalem", hour: "2-digit", hourCycle: "h23" }).format(now)));
+  const hourNow = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Jerusalem", hour: "2-digit", hourCycle: "h23" }).format(now));
+  const seaNow = (beach.data ?? []).find((h) => h.time.startsWith(today) && Number(h.time.slice(11, 13)) === hourNow);
 
   const story = (news.data?.news ?? []).find((n) => n.image) ?? news.data?.news[0];
   const food = useMemo(() => {
@@ -67,12 +69,15 @@ export const HomeBoard = () => {
     return {
       open: list.filter((p) => openStateAt(p.hours, now).status === "open").length,
       bars: list.filter((p) => ["bar", "pub", "biergarten"].includes(p.kind) && openStateAt(p.hours, now).status === "open").length,
+      // Bars open now nearest Dizengoff Square, by name.
+      near: list.filter((p) => ["bar", "pub", "biergarten", "cafe"].includes(p.kind) && openStateAt(p.hours, now).status === "open")
+        .sort((a, b) => distanceMeters(TLV_CENTER, a) - distanceMeters(TLV_CENTER, b)).slice(0, 3),
       late: list.filter((p) => openStateAt(p.hours, late).status === "open").length,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [places.data]);
 
-  const films = (cinema.data?.films ?? []).filter((f) => f.shows.some((s) => nightKey(s.at) === nightKey(now.toISOString())));
+  const films = (cinema.data?.films ?? []).filter((f) => f.shows.some((s) => { const d = new Date(s.at).getTime() - now.getTime(); return d > -30 * 60_000 && d < 24 * 3600_000; }));
   const jams = traffic.data?.jams.filter((j) => j.level >= 3).length;
   const lots = parking.data?.filter((k) => k.status === "free" || k.status === "few").length;
   const nextHoliday = holidays.data?.[0];
@@ -97,7 +102,12 @@ export const HomeBoard = () => {
         <p className="text-[14px] text-white/85">{t("nav.beach")}</p>
         <p className="mt-1 font-display text-[44px] leading-none tabular">{best ? best.score.toFixed(1) : "…"}</p>
         {best && <p className="mt-1 text-[14px] font-medium">{t(verdict(best.score))}</p>}
-        {nowHour?.sea != null && <p className="mt-2 text-[12px] text-white/80">{t("now.sea")} {Math.round(nowHour.sea)}° · {nowHour.wave?.toFixed(1)} m</p>}
+        {seaNow?.sea != null && <p className="mt-2 text-[12px] text-white/80">{t("now.sea")} {Math.round(seaNow.sea)}°{seaNow.wave != null ? `, ${seaNow.wave.toFixed(1)} m` : ""}</p>}
+        {beachHours.length > 0 && (
+          <div className="relative mt-3 hidden sm:flex items-end gap-[3px] h-14" aria-hidden>
+            {beachHours.map((h) => <span key={h.time} className="flex-1 rounded-sm bg-white" style={{ height: `${8 + h.score * 9}%`, opacity: 0.35 + h.score / 16 }} />)}
+          </div>
+        )}
       </Link>
 
       {/* Top story: a picture you can't miss */}
@@ -107,7 +117,7 @@ export const HomeBoard = () => {
           <span className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
           <span className="absolute inset-x-0 bottom-0 p-4">
             <span className="text-[12px] text-white/80">{story.source}, {relTime(story.published, lang)}</span>
-            <span className="mt-1 block font-display text-[22px] leading-tight line-clamp-4" lang={story.lang} dir={story.lang === "he" ? "rtl" : "ltr"}>{story.title}</span>
+            <span className="mt-1 block font-display text-[17px] sm:text-[22px] leading-tight line-clamp-5 sm:line-clamp-4" lang={story.lang} dir={story.lang === "he" ? "rtl" : "ltr"}>{story.title}</span>
           </span>
         </a>
       ) : <div className="row-span-2 rounded-[28px] bg-secondary animate-pulse" />}
@@ -117,7 +127,12 @@ export const HomeBoard = () => {
         <p className="text-[14px] opacity-80">{t("food.title")}</p>
         <p className="mt-1 font-display text-[44px] leading-none tabular">{places.data ? food.open : "…"}</p>
         <p className="text-[13px] font-medium">{t("food.openNow")}</p>
-        {places.data && <p className="mt-2 text-[12px] opacity-80">{food.bars} {t("board.bars")} · {food.late} {t("board.late")}</p>}
+        {places.data && <p className="mt-2 text-[12px] opacity-80">{food.bars} {t("board.bars")}, {food.late} {t("board.late")}</p>}
+        {food.near.length > 0 && (
+          <ul className="mt-3 hidden sm:block space-y-1">
+            {food.near.map((p) => <li key={p.id} className="text-[13px] font-medium truncate" dir="auto">{(lang === "en" && p.nameEn) || p.name}</li>)}
+          </ul>
+        )}
       </Link>
 
       {/* The city moving */}
@@ -131,9 +146,9 @@ export const HomeBoard = () => {
       </Link>
 
       {/* Cinema tonight */}
-      <Link to="/cinema" className="col-span-2 lg:col-span-1 rounded-[28px] p-4 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea" style={{ background: "linear-gradient(150deg,#3b1d6e,#9c36b5)" }}>
+      <Link to="/cinema" className="rounded-[28px] p-4 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea" style={{ background: "linear-gradient(150deg,#3b1d6e,#9c36b5)" }}>
         <p className="text-[14px] text-white/85">{t("cin.title")}</p>
-        <p className="mt-1 font-display text-[30px] leading-none tabular">{cinema.data ? films.length : "…"} <span className="text-[14px] font-sans">{t("tiles.films")}</span></p>
+        <p className="mt-1 font-display text-[30px] leading-none tabular">{cinema.data ? films.length : "…"} <span className="text-[14px] font-sans">{t("board.films")}</span></p>
         <div className="mt-3 flex -space-x-3 rtl:space-x-reverse">
           {films.filter((f) => f.poster).slice(0, 4).map((f) => (
             <img key={f.id} src={f.poster!} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-11 rounded-md object-cover ring-2 ring-[#3b1d6e]" />
@@ -154,13 +169,13 @@ export const HomeBoard = () => {
       </Link>
 
       {/* The live map */}
-      <Link to="/live" className="relative overflow-hidden col-span-2 lg:col-span-1 rounded-[28px] p-4 bg-[hsl(216_57%_8%)] text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea">
+      <Link to="/live" className="relative overflow-hidden col-span-2 lg:col-span-4 min-h-[150px] rounded-[28px] p-5 sm:p-6 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea" style={{ background: "linear-gradient(110deg,#0b3d91 0%,#1864ab 45%,#0c8599 100%)" }}>
         <span className="absolute -end-10 -bottom-10 h-40 w-40 rounded-full border-2 border-[#15aabf]/50" aria-hidden />
         <span className="absolute -end-2 -bottom-2 h-24 w-24 rounded-full border-2 border-[#15aabf]/70" aria-hidden />
         <span className="absolute end-7 bottom-7 h-6 w-6 rounded-full bg-[#ff5a1f] motion-safe:animate-ping opacity-60" aria-hidden />
         <Radar className="h-5 w-5 text-[#15aabf]" aria-hidden />
-        <p className="mt-2 font-display text-[24px] leading-tight max-w-[10ch]">{t("board.map")}</p>
-        <p className="mt-1 text-[12px] text-white/75 max-w-[22ch]">{t("board.mapBody")}</p>
+        <p className="mt-2 font-display text-[28px] sm:text-[36px] leading-tight">{t("board.map")}</p>
+        <p className="mt-1 text-[14px] text-white/85 max-w-[44ch]">{t("board.mapBody")}</p>
       </Link>
     </div>
   );

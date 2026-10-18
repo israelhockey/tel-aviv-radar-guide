@@ -66,6 +66,7 @@ const STRINGS = {
   "sky.sunsetIn": { en: "Sunset in", he: "שקיעה בעוד" },
   "sky.sunriseIn": { en: "Sunrise in", he: "זריחה בעוד" },
   "sky.liveMap": { en: "Watch the city live", he: "העיר בשידור חי" },
+  "board.films": { en: "films showing in the next 24 hours", he: "סרטים ב־24 השעות הקרובות" },
   "board.thisWeek": { en: "This week", he: "השבוע" },
   "board.bars": { en: "bars open", he: "ברים פתוחים" },
   "board.late": { en: "open after midnight", he: "פתוחים אחרי חצות" },

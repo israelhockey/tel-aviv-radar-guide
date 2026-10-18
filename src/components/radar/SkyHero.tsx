@@ -184,10 +184,10 @@ export const SkyHero = () => {
         ))}
       </div>
 
-      <div className="container-page relative flex flex-col min-h-[560px] h-[78svh] max-h-[760px] pt-8 sm:pt-12 pb-[120px] sm:pb-[150px]">
-        <p className="text-[14px] text-white/85 [text-shadow:0_1px_8px_rgba(0,0,0,0.35)]">
-          {fmtToday(lang)}
-          {hebrewDate.data && <span lang="he" dir="rtl" className="ms-2 text-white/70">{hebrewDate.data}</span>}
+      <div className="container-page relative flex flex-col min-h-[500px] h-[66svh] sm:h-[78svh] max-h-[760px] pt-8 sm:pt-12 pb-[120px] sm:pb-[150px]">
+        <p className="flex flex-wrap gap-x-3 text-[14px] text-white/85 [text-shadow:0_1px_8px_rgba(0,0,0,0.35)]">
+          <span>{fmtToday(lang)}</span>
+          {hebrewDate.data && <span lang="he" dir="rtl" className="text-white/70">{hebrewDate.data}</span>}
         </p>
         <h1 id="sky-h" className="mt-2 font-display text-[50px] leading-[0.9] sm:text-[88px] lg:text-[112px] max-w-[12ch] [text-shadow:0_4px_30px_rgba(0,0,0,0.25)]">
           {greeting}
