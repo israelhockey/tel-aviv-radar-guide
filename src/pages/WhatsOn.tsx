@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { TonightHero } from "@/components/radar/TonightHero";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n, type StringKey } from "@/lib/i18n";
 import { useEventsFeed } from "@/lib/live/hooks";
@@ -83,8 +84,9 @@ const WhatsOn = () => {
 
   return (
     <SiteLayout>
-      <div className="container-page pt-6 sm:pt-10 max-w-5xl">
-        <h1 className="font-display text-[40px] sm:text-[60px] leading-[0.95]">{t("on.title")}</h1>
+      <TonightHero onWhatsOn />
+      <div id="list" className="container-page pt-6 sm:pt-10 max-w-5xl scroll-mt-16">
+        <h2 className="font-display text-[34px] sm:text-[48px] leading-[0.95]">{t("on.title")}</h2>
 
         <div className="mt-5 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]" role="tablist">
           {RANGES.map((r) => (

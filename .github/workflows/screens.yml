@@ -1,0 +1,46 @@
+name: Screenshots (design review)
+
+on:
+  workflow_dispatch:
+    inputs:
+      routes:
+        description: "Space-separated routes"
+        default: "/ /events"
+      full:
+        description: "Full page (1) or first screen (0)"
+        default: "1"
+
+permissions:
+  contents: write
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - run: npm install --no-save playwright@1.48.2 && npx playwright install --with-deps chromium
+      - run: |
+          npx vite preview --port 4173 &
+          sleep 4
+          node scripts/screens.mjs
+        env:
+          ROUTES: ${{ inputs.routes }}
+          FULL: ${{ inputs.full }}
+          TZ: Asia/Jerusalem
+      - name: Save to the screens branch
+        run: |
+          cp -r screens /tmp/screens
+          git config user.name "tlv-radar-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan screens
+          git rm -rfq .
+          cp /tmp/screens/*.png .
+          git add *.png
+          git commit -qm "Screens ${{ github.run_id }}"
+          git push -f origin screens

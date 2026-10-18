@@ -41,7 +41,8 @@ const Row = ({ items, duration, reverse }: { items: FeedEvent[]; duration: numbe
   );
 };
 
-export const TonightHero = () => {
+// On the What's on page the buttons jump to the list below instead of opening the page.
+export const TonightHero = ({ onWhatsOn = false }: { onWhatsOn?: boolean }) => {
   const { t, lang } = useI18n();
   const events = useEventsFeed();
   const hebrewDate = useHebrewDate();
@@ -81,7 +82,7 @@ export const TonightHero = () => {
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[hsl(230_35%_6%)] via-[hsl(230_35%_6%/0.72)] to-[hsl(230_35%_6%/0.15)] pointer-events-none" aria-hidden />
       <div className="absolute inset-x-0 bottom-0 h-16 -z-10 bg-gradient-to-b from-transparent to-background pointer-events-none" aria-hidden />
 
-      <div className="container-page relative flex flex-col justify-end min-h-[520px] h-[74svh] max-h-[720px] pb-12 sm:pb-16 pointer-events-none">
+      <div className={`container-page relative flex flex-col justify-end ${onWhatsOn ? "h-[62svh] max-h-[600px] min-h-[460px]" : "h-[74svh] max-h-[720px] min-h-[520px]"} pb-12 sm:pb-16 pointer-events-none`}>
         <p className="inline-flex flex-wrap items-center gap-x-2 text-[13px] text-white/80">
           <span className="relative flex h-2 w-2" aria-hidden>
             <span className="absolute inline-flex h-full w-full rounded-full bg-accent opacity-60 motion-safe:animate-ping" />
@@ -119,7 +120,8 @@ export const TonightHero = () => {
 
         <div className="mt-6 flex flex-wrap gap-3 pointer-events-auto">
           <Link
-            to={quiet ? "/events?range=week" : "/events"}
+            to={onWhatsOn ? "#list" : quiet ? "/events?range=week" : "/events"}
+            onClick={onWhatsOn ? (ev) => { ev.preventDefault(); document.getElementById("list")?.scrollIntoView({ behavior: "smooth" }); } : undefined}
             className="inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-[15px] font-semibold text-[hsl(230_35%_10%)] shadow-[0_12px_30px_-10px_rgba(0,0,0,0.6)] hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black"
           >
             {quiet ? t("now.seeWeek") : t("hero.seeTonight")}
