@@ -124,7 +124,8 @@ export const fetchShabbat = async (lang: "en" | "he"): Promise<Shabbat> => {
     candles: items.find((i) => i.category === "candles")?.date,
     havdalah: items.find((i) => i.category === "havdalah")?.date,
     parasha: items.find((i) => i.category === "parashat")?.title,
-    holiday: items.find((i) => i.category === "holiday")?.title,
+    // Only major holidays replace the weekly portion; minor observances are noise here.
+    holiday: items.find((i) => i.category === "holiday" && i.subcat === "major")?.title,
   };
 };
 

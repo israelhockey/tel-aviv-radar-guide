@@ -17,6 +17,39 @@ export const BeachList = () => {
   const { t, lang } = useI18n();
   const { data, isLoading, isError } = useBeaches();
 
+  // The free wave model's grid is coarser than the coastline, so neighbouring beaches often
+  // read the same. When they all do, say so once instead of repeating identical rows.
+  const readings = (data ?? []).filter((d) => d.waveHeight != null);
+  const uniform = readings.length > 1 && readings.every((d) =>
+    Math.abs((d.waveHeight ?? 0) - (readings[0].waveHeight ?? 0)) < 0.15 &&
+    Math.round(d.seaTemp ?? 0) === Math.round(readings[0].seaTemp ?? 0));
+
+  if (uniform) {
+    const c = readings[0];
+    const state = seaState(c.waveHeight);
+    return (
+      <section aria-labelledby="beaches-h">
+        <h2 id="beaches-h" className="text-lg font-medium">{t("now.beaches")}</h2>
+        <div className="mt-3 flex items-baseline justify-between gap-3">
+          <span className="text-[15px]">{t("now.wholeCoast")}</span>
+          <span className="text-[13px] tabular text-muted-foreground">
+            {c.waveHeight!.toFixed(1)} m{c.seaTemp != null && <span className="ms-2 text-foreground">{Math.round(c.seaTemp)}°</span>}
+          </span>
+        </div>
+        <span className="mt-2 relative block h-1.5 rounded-full bg-secondary overflow-hidden" aria-hidden>
+          <span className="absolute inset-y-0 start-0 rounded-full bg-surf" style={{ width: `${Math.min(100, (c.waveHeight! / MAX_WAVE) * 100)}%` }} />
+        </span>
+        {state && (
+          <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${STATE_STYLE[state]}`}>{t(`sea.${state}` as const)}</span>
+        )}
+        <p className="mt-3 text-[13px] text-muted-foreground leading-snug">
+          {BEACHES.map((b) => (lang === "he" ? b.he : b.en)).join(lang === "he" ? " · " : " · ")}
+        </p>
+        <p className="mt-2 text-[12px] text-muted-foreground">{t("now.beachesNote")}</p>
+      </section>
+    );
+  }
+
   return (
     <section aria-labelledby="beaches-h">
       <h2 id="beaches-h" className="text-lg font-medium">{t("now.beaches")}</h2>

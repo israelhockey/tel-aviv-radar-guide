@@ -35,6 +35,7 @@ const STRINGS = {
   "now.newsEmpty": { en: "No briefs published yet today.", he: "עוד לא פורסמו עדכונים היום." },
   "now.allNews": { en: "All news", he: "לכל החדשות" },
   "now.beaches": { en: "Beaches right now", he: "החופים עכשיו" },
+  "now.wholeCoast": { en: "Whole coastline", he: "כל קו החוף" },
   "now.beachesNote": { en: "Wave model data, not a lifeguard report. Swim only at staffed beaches.", he: "נתוני מודל גלים, לא דיווח מציל. רוחצים רק בחופים מוכרזים." },
   "now.liveTitle": { en: "The city, live", he: "העיר, בשידור חי" },
   "now.liveBody": { en: "Buses, planes, open kitchens and the sea on one map.", he: "אוטובוסים, מטוסים, מקומות פתוחים והים על מפה אחת." },
