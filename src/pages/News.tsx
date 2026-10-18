@@ -2,29 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n } from "@/lib/i18n";
 import { useNewsFeed } from "@/lib/live/hooks";
-import { fmtClock } from "@/lib/live/format";
 import { dayHeading, nightKey } from "@/lib/live/when";
 import type { FeedNews } from "@/lib/live/sources";
-
-export const NewsRow = ({ n }: { n: FeedNews }) => {
-  const { lang } = useI18n();
-  return (
-    <li>
-      <a
-        href={n.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group grid grid-cols-[3.5rem,1fr] gap-3 py-3 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"
-      >
-        <span className="text-[14px] tabular text-muted-foreground pt-0.5">{n.published ? fmtClock(n.published, lang) : ""}</span>
-        <span className="min-w-0">
-          <span className="block text-[15px] leading-snug group-hover:text-sea" lang={n.lang} dir={n.lang === "he" ? "rtl" : "ltr"}>{n.title}</span>
-          <span className="block mt-0.5 text-[12px] text-muted-foreground" dir="auto">{n.source}</span>
-        </span>
-      </a>
-    </li>
-  );
-};
+import { NewsCard, NewsLead } from "@/components/radar/NewsCard";
 
 const News = () => {
   const { t, lang } = useI18n();
@@ -52,7 +32,7 @@ const News = () => {
 
   return (
     <SiteLayout>
-      <div className="container-page pt-6 sm:pt-8 max-w-3xl">
+      <div className="container-page pt-6 sm:pt-8 max-w-6xl">
         <h1 className="font-display text-[40px] sm:text-[60px] leading-[0.95]">{t("news.title")}</h1>
         <p className="mt-2 text-[15px] text-muted-foreground max-w-xl">{t("news.body")}</p>
         <div className="mt-5 flex gap-2">
@@ -66,14 +46,20 @@ const News = () => {
         {isError && <p className="mt-6 text-[14px] text-muted-foreground">{t("common.error")}</p>}
         {!isLoading && !isError && groups.length === 0 && <p className="mt-6 text-[15px] text-muted-foreground">{t("news.empty")}</p>}
 
-        {groups.map(([key, list]) => (
-          <section key={key || "undated"} className="mt-6">
-            {key && <h2 className="text-[13px] font-medium text-muted-foreground border-b border-border pb-2">{dayHeading(key, lang)}</h2>}
-            <ul className="divide-y divide-border">
-              {list.map((n) => <NewsRow key={n.id} n={n} />)}
-            </ul>
-          </section>
-        ))}
+        {groups.map(([key, list], gi) => {
+          // The newest story with a picture leads the page.
+          const leadIdx = gi === 0 ? Math.max(0, list.findIndex((n) => n.image)) : -1;
+          const rest = list.filter((_, i) => i !== leadIdx);
+          return (
+            <section key={key || "undated"} className="mt-8">
+              {key && <h2 className="font-display text-[24px] leading-none mb-3">{dayHeading(key, lang)}</h2>}
+              {leadIdx >= 0 && <NewsLead n={list[leadIdx]} />}
+              <div className={`grid gap-4 sm:grid-cols-2 lg:grid-cols-3 ${leadIdx >= 0 ? "mt-4" : ""}`}>
+                {rest.map((n) => <NewsCard key={n.id} n={n} />)}
+              </div>
+            </section>
+          );
+        })}
       </div>
     </SiteLayout>
   );

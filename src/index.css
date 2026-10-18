@@ -142,3 +142,13 @@
 
 /* MapLibre controls follow the page theme */
 .maplibregl-ctrl-attrib { font-size: 10px; }
+
+/* Poster wall in the home page hero */
+@keyframes radar-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.radar-marquee { animation: radar-marquee 80s linear infinite; will-change: transform; }
+@media (prefers-reduced-motion: reduce) {
+  .radar-marquee { animation: none; }
+}

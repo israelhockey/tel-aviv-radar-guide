@@ -287,9 +287,46 @@ const isLocal = (text) => HE_RE.test(text) || EN_RE.test(text);
 const parseRss = (xml) =>
   [...xml.matchAll(/<item[\s>][\s\S]*?<\/item>/gi)].map((m) => {
     const it = m[0];
-    const tag = (t) => decode((new RegExp(`<${t}[^>]*>([\\s\\S]*?)<\\/${t}>`, "i").exec(it) ?? [])[1]);
-    return { title: tag("title"), link: tag("link") || tag("guid"), pubDate: tag("pubDate"), description: tag("description") };
+    const raw = (t) => (new RegExp(`<${t}[^>]*>([\\s\\S]*?)<\\/${t}>`, "i").exec(it) ?? [])[1] ?? "";
+    const tag = (t) => decode(raw(t));
+    return { title: tag("title"), link: tag("link") || tag("guid"), pubDate: tag("pubDate"), description: tag("description"), image: rssImage(it, raw) };
   });
+
+// A picture for the story, from whichever RSS convention the feed uses.
+const rssImage = (it, raw) => {
+  const attr = (re) => (re.exec(it) ?? [])[1];
+  const html = (raw("description") + raw("content:encoded")).replace(/<!\[CDATA\[|\]\]>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"');
+  const url =
+    attr(/<media:content[^>]+url=["']([^"']+)["'][^>]*(?:medium=["']image|type=["']image)/i) ??
+    attr(/<media:content[^>]+url=["']([^"']+\.(?:jpe?g|png|webp)[^"']*)["']/i) ??
+    attr(/<media:thumbnail[^>]+url=["']([^"']+)["']/i) ??
+    attr(/<enclosure[^>]+url=["']([^"']+)["'][^>]*type=["']image/i) ??
+    attr(/<enclosure[^>]+type=["']image[^>]+url=["']([^"']+)["']/i) ??
+    (/<img[^>]+src=["']([^"']+)["']/i.exec(html) ?? [])[1];
+  return cleanImage(url);
+};
+
+const cleanImage = (url) => {
+  if (!url) return null;
+  const u = url.replace(/&amp;/g, "&").trim();
+  if (!/^https?:\/\//.test(u) || /pixel|spacer|1x1|feedburner|gravatar/i.test(u)) return null;
+  return u.replace(/^http:/, "https:");
+};
+
+// Story pages almost always carry an og:image even when the feed doesn't.
+const ogImage = async (url) => {
+  try {
+    const html = (await get(url)).slice(0, 200_000);
+    const m = /<meta[^>]+(?:property|name)=["'](?:og:image|twitter:image)(?::src)?["'][^>]+content=["']([^"']+)["']/i.exec(html)
+      ?? /<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["'](?:og:image|twitter:image)["']/i.exec(html);
+    return cleanImage(m?.[1]);
+  } catch { return null; }
+};
+
+const summarize = (text) => {
+  const s = text.replace(/\s+/g, " ").replace(/The post .* appeared first on .*$/i, "").trim();
+  return s.length > 200 ? `${s.slice(0, 197).replace(/\s+\S*$/, "")}…` : s || null;
+};
 
 const fetchNews = async () => {
   const items = [];
@@ -310,6 +347,8 @@ const fetchNews = async () => {
           source: src.name,
           lang: src.lang,
           published: published && !Number.isNaN(published.getTime()) ? published.toISOString() : null,
+          image: r.image,
+          summary: summarize(r.description),
         });
         kept++;
       }
@@ -325,6 +364,18 @@ const fetchNews = async () => {
     .filter((n) => (seen.has(n.title) ? false : (seen.add(n.title), true)))
     .sort((a, b) => new Date(b.published ?? 0) - new Date(a.published ?? 0))
     .slice(0, 80);
+  // Fill missing pictures from the story page; reuse what earlier runs found.
+  let prev = new Map();
+  try { prev = new Map(JSON.parse(await readFile("public/data/news.json", "utf8")).news.map((n) => [n.id, n.image])); } catch { /* first run */ }
+  const todo = news.filter((n) => !n.image);
+  let found = 0;
+  for (let i = 0; i < todo.length; i += 6) {
+    await Promise.all(todo.slice(i, i + 6).map(async (n) => {
+      n.image = prev.get(n.id) ?? (await ogImage(n.url));
+      if (n.image) found++;
+    }));
+  }
+  report.push(`news images: ${news.length - todo.length} from feeds, ${found} from story pages, ${news.filter((n) => !n.image).length} without`);
   return { news, report };
 };
 

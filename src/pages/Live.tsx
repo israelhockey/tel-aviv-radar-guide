@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Bike, CalendarDays, CloudRain, LocateFixed, Plane, Bus as BusIcon, TrainFront, UtensilsCrossed, Waves, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Bike, CalendarDays, CloudRain, LocateFixed, Plane, Search, Bus as BusIcon, TrainFront, UtensilsCrossed, Waves, X } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n, type StringKey } from "@/lib/i18n";
 import { BEACHES, TLV_CENTER } from "@/lib/live/geo";
@@ -12,7 +13,8 @@ import { useTheme } from "@/lib/theme";
 import { busIcon, planeIcon } from "@/lib/live/mapIcons";
 import { openStateAt } from "@/lib/live/openingHours";
 import { placeKindLabel } from "@/lib/live/places";
-import { seaState, type Aircraft, type Bus, type FeedEvent, type Place } from "@/lib/live/sources";
+import { fetchBusTrip, fetchFlightInfo, lineRoutePath, seaState, type Aircraft, type Bus, type BusTrip, type FeedEvent, type FlightInfo, type Place } from "@/lib/live/sources";
+import { WhereTo, type WhereResult } from "@/components/radar/WhereTo";
 import { fmtClock, minutesAgo } from "@/lib/live/format";
 
 type LayerId = "events" | "buses" | "rail" | "flights" | "food" | "bikes" | "beaches" | "rain";
@@ -32,7 +34,7 @@ const LAYERS: { id: LayerId; key: StringKey; icon: typeof BusIcon; color: string
 const MAP_LAYERS: Record<LayerId, string[]> = {
   events: ["events-halo", "events"],
   rail: ["rail-glow", "rail-train", "rail-line", "rail-stations", "rail-stations-label"],
-  buses: ["buses-glow", "buses-dot", "buses-icon", "buses-label"],
+  buses: ["buses-glow", "buses-dot", "buses-icon", "buses-label", "trip-route", "trip-ahead", "trip-casing", "trip-trail"],
   flights: ["flights-icon", "flights-label"],
   food: ["food-closed", "food-open"],
   bikes: ["bikes"],
@@ -48,6 +50,27 @@ type Selected =
   | { kind: "event"; event: FeedEvent };
 
 const fc = (features: unknown[]) => ({ type: "FeatureCollection", features });
+const line = (coordinates: [number, number][], properties: Record<string, unknown> = {}) => ({
+  type: "Feature", geometry: { type: "LineString", coordinates }, properties,
+});
+
+// Points along the great circle between two places, so long flight routes curve like on a globe.
+const greatCircle = (a: [number, number], b: [number, number], n = 64): [number, number][] => {
+  const r = Math.PI / 180;
+  const [l1, p1, l2, p2] = [a[0] * r, a[1] * r, b[0] * r, b[1] * r];
+  const d = 2 * Math.asin(Math.sqrt(Math.sin((p2 - p1) / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin((l2 - l1) / 2) ** 2));
+  if (!d) return [a, b];
+  return Array.from({ length: n + 1 }, (_, i) => {
+    const f = i / n;
+    const A = Math.sin((1 - f) * d) / Math.sin(d), B = Math.sin(f * d) / Math.sin(d);
+    const x = A * Math.cos(p1) * Math.cos(l1) + B * Math.cos(p2) * Math.cos(l2);
+    const y = A * Math.cos(p1) * Math.sin(l1) + B * Math.cos(p2) * Math.sin(l2);
+    const z = A * Math.sin(p1) + B * Math.sin(p2);
+    return [Math.atan2(y, x) / r, Math.atan2(z, Math.sqrt(x * x + y * y)) / r] as [number, number];
+  });
+};
+
+const SQUAWK_EMERGENCY = new Set(["7500", "7600", "7700"]);
 const pt = (lon: number, lat: number, properties: Record<string, unknown>) => ({
   type: "Feature", geometry: { type: "Point", coordinates: [lon, lat] }, properties,
 });
@@ -63,6 +86,10 @@ const Live = () => {
   });
   const [selected, setSelected] = useState<Selected | null>(null);
   const [tick, setTick] = useState(0); // re-evaluates "open now" every minute
+  const [whereOpen, setWhereOpen] = useState(false);
+  const [where, setWhere] = useState<WhereResult | null>(null);
+  const [lineFilter, setLineFilter] = useState<number | null>(null);
+  const myPos = useRef<{ lat: number; lon: number } | null>(null);
 
   const buses = useBuses(on.buses);
   const aircraft = useAircraft(on.flights);
@@ -128,7 +155,7 @@ const Live = () => {
           map.addImage("radar-plane", planeIcon(C.plane), { pixelRatio: 2 });
 
           const empty = fc([]);
-          for (const id of ["events", "buses", "flights", "food", "bikes", "beaches", "me", "rail-lines", "rail-stations"]) map.addSource(id, { type: "geojson", data: empty });
+          for (const id of ["events", "buses", "flights", "food", "bikes", "beaches", "me", "rail-lines", "rail-stations", "trip-route", "trip-ahead", "trip-trail", "sel", "where", "flight-path"]) map.addSource(id, { type: "geojson", data: empty });
 
           // Light rail lines in their official colours; heavy rail thinner and dashed.
           map.addLayer({
@@ -198,6 +225,42 @@ const Live = () => {
             },
             paint: { "text-color": C.text, "text-halo-color": C.halo, "text-halo-width": 1.5 },
           });
+          // A selected bus: the full route faintly, what's still ahead dashed, what it has driven solid.
+          map.addLayer({
+            id: "trip-route", type: "line", source: "trip-route",
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: { "line-color": C.bus, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 3, 16, 8], "line-opacity": 0.18 },
+          });
+          map.addLayer({
+            id: "trip-ahead", type: "line", source: "trip-ahead",
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: { "line-color": C.bus, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 2, 16, 4], "line-dasharray": [1.2, 1.4], "line-opacity": 0.9 },
+          });
+          map.addLayer({
+            id: "trip-casing", type: "line", source: "trip-trail",
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: { "line-color": C.halo, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 5, 16, 10] },
+          });
+          map.addLayer({
+            id: "trip-trail", type: "line", source: "trip-trail",
+            layout: { "line-cap": "round", "line-join": "round" },
+            paint: { "line-color": C.bus, "line-width": ["interpolate", ["linear"], ["zoom"], 11, 3, 16, 6] },
+          });
+          map.addLayer({
+            id: "flight-done", type: "line", source: "flight-path", filter: ["==", ["get", "part"], "done"],
+            paint: { "line-color": C.plane, "line-width": 2, "line-opacity": 0.45 },
+          });
+          map.addLayer({
+            id: "flight-ahead", type: "line", source: "flight-path", filter: ["==", ["get", "part"], "ahead"],
+            paint: { "line-color": C.plane, "line-width": 2, "line-dasharray": [2, 2], "line-opacity": 0.9 },
+          });
+          map.addLayer({
+            id: "where", type: "circle", source: "where",
+            paint: {
+              "circle-radius": 8, "circle-color": ["match", ["get", "kind"], "dest", "#ff5a1f", C.bus],
+              "circle-stroke-color": C.halo, "circle-stroke-width": 3,
+            },
+          });
           // City-wide view: buses as small dots, so the map stays readable with ~1,000 of them.
           map.addLayer({
             id: "buses-glow", type: "circle", source: "buses", maxzoom: 15,
@@ -207,22 +270,22 @@ const Live = () => {
             },
           });
           map.addLayer({
-            id: "buses-dot", type: "circle", source: "buses", maxzoom: 14,
+            id: "buses-dot", type: "circle", source: "buses", maxzoom: 12.5,
             paint: {
-              "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 1.6, 13.9, 3.2],
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 1.8, 12.5, 3.4],
               "circle-color": C.bus, "circle-opacity": 0.9,
             },
           });
           map.addLayer({
-            id: "buses-icon", type: "symbol", source: "buses", minzoom: 14,
+            id: "buses-icon", type: "symbol", source: "buses", minzoom: 12.5,
             layout: {
-              "icon-image": "radar-bus", "icon-size": ["interpolate", ["linear"], ["zoom"], 14, 0.7, 17, 1],
+              "icon-image": "radar-bus", "icon-size": ["interpolate", ["linear"], ["zoom"], 12.5, 0.45, 14, 0.7, 17, 1],
               "icon-rotate": ["get", "bearing"], "icon-rotation-alignment": "map",
               "icon-allow-overlap": true, "icon-ignore-placement": true,
             },
           });
           map.addLayer({
-            id: "buses-label", type: "symbol", source: "buses", minzoom: 14.5,
+            id: "buses-label", type: "symbol", source: "buses", minzoom: 13.8,
             layout: {
               "text-field": ["get", "line"], "text-font": ["Noto Sans Regular"], "text-size": 11,
               "text-offset": [0, 1.4], "text-anchor": "top",
@@ -244,6 +307,13 @@ const Live = () => {
               "text-offset": [0, 1.6], "text-anchor": "top",
             },
             paint: { "text-color": C.plane, "text-halo-color": C.halo, "text-halo-width": 1.5 },
+          });
+          map.addLayer({
+            id: "sel", type: "circle", source: "sel",
+            paint: {
+              "circle-radius": 17, "circle-color": "transparent",
+              "circle-stroke-color": ["match", ["get", "kind"], "plane", C.plane, C.bus], "circle-stroke-width": 3,
+            },
           });
           map.addLayer({
             id: "me", type: "circle", source: "me",
@@ -287,7 +357,7 @@ const Live = () => {
     if (!ready || !buses.data) return;
     lookup.current.buses = new Map(buses.data.buses.map((b) => [b.id, b]));
     tweenBuses.current(mapRef.current, "buses",
-      buses.data.buses.map((b) => ({ id: b.id, lon: b.lon, lat: b.lat, props: { bearing: b.bearing, line: b.line ?? "" } })));
+      buses.data.buses.map((b) => ({ id: b.id, lon: b.lon, lat: b.lat, props: { bearing: b.bearing, line: b.line ?? "", lineRef: b.lineRef } })));
   }, [ready, buses.data]);
 
   useEffect(() => {
@@ -363,6 +433,108 @@ const Live = () => {
     mapRef.current?.getSource("rail-stations")?.setData(rail.data.stations);
   }, [ready, rail.data]);
 
+  /* ---------- selected bus: its trip, and the line's whole route ---------- */
+  const selBus = selected?.kind === "bus" ? selected.bus : null;
+  const selPlane = selected?.kind === "plane" ? selected.plane : null;
+  const trip = useQuery({
+    queryKey: ["bus-trip", selBus?.rideId ?? selBus?.id],
+    queryFn: () => fetchBusTrip(selBus!),
+    enabled: !!selBus,
+    staleTime: 60_000,
+  });
+  const linePath = useQuery({
+    queryKey: ["line-path", lineFilter],
+    queryFn: () => lineRoutePath(lineFilter!),
+    enabled: lineFilter != null && !selBus,
+    staleTime: 30 * 60_000,
+  });
+  const flight = useQuery({
+    queryKey: ["flight-info", selPlane?.id, selPlane?.callsign],
+    queryFn: () => fetchFlightInfo(selPlane!.id, selPlane!.callsign),
+    enabled: !!selPlane,
+    staleTime: 30 * 60_000,
+  });
+
+  // The ring around whatever is selected follows it as positions refresh.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const live = selBus ? buses.data?.buses.find((b) => b.id === selBus.id) ?? selBus
+      : selPlane ? aircraft.data?.find((a) => a.id === selPlane.id) ?? selPlane : null;
+    map.getSource("sel")?.setData(fc(live ? [pt(live.lon, live.lat, { kind: selBus ? "bus" : "plane" })] : []));
+  }, [ready, selBus, selPlane, buses.data, aircraft.data]);
+
+  const fitted = useRef<string | null>(null);
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const d = selBus ? trip.data : null;
+    const route = d?.route ?? (lineFilter != null && !selBus ? linePath.data?.coords : null) ?? null;
+    map.getSource("trip-route")?.setData(fc(route ? [line(route)] : []));
+    map.getSource("trip-ahead")?.setData(fc(d?.ahead ? [line(d.ahead)] : []));
+    map.getSource("trip-trail")?.setData(fc(d && d.trail.length > 1 ? [line(d.trail)] : []));
+    // Frame the route once per selection, leaving room for the panel.
+    const key = selBus ? `bus:${selBus.id}` : lineFilter != null ? `line:${lineFilter}` : null;
+    const pts = [...(route ?? []), ...(d?.trail ?? [])];
+    if (key && pts.length > 1 && fitted.current !== key) {
+      fitted.current = key;
+      const lons = pts.map((p) => p[0]), lats = pts.map((p) => p[1]);
+      const wide = window.innerWidth >= 768;
+      map.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]], {
+        padding: wide ? { top: 80, bottom: 60, left: 420, right: 60 } : { top: 70, bottom: 330, left: 30, right: 30 },
+        maxZoom: 15, duration: 900,
+      });
+    }
+    if (!key) fitted.current = null;
+  }, [ready, selBus, trip.data, lineFilter, linePath.data]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const f = flight.data;
+    const a = selPlane ? aircraft.data?.find((x) => x.id === selPlane.id) ?? selPlane : null;
+    const feats: unknown[] = [];
+    if (a && f?.origin) feats.push(line(greatCircle([f.origin.lon, f.origin.lat], [a.lon, a.lat]), { part: "done" }));
+    if (a && f?.destination) feats.push(line(greatCircle([a.lon, a.lat], [f.destination.lon, f.destination.lat]), { part: "ahead" }));
+    map.getSource("flight-path")?.setData(fc(feats));
+  }, [ready, selPlane, flight.data, aircraft.data]);
+
+  // "Where to?": pins for both ends, and only the chosen line's buses.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    map.getSource("where")?.setData(fc(where ? [pt(where.origin.lon, where.origin.lat, { kind: "origin" }), pt(where.dest.lon, where.dest.lat, { kind: "dest" })] : []));
+  }, [ready, where]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!ready || !map) return;
+    const lines = lineFilter != null ? [lineFilter] : where?.lines.length ? where.lines.map((l) => l.lineRef) : null;
+    const filter = lines ? ["in", ["get", "lineRef"], ["literal", lines]] : null;
+    for (const id of ["buses-glow", "buses-dot", "buses-icon", "buses-label"]) if (map.getLayer(id)) map.setFilter(id, filter);
+  }, [ready, lineFilter, where]);
+
+  const getOrigin = () =>
+    new Promise<{ geo: { lat: number; lon: number; label: string }; mine: boolean }>((resolve) => {
+      const centre = () => {
+        const c = mapRef.current?.getCenter();
+        resolve({ geo: { lat: c?.lat ?? TLV_CENTER.lat, lon: c?.lng ?? TLV_CENTER.lon, label: "" }, mine: false });
+      };
+      if (myPos.current) return resolve({ geo: { ...myPos.current, label: "" }, mine: true });
+      if (!navigator.geolocation) return centre();
+      navigator.geolocation.getCurrentPosition(
+        (p) => {
+          const g = { lat: p.coords.latitude, lon: p.coords.longitude };
+          // Outside Gush Dan, a "my location" search makes no sense here; use the map instead.
+          if (g.lat < 31.9 || g.lat > 32.25 || g.lon < 34.7 || g.lon > 35) return centre();
+          myPos.current = g;
+          resolve({ geo: { ...g, label: "" }, mine: true });
+        },
+        centre,
+        { timeout: 6000, maximumAge: 120000 },
+      );
+    });
+
   /* ---------- rain radar raster ---------- */
   useEffect(() => {
     const map = mapRef.current;
@@ -394,6 +566,7 @@ const Live = () => {
     navigator.geolocation?.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
+        myPos.current = { lat: latitude, lon: longitude };
         mapRef.current?.getSource("me")?.setData(fc([pt(longitude, latitude, {})]));
         mapRef.current?.flyTo({ center: [longitude, latitude], zoom: 15.5 });
         setOn((s) => ({ ...s, food: true }));
@@ -470,17 +643,182 @@ const Live = () => {
           <LocateFixed className="h-4 w-4" aria-hidden />
           {t("live.locate")}
         </button>
+        {!whereOpen && (
+          <button
+            onClick={() => { setWhereOpen(true); setSelected(null); setOn((s) => ({ ...s, buses: true })); }}
+            className="inline-flex items-center gap-2 h-9 rounded-full bg-background border border-border px-3.5 text-[13px] font-medium shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"
+          >
+            <Search className="h-4 w-4" aria-hidden />
+            {t("where.button")}
+          </button>
+        )}
       </div>
 
-      {selected && <DetailPanel selected={selected} onClose={() => setSelected(null)} beaches={beaches.data} />}
+      {whereOpen && !selected && (
+        <WhereTo
+          getOrigin={getOrigin}
+          buses={buses.data?.buses ?? []}
+          activeLine={lineFilter}
+          onResult={setWhere}
+          onPickLine={setLineFilter}
+          onClose={() => { setWhereOpen(false); setWhere(null); setLineFilter(null); }}
+        />
+      )}
+
+      {selected && (
+        <DetailPanel
+          selected={selected}
+          onClose={() => setSelected(null)}
+          beaches={beaches.data}
+          trip={trip.data}
+          tripLoading={trip.isLoading}
+          flight={flight.data}
+          liveBus={selBus ? buses.data?.buses.find((b) => b.id === selBus.id) : undefined}
+          livePlane={selPlane ? aircraft.data?.find((a) => a.id === selPlane.id) : undefined}
+          lineFilter={lineFilter}
+          onLineFilter={setLineFilter}
+        />
+      )}
     </SiteLayout>
   );
 };
 
-const DetailPanel = ({
-  selected, onClose, beaches,
-}: { selected: Selected; onClose: () => void; beaches: ReturnType<typeof useBeaches>["data"] }) => {
+type PanelProps = {
+  selected: Selected; onClose: () => void; beaches: ReturnType<typeof useBeaches>["data"];
+  trip?: BusTrip; tripLoading: boolean; flight?: FlightInfo; liveBus?: Bus; livePlane?: Aircraft;
+  lineFilter: number | null; onLineFilter: (l: number | null) => void;
+};
+
+const Shell = ({ onClose, children, flush = false }: { onClose: () => void; children: ReactNode; flush?: boolean }) => {
+  const { t } = useI18n();
+  return (
+    <div className={`absolute inset-x-3 bottom-3 md:inset-x-auto md:start-3 md:bottom-6 md:w-[360px] max-h-[62%] overflow-y-auto rounded-2xl bg-background border border-border shadow-lg ${flush ? "" : "p-4"}`}>
+      <button onClick={onClose} aria-label={t("live.close")} className="absolute top-2.5 end-2.5 z-10 p-1.5 rounded-full bg-background/90 hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea">
+        <X className="h-4 w-4" />
+      </button>
+      {children}
+    </div>
+  );
+};
+
+const Rows = ({ rows }: { rows: [string, string][] }) => (
+  <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-[14px]">
+    {rows.map(([k, v], i) => (
+      <div key={i} className="contents">
+        <dt className="text-muted-foreground">{k}</dt>
+        <dd className="min-w-0 break-words" dir="auto">{v}</dd>
+      </div>
+    ))}
+  </dl>
+);
+
+const BusPanel = ({ bus, trip, loading, lineFilter, onLineFilter, onClose }: {
+  bus: Bus; trip?: BusTrip; loading: boolean; lineFilter: number | null; onLineFilter: (l: number | null) => void; onClose: () => void;
+}) => {
   const { t, lang } = useI18n();
+  const pct = trip?.doneKm != null && trip.totalKm ? Math.min(100, Math.round((trip.doneKm / trip.totalKm) * 100)) : null;
+  const rows: [string, string][] = [];
+  rows.push([t("live.speed"), `${Math.round(bus.speed)} km/h`]);
+  if (bus.scheduledStart) rows.push([t("bus.scheduled"), fmtClock(bus.scheduledStart, lang)]);
+  if (trip?.startedAt) rows.push([t("bus.started"), fmtClock(trip.startedAt, lang)]);
+  if (trip?.tripMinutes) rows.push([t("bus.tripTime"), `~${trip.tripMinutes} ${t("live.minutes")}`]);
+  rows.push([t("live.position"), `${minutesAgo(bus.recordedAt)} ${t("live.minutes")}`]);
+  rows.push([t("bus.vehicle"), bus.id]);
+  const only = lineFilter === bus.lineRef;
+  return (
+    <Shell onClose={onClose}>
+      <div className="flex items-center gap-3 pe-8">
+        <span className="min-w-[52px] h-11 px-2.5 rounded-xl bg-[#0b63e5] text-white text-[22px] font-semibold tabular flex items-center justify-center shadow-sm">{bus.line ?? "?"}</span>
+        <div className="min-w-0">
+          <p className="text-[17px] font-medium leading-tight truncate" dir="auto">→ {bus.to ?? t("live.buses")}</p>
+          <p className="text-[12px] text-muted-foreground truncate" dir="auto">{[bus.from && `${t("where.from")} ${bus.from}`, bus.agency].filter(Boolean).join(" · ")}</p>
+        </div>
+      </div>
+
+      <div className="mt-4">
+        <div className="flex justify-between text-[12px] text-muted-foreground">
+          <span>{t("bus.progress")}</span>
+          {trip?.doneKm != null && <span className="tabular">{trip.doneKm.toFixed(1)}{trip.totalKm ? ` ${t("bus.of")} ${trip.totalKm.toFixed(1)}` : ""} km</span>}
+        </div>
+        <div className="mt-1 h-2 rounded-full bg-secondary overflow-hidden">
+          <div className={`h-full rounded-full bg-[#0b63e5] transition-[width] duration-700 ${pct == null ? "w-1/3 animate-pulse opacity-40" : ""}`} style={pct != null ? { width: `${Math.max(4, pct)}%` } : undefined} />
+        </div>
+        <p className="mt-1.5 text-[12px] text-muted-foreground">{loading ? t("bus.loadingRoute") : t("bus.legend")}</p>
+      </div>
+
+      <div className="mt-3"><Rows rows={rows} /></div>
+
+      <button
+        onClick={() => onLineFilter(only ? null : bus.lineRef)}
+        className="mt-3 h-9 rounded-full border border-border px-3.5 text-[13px] font-medium hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"
+      >
+        {only ? t("bus.showAll") : t("bus.showLine")}
+      </button>
+    </Shell>
+  );
+};
+
+const PlanePanel = ({ plane, info, onClose }: { plane: Aircraft; info?: FlightInfo; onClose: () => void }) => {
+  const { t } = useI18n();
+  const [broken, setBroken] = useState(false);
+  const vr = plane.vRate ?? 0;
+  const trend = plane.onGround ? t("flight.ground") : Math.abs(vr) < 300 ? t("flight.level") : vr > 0 ? `${t("flight.climbing")} ${Math.round(vr).toLocaleString()} ft/min` : `${t("flight.descending")} ${Math.round(-vr).toLocaleString()} ft/min`;
+  const rows: [string, string][] = [];
+  const model = info?.model || plane.desc || plane.type;
+  if (model) rows.push([t("flight.aircraft"), `${model}${plane.type && !model.includes(plane.type) ? ` (${plane.type})` : ""}`]);
+  if (plane.reg) rows.push([t("flight.reg"), plane.reg]);
+  if (info?.owner && info.owner !== info.airline) rows.push(["", `${info.owner}${info.ownerCountry ? ` · ${info.ownerCountry}` : ""}`]);
+  if (plane.altFt != null) rows.push([t("live.altitude"), `${plane.altFt.toLocaleString()} ft · ${Math.round(plane.altFt * 0.3048).toLocaleString()} m`]);
+  rows.push(["", trend]);
+  if (plane.speedKt != null) rows.push([t("live.speed"), `${Math.round(plane.speedKt)} kt · ${Math.round(plane.speedKt * 1.852)} km/h`]);
+  if (plane.squawk) rows.push(["Squawk", plane.squawk]);
+  const ap = (a?: FlightInfo["origin"]) => a && (
+    <div className="min-w-0">
+      <p className="font-display text-[30px] leading-none">{a.iata ?? "—"}</p>
+      <p className="mt-1 text-[12px] text-muted-foreground truncate" dir="auto">{a.city ?? a.name}</p>
+    </div>
+  );
+  return (
+    <Shell onClose={onClose} flush>
+      {info?.photo?.src && !broken && (
+        <a href={info.photo.link} target="_blank" rel="noopener noreferrer" className="relative block aspect-[16/9] bg-muted overflow-hidden rounded-t-2xl">
+          <img src={info.photo.src} alt="" referrerPolicy="no-referrer" onError={() => setBroken(true)} className="h-full w-full object-cover" />
+          <span className="absolute bottom-1.5 end-2 rounded bg-black/55 px-1.5 py-0.5 text-[10px] text-white">© {info.photo.by} · Planespotters.net</span>
+        </a>
+      )}
+      <div className="p-4">
+        {plane.squawk && SQUAWK_EMERGENCY.has(plane.squawk) && (
+          <p className="mb-2 rounded-lg bg-destructive/10 text-destructive px-2.5 py-1.5 text-[13px] font-medium">{t("flight.emergency")} {plane.squawk}</p>
+        )}
+        <div className="pe-8">
+          <p className="text-[19px] font-semibold leading-tight">{plane.callsign || plane.id}{info?.flightIata && info.flightIata !== plane.callsign ? <span className="ms-2 text-[14px] font-normal text-muted-foreground">{info.flightIata}</span> : null}</p>
+          {(info?.airline || plane.operator) && <p className="text-[13px] text-muted-foreground" dir="auto">{info?.airline ?? plane.operator}</p>}
+        </div>
+        {(info?.origin || info?.destination) && (
+          <div className="mt-3 grid grid-cols-[1fr,auto,1fr] items-center gap-3 rounded-xl bg-secondary px-3 py-3">
+            {ap(info.origin) ?? <span />}
+            <Plane className="h-5 w-5 text-[#ff5a1f] rtl:-scale-x-100" style={{ transform: "rotate(45deg)" }} aria-hidden />
+            <div className="text-end">{ap(info.destination)}</div>
+          </div>
+        )}
+        <div className="mt-3"><Rows rows={rows} /></div>
+        <a href={`https://globe.adsb.lol/?icao=${plane.id}`} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-[14px] font-medium text-sea hover:underline underline-offset-4">
+          {t("flight.track")}
+        </a>
+      </div>
+    </Shell>
+  );
+};
+
+const DetailPanel = ({ selected, onClose, beaches, trip, tripLoading, flight, liveBus, livePlane, lineFilter, onLineFilter }: PanelProps) => {
+  const { t, lang } = useI18n();
+
+  if (selected.kind === "bus") {
+    return <BusPanel bus={liveBus ?? selected.bus} trip={trip} loading={tripLoading} lineFilter={lineFilter} onLineFilter={onLineFilter} onClose={onClose} />;
+  }
+  if (selected.kind === "plane") {
+    return <PlanePanel plane={livePlane ?? selected.plane} info={flight} onClose={onClose} />;
+  }
 
   let title = "";
   const rows: [string, string][] = [];
@@ -495,20 +833,6 @@ const DetailPanel = ({
     if (e.free) rows.push(["", t("on.free")]);
     else if (e.priceFrom != null) rows.push(["", `${t("on.from")}${lang === "he" ? "" : " "}₪${Math.round(e.priceFrom)}`]);
     link = e.url;
-  } else if (selected.kind === "bus") {
-    const b = selected.bus;
-    title = b.line ? `${t("live.line")} ${b.line}` : t("live.buses");
-    if (b.to) rows.push(["", b.to]);
-    if (b.agency) rows.push(["", b.agency]);
-    rows.push([t("live.speed"), `${Math.round(b.speed)} km/h`]);
-    rows.push([t("live.position"), `${minutesAgo(b.recordedAt)} ${t("live.minutes")}`]);
-  } else if (selected.kind === "plane") {
-    const a = selected.plane;
-    title = a.callsign || a.id;
-    if (a.type) rows.push(["", a.type]);
-    if (a.altFt != null) rows.push([t("live.altitude"), `${a.altFt.toLocaleString()} ft`]);
-    if (a.speedKt != null) rows.push([t("live.speed"), `${Math.round(a.speedKt)} kt`]);
-    link = `https://globe.adsb.lol/?icao=${a.id}`;
   } else if (selected.kind === "place") {
     const p = selected.place;
     title = (lang === "en" && p.nameEn) || p.name || t("live.dockBikes");
@@ -539,13 +863,8 @@ const DetailPanel = ({
   }
 
   return (
-    <div className="absolute inset-x-3 bottom-3 md:inset-x-auto md:start-3 md:bottom-6 md:w-[340px] rounded-2xl bg-background border border-border shadow-lg p-4">
-      <div className="flex items-start justify-between gap-3">
-        <h2 className="text-[17px] font-medium leading-snug" dir="auto">{title}</h2>
-        <button onClick={onClose} aria-label={t("live.close")} className="-m-1 p-1 rounded-full hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea">
-          <X className="h-4 w-4" />
-        </button>
-      </div>
+    <Shell onClose={onClose}>
+      <h2 className="pe-8 text-[17px] font-medium leading-snug" dir="auto">{title}</h2>
       <dl className="mt-2 space-y-1 text-[14px]">
         {rows.map(([k, v], i) => (
           <div key={i} className="flex gap-2">
@@ -556,10 +875,10 @@ const DetailPanel = ({
       </dl>
       {link && (
         <a href={link} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-[14px] font-medium text-sea hover:underline underline-offset-4">
-          {selected.kind === "plane" ? "adsb.lol" : selected.kind === "event" ? `${t("on.tickets")} · ${selected.event.source}` : t("live.directions")}
+          {selected.kind === "event" ? `${t("on.tickets")} · ${selected.event.source}` : t("live.directions")}
         </a>
       )}
-    </div>
+    </Shell>
   );
 };
 

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ConditionsStrip } from "@/components/radar/ConditionsStrip";
-import { CityHero } from "@/components/radar/CityHero";
+import { TonightHero } from "@/components/radar/TonightHero";
 import { BeachList } from "@/components/radar/BeachList";
 import { ShabbatCard } from "@/components/radar/ShabbatCard";
 import { OpenNearby } from "@/components/radar/OpenNearby";
@@ -13,7 +13,7 @@ import { useI18n } from "@/lib/i18n";
 import { useEventsFeed, useNewsFeed } from "@/lib/live/hooks";
 import { inRange } from "@/lib/live/when";
 import { PosterCard } from "@/components/radar/PosterCard";
-import { NewsRow } from "./News";
+import { NewsCard } from "@/components/radar/NewsCard";
 import { fmtClock } from "@/lib/live/format";
 
 type Item = Database["public"]["Tables"]["content_items"]["Row"];
@@ -87,7 +87,7 @@ const Now = () => {
   const allEvents = eventsFeed.data?.events ?? [];
   const tonightOnly = allEvents.filter((e) => inRange(e.start, e.end, "tonight"));
   const feedTonight = (tonightOnly.length >= 3 ? tonightOnly : [...tonightOnly, ...allEvents.filter((e) => !tonightOnly.includes(e) && inRange(e.start, e.end, "week"))]).slice(0, 10);
-  const feedNews = (newsFeed.data?.news ?? []).slice(0, 6);
+  const feedNews = (newsFeed.data?.news ?? []).slice(0, 8);
   const tonightCount = feedTonight.length + (tonight.data?.length ?? 0);
   const newsCount = feedNews.length + (briefs.data?.length ?? 0);
 
@@ -97,7 +97,7 @@ const Now = () => {
 
   return (
     <SiteLayout>
-      <CityHero />
+      <TonightHero />
       <div className="container-page">
         <div className="mt-2">
           <ConditionsStrip />
@@ -136,12 +136,20 @@ const Now = () => {
                 <Link to="/news" className="text-[14px] text-sea hover:underline underline-offset-4">{t("now.allNews")}</Link>
               </div>
               {newsCount > 0 ? (
-                <ul className="mt-1 divide-y divide-border">
-                  {(briefs.data ?? []).map((i) => (
-                    <ItemRow key={i.id} item={i} lead={i.published_at ? fmtClock(i.published_at, lang) : ""} />
-                  ))}
-                  {feedNews.map((n) => <NewsRow key={n.id} n={n} />)}
-                </ul>
+                <>
+                  {feedNews.length > 0 && (
+                    <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 [scrollbar-width:thin]">
+                      {feedNews.map((n) => <NewsCard key={n.id} n={n} className="snap-start shrink-0 w-[78%] sm:w-[280px]" />)}
+                    </div>
+                  )}
+                  {(briefs.data ?? []).length > 0 && (
+                    <ul className="mt-1 divide-y divide-border">
+                      {(briefs.data ?? []).map((i) => (
+                        <ItemRow key={i.id} item={i} lead={i.published_at ? fmtClock(i.published_at, lang) : ""} />
+                      ))}
+                    </ul>
+                  )}
+                </>
               ) : (
                 !briefs.isLoading && !newsFeed.isLoading && <p className="mt-3 text-[14px] text-muted-foreground">{t("now.newsEmpty")}</p>
               )}

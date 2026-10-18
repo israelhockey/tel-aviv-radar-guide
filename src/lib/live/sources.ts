@@ -155,10 +155,11 @@ const STRIDE = "https://open-bus-stride-api.hasadna.org.il";
 
 export type Bus = {
   id: string; lat: number; lon: number; bearing: number; speed: number; recordedAt: string;
-  lineRef: number; operatorRef: number; line?: string; to?: string; agency?: string;
+  lineRef: number; operatorRef: number; line?: string; to?: string; from?: string; agency?: string;
+  rideId?: number; scheduledStart?: string; distance?: number;
 };
 
-type RouteInfo = { line?: string; to?: string; agency?: string };
+type RouteInfo = { line?: string; to?: string; from?: string; agency?: string };
 const routeCache = new Map<number, RouteInfo>();
 
 const lookupRoutes = async (lineRefs: number[]) => {
@@ -179,12 +180,135 @@ const lookupRoutes = async (lineRefs: number[]) => {
       for (const r of rows) {
         const longName: string = r.route_long_name ?? "";
         // route_long_name looks like "Origin-City<->Destination-City-2#"; keep the destination part.
-        const dest = longName.split("<->")[1]?.replace(/-\d+#?$/, "").replace(/-/g, " · ").trim();
-        routeCache.set(r.line_ref, { line: r.route_short_name ?? undefined, to: dest || undefined, agency: r.agency_name ?? undefined });
+        const [o, d] = longName.split("<->");
+        const tidy = (x?: string) => x?.replace(/-\d+#?$/, "").replace(/-/g, " · ").trim() || undefined;
+        routeCache.set(r.line_ref, { line: r.route_short_name ?? undefined, to: tidy(d), from: tidy(o), agency: r.agency_name ?? undefined });
       }
     } catch { /* names are a nice-to-have; positions still show */ }
     for (const r of chunk) if (!routeCache.has(r)) routeCache.set(r, {});
   }));
+};
+
+export const routeInfo = async (lineRef: number): Promise<RouteInfo> => {
+  await lookupRoutes([lineRef]);
+  return routeCache.get(lineRef) ?? {};
+};
+
+type LonLat = [number, number];
+const ridePath = async (rideId: number): Promise<{ coords: LonLat[]; dist: number[]; times: string[] }> => {
+  const u = new URL(`${STRIDE}/siri_vehicle_locations/list`);
+  u.searchParams.set("siri_rides__ids", String(rideId));
+  u.searchParams.set("order_by", "recorded_at_time asc");
+  u.searchParams.set("limit", "1000");
+  const rows = await getJSON<any[]>(u.toString());
+  const ok = rows.filter((r) => typeof r.lat === "number" && r.lat > 29 && r.lat < 34);
+  return { coords: ok.map((r) => [r.lon, r.lat]), dist: ok.map((r) => r.distance_from_journey_start ?? 0), times: ok.map((r) => r.recorded_at_time) };
+};
+
+// The whole route of a line, taken from a recent finished trip in the same direction.
+const routePathCache = new Map<number, Promise<{ coords: LonLat[]; dist: number[]; minutes: number | null } | null>>();
+export const lineRoutePath = (lineRef: number) => {
+  if (!routePathCache.has(lineRef)) {
+    routePathCache.set(lineRef, (async () => {
+      const u = new URL(`${STRIDE}/siri_rides/list`);
+      u.searchParams.set("siri_route__line_refs", String(lineRef));
+      u.searchParams.set("scheduled_start_time_from", new Date(Date.now() - 36 * 3600_000).toISOString());
+      u.searchParams.set("scheduled_start_time_to", new Date(Date.now() - 3 * 3600_000).toISOString());
+      u.searchParams.set("order_by", "scheduled_start_time desc");
+      u.searchParams.set("limit", "4");
+      const rides = await getJSON<any[]>(u.toString());
+      // Prefer a trip the feed saw from start to finish.
+      for (const r of [...rides.filter((x) => x.duration_minutes), ...rides.filter((x) => !x.duration_minutes)].slice(0, 2)) {
+        const p = await ridePath(r.id);
+        if (p.coords.length >= 5) return { coords: p.coords, dist: p.dist, minutes: r.duration_minutes ?? null };
+      }
+      return null;
+    })().catch(() => { routePathCache.delete(lineRef); return null; }));
+  }
+  return routePathCache.get(lineRef)!;
+};
+
+export type BusTrip = {
+  trail: LonLat[];          // where this bus has driven on this trip
+  route: LonLat[] | null;   // the full route, from an earlier trip
+  ahead: LonLat[] | null;   // the part of the route still to come
+  startedAt: string | null; // first position the feed has for this trip
+  doneKm: number | null; totalKm: number | null; tripMinutes: number | null;
+};
+
+export const fetchBusTrip = async (bus: Bus): Promise<BusTrip> => {
+  const [trail, route] = await Promise.all([
+    bus.rideId ? ridePath(bus.rideId).catch(() => null) : Promise.resolve(null),
+    lineRoutePath(bus.lineRef),
+  ]);
+  const done = bus.distance ?? trail?.dist.at(-1) ?? null;
+  let ahead: LonLat[] | null = null;
+  if (route && done != null) {
+    const i = route.dist.findIndex((d) => d > done);
+    ahead = i >= 0 ? [[bus.lon, bus.lat], ...route.coords.slice(i)] : null;
+  }
+  const total = route?.dist.at(-1) ?? null;
+  return {
+    trail: [...(trail?.coords ?? []), [bus.lon, bus.lat]],
+    route: route?.coords ?? null,
+    ahead,
+    startedAt: trail?.times[0] ?? null,
+    doneKm: done != null ? done / 1000 : null,
+    totalKm: total ? total / 1000 : null,
+    tripMinutes: route?.minutes ?? null,
+  };
+};
+
+/* ---------------- "Where to?": lines that run between two points ---------------- */
+
+export type Geo = { lat: number; lon: number; label: string };
+
+export const geocode = async (q: string, lang: "he" | "en"): Promise<Geo[]> => {
+  const u = new URL("https://nominatim.openstreetmap.org/search");
+  u.searchParams.set("q", q);
+  u.searchParams.set("format", "jsonv2");
+  u.searchParams.set("limit", "5");
+  u.searchParams.set("countrycodes", "il");
+  u.searchParams.set("viewbox", "34.70,32.20,34.95,31.95"); // Gush Dan first
+  u.searchParams.set("accept-language", lang === "he" ? "he,en" : "en,he");
+  const rows = await getJSON<any[]>(u.toString());
+  return rows.map((r) => ({ lat: Number(r.lat), lon: Number(r.lon), label: String(r.display_name).split(",").slice(0, 3).join(",") }));
+};
+
+export type LineMatch = { lineRef: number; line?: string; to?: string; from?: string; agency?: string; distAtOrigin: number; distAtDest: number };
+
+// Lines whose buses, over the last few hours, passed near the start and then near the destination.
+// Uses only the Open Bus feed, so it needs no timetable download.
+export const linesBetween = async (o: Geo, d: Geo): Promise<LineMatch[]> => {
+  const near = async (p: Geo) => {
+    const u = new URL(`${STRIDE}/siri_vehicle_locations/list`);
+    const dl = 0.0035, dn = 0.0042; // ~400 m
+    u.searchParams.set("recorded_at_time_from", new Date(Date.now() - 3 * 3600_000).toISOString());
+    u.searchParams.set("recorded_at_time_to", new Date(Date.now() + 60000).toISOString());
+    u.searchParams.set("lat__greater_or_equal", String(p.lat - dl));
+    u.searchParams.set("lat__lower_or_equal", String(p.lat + dl));
+    u.searchParams.set("lon__greater_or_equal", String(p.lon - dn));
+    u.searchParams.set("lon__lower_or_equal", String(p.lon + dn));
+    u.searchParams.set("limit", "6000");
+    return getJSON<any[]>(u.toString());
+  };
+  const [a, b] = await Promise.all([near(o), near(d)]);
+  const atOrigin = new Map<number, number>();
+  for (const r of a) {
+    const prev = atOrigin.get(r.siri_ride__id);
+    if (prev == null || r.distance_from_journey_start < prev) atOrigin.set(r.siri_ride__id, r.distance_from_journey_start);
+  }
+  const best = new Map<number, LineMatch>();
+  for (const r of b) {
+    const s = atOrigin.get(r.siri_ride__id);
+    if (s == null || !(r.distance_from_journey_start > s)) continue; // must reach the destination after the start
+    const lr = r.siri_route__line_ref;
+    if (!best.has(lr)) best.set(lr, { lineRef: lr, distAtOrigin: s, distAtDest: r.distance_from_journey_start });
+  }
+  const list = [...best.values()];
+  await lookupRoutes(list.map((l) => l.lineRef));
+  for (const l of list) Object.assign(l, routeCache.get(l.lineRef) ?? {});
+  return list.sort((x, y) => (x.distAtDest - x.distAtOrigin) - (y.distAtDest - y.distAtOrigin));
 };
 
 export const fetchBuses = async (): Promise<{ buses: Bus[]; newest: string | null }> => {
@@ -226,6 +350,8 @@ export const fetchBuses = async (): Promise<{ buses: Bus[]; newest: string | nul
     latest.set(id, {
       id, lat: r.lat, lon: r.lon, bearing: r.bearing ?? 0, speed: r.velocity ?? 0, recordedAt: r.recorded_at_time,
       lineRef: r.siri_route__line_ref, operatorRef: r.siri_route__operator_ref,
+      rideId: r.siri_ride__id ?? undefined, scheduledStart: r.siri_ride__scheduled_start_time ?? undefined,
+      distance: r.distance_from_journey_start ?? undefined,
     });
   }
   const buses = [...latest.values()];
@@ -236,7 +362,10 @@ export const fetchBuses = async (): Promise<{ buses: Bus[]; newest: string | nul
 
 /* ---------------- Aircraft (adsb.lol, then adsb.fi, then OpenSky) ---------------- */
 
-export type Aircraft = { id: string; callsign: string; lat: number; lon: number; track: number; altFt: number | null; speedKt: number | null; type?: string };
+export type Aircraft = {
+  id: string; callsign: string; lat: number; lon: number; track: number; altFt: number | null; speedKt: number | null; type?: string;
+  reg?: string; desc?: string; operator?: string; vRate?: number | null; squawk?: string; onGround?: boolean;
+};
 
 // Both adsb.lol and adsb.fi speak the readsb "v2" format.
 const fromReadsb = (j: any): Aircraft[] =>
@@ -247,6 +376,8 @@ const fromReadsb = (j: any): Aircraft[] =>
       track: a.track ?? a.true_heading ?? 0,
       altFt: typeof a.alt_baro === "number" ? a.alt_baro : null,
       speedKt: a.gs ?? null, type: a.t,
+      reg: a.r, desc: a.desc, operator: a.ownOp, vRate: a.baro_rate ?? a.geom_rate ?? null, squawk: a.squawk,
+      onGround: a.alt_baro === "ground",
     }));
 
 const fromOpenSky = (j: any): Aircraft[] =>
@@ -278,6 +409,40 @@ export const fetchAircraft = async (): Promise<Aircraft[]> => {
   }
   if (lastFlights && Date.now() - lastFlights.at < 2 * 60_000) return lastFlights.planes;
   throw new Error("No flight source responded");
+};
+
+export type Airport = { iata?: string; name: string; city?: string; country?: string; lat: number; lon: number };
+export type FlightInfo = {
+  airline?: string; flightIata?: string; origin?: Airport; destination?: Airport;
+  model?: string; owner?: string; ownerCountry?: string;
+  photo?: { src: string; link: string; by: string };
+};
+
+const flightInfoCache = new Map<string, Promise<FlightInfo>>();
+// Route and airframe from adsbdb, photo from Planespotters. Both are free and allow browser calls.
+export const fetchFlightInfo = (hex: string, callsign: string) => {
+  const key = `${hex}|${callsign}`;
+  if (!flightInfoCache.has(key)) {
+    flightInfoCache.set(key, (async () => {
+      const cs = callsign.trim();
+      const [db, ps] = await Promise.all([
+        fetch(`https://api.adsbdb.com/v0/aircraft/${hex}${cs && cs !== hex ? `?callsign=${encodeURIComponent(cs)}` : ""}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+        fetch(`https://api.planespotters.net/pub/photos/hex/${hex}`).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      ]);
+      const ac = db?.response?.aircraft;
+      const fr = db?.response?.flightroute;
+      const ap = (x: any): Airport | undefined => x && { iata: x.iata_code, name: x.name, city: x.municipality, country: x.country_name, lat: x.latitude, lon: x.longitude };
+      const p = ps?.photos?.[0];
+      return {
+        airline: fr?.airline?.name, flightIata: fr?.callsign_iata,
+        origin: ap(fr?.origin), destination: ap(fr?.destination),
+        model: ac ? `${ac.manufacturer ?? ""} ${ac.type ?? ""}`.trim() : undefined,
+        owner: ac?.registered_owner, ownerCountry: ac?.registered_owner_country_name,
+        photo: p ? { src: p.thumbnail_large?.src ?? p.thumbnail?.src, link: p.link, by: p.photographer } : undefined,
+      };
+    })());
+  }
+  return flightInfoCache.get(key)!;
 };
 
 /* ---------------- Places (OpenStreetMap via Overpass, ODbL) ---------------- */
@@ -369,7 +534,7 @@ export type FeedEvent = {
   url: string; image: string | null; source: string;
 };
 
-export type FeedNews = { id: string; title: string; url: string; source: string; lang: "he" | "en"; published: string | null };
+export type FeedNews = { id: string; title: string; url: string; source: string; lang: "he" | "en"; published: string | null; image?: string | null; summary?: string | null };
 
 export const fetchEventsFeed = async (): Promise<{ updated: string | null; events: FeedEvent[] }> => {
   const res = await fetch("/data/events.json", { cache: "no-cache" });

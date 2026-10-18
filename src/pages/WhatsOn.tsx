@@ -51,10 +51,12 @@ export const EventRow = ({ e, showDay = false }: { e: FeedEvent; showDay?: boole
 
 const WhatsOn = () => {
   const { t, lang } = useI18n();
-  const path = useLocation().pathname;
-  const [range, setRange] = useState<Range>(path === "/weekend" ? "weekend" : "tonight");
+  const { pathname: path, search } = useLocation();
+  const params = new URLSearchParams(search);
+  const qRange = params.get("range") as Range | null;
+  const [range, setRange] = useState<Range>(path === "/weekend" ? "weekend" : qRange && ["tonight", "tomorrow", "weekend", "week", "all"].includes(qRange) ? qRange : "tonight");
   const [freeOnly, setFreeOnly] = useState(path === "/free");
-  const [cats, setCats] = useState<Set<string>>(new Set());
+  const [cats, setCats] = useState<Set<string>>(() => new Set(params.getAll("cat")));
   const { data, isLoading, isError } = useEventsFeed();
 
   useEffect(() => {
