@@ -110,13 +110,16 @@ export const SkyHero = () => {
   const beach = useBeachForecast();
   const shabbat = useShabbat(lang);
   const [now, setNow] = useState(() => new Date());
+  // Dragging the timeline previews the sky (and the city) at another hour today.
+  const [preview, setPreview] = useState<number | null>(null);
 
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
   }, []);
 
-  const m = israelMinutes(now);
+  const realM = israelMinutes(now);
+  const m = preview != null ? preview % 1440 : realM;
   const sr = toMin(weather.data?.sunrise) ?? 6 * 60 + 15;
   const ss = toMin(weather.data?.sunset) ?? 17 * 60 + 30;
   const [top, horizon] = skyAt(m, sr, ss);
@@ -143,13 +146,39 @@ export const SkyHero = () => {
   const candles = shabbat.data?.candles ? new Date(shabbat.data.candles).getTime() : null;
   const hoursToShabbat = candles && candles > now.getTime() ? (candles - now.getTime()) / 3600_000 : null;
 
+  // Timeline runs from 05:00 today to 05:00 tomorrow.
+  const T0 = 300;
+  const tl = (min: number) => (min < T0 ? min + 1440 : min);
+  const tlNow = tl(realM);
+  const tlSel = preview ?? tlNow;
+  const trackStops = Array.from({ length: 25 }, (_, i) => {
+    const mm = (T0 + i * 60) % 1440;
+    const [a, b] = skyAt(mm, sr, ss);
+    return `${css(mix(a, b, 0.6))} ${(i / 24) * 100}%`;
+  }).join(",");
+  const pct = (v: number) => `${((v - T0) / 1440) * 100}%`;
+  const hh = (v: number) => `${String(Math.floor((v % 1440) / 60)).padStart(2, "0")}:${String(v % 60).padStart(2, "0")}`;
+
+  const selHour = beach.data?.find((h) => h.time.startsWith(today) && Number(h.time.slice(11, 13)) === Math.floor((tlSel % 1440) / 60))
+    ?? beach.data?.find((h) => Number(h.time.slice(11, 13)) === Math.floor((tlSel % 1440) / 60) && h.time.slice(0, 10) > today);
+  const startingThen = useMemo(() => {
+    if (preview == null) return [];
+    // Israel midnight today, as an instant, plus the chosen minutes.
+    const off = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Jerusalem", timeZoneName: "shortOffset" }).formatToParts(now).find((x) => x.type === "timeZoneName")?.value.replace("GMT", "") || "+2";
+    const midnight = Date.parse(`${today}T00:00:00${off.startsWith("-") ? "-" : "+"}${String(Math.abs(Number(off.split(":")[0]))).padStart(2, "0")}:00`);
+    const at = midnight + tlSel * 60_000;
+    return (events.data?.events ?? [])
+      .filter((e) => isEveningOut(e) && !e.allDay && Math.abs(new Date(e.start).getTime() - at) <= 45 * 60_000)
+      .slice(0, 3);
+  }, [preview, tlSel, events.data, now]);
+
   const pills: { text: string; to: string; bg: string }[] = [];
   if (tonight) pills.push({ text: `${tonight} ${t("hero.thingsTonight")}`, to: "/events", bg: "#d6336c" });
   if (toSunset > 0 && toSunset < 180) pills.push({ text: `${t("sky.sunsetIn")} ${toSunset < 60 ? `${toSunset} ${t("live.minutes")}` : `${Math.floor(toSunset / 60)}:${String(toSunset % 60).padStart(2, "0")}`}`, to: "/beach", bg: "#f76707" });
   else if (isNight && toSunrise < 300) pills.push({ text: `${t("sky.sunriseIn")} ${Math.floor(toSunrise / 60)}:${String(toSunrise % 60).padStart(2, "0")}`, to: "/beach", bg: "#f59f00" });
   if (beachScore != null) pills.push({ text: `${t("nav.beach")} ${beachScore.toFixed(1)}/10`, to: "/beach", bg: "#0c8599" });
   if (hoursToShabbat != null && hoursToShabbat < 30) pills.push({ text: `${t("shab.in")} ${Math.round(hoursToShabbat)} ${t("shab.hours")}`, to: "/shabbat", bg: "#5f3dc4" });
-  pills.push({ text: t("sky.liveMap"), to: "/live", bg: "rgba(255,255,255,0.18)" });
+  pills.push({ text: t("sky.liveMap"), to: "/live", bg: "#0f1530" });
 
   const w = weather.data;
 
@@ -184,6 +213,29 @@ export const SkyHero = () => {
         ))}
       </div>
 
+      {/* The horizon is a timeline: drag to see the sky, the weather and what starts at any hour today */}
+      <div className="absolute inset-x-0 bottom-0 h-[52px] sm:h-[64px] z-10">
+        <div className="container-page h-full flex items-center gap-3">
+          <div className="relative flex-1 h-full flex items-center">
+            <div className="absolute inset-x-0 h-2 rounded-sm" style={{ background: `linear-gradient(90deg, ${trackStops})` }} aria-hidden />
+            {[sr, ss].map((x, i) => (
+              <span key={i} className="absolute -translate-x-1/2 top-1 text-[10px] text-white/80 tabular" style={{ left: pct(tl(x)) }} aria-hidden>{i ? "☾" : "☀"} {hh(x)}</span>
+            ))}
+            <span className="absolute h-4 w-[2px] bg-white -translate-x-1/2" style={{ left: pct(tlNow) }} aria-hidden />
+            <input
+              type="range" min={T0} max={T0 + 1439} step={15} value={tlSel}
+              onChange={(e) => setPreview(Number(e.target.value))}
+              aria-label={t("sky.scrub")}
+              aria-valuetext={hh(tlSel)}
+              className="radar-scrub relative w-full h-8 bg-transparent appearance-none cursor-grab active:cursor-grabbing"
+            />
+          </div>
+          {preview != null && (
+            <button onClick={() => setPreview(null)} className="shrink-0 h-8 rounded-md bg-white text-[#0f1530] px-3 text-[13px] font-semibold">{t("sky.now")}</button>
+          )}
+        </div>
+      </div>
+
       <div className="container-page relative flex flex-col min-h-[500px] h-[66svh] sm:h-[78svh] max-h-[760px] pt-8 sm:pt-12 pb-[120px] sm:pb-[150px]">
         <p className="flex flex-wrap gap-x-3 text-[14px] text-white/85 [text-shadow:0_1px_8px_rgba(0,0,0,0.35)]">
           <span>{fmtToday(lang)}</span>
@@ -192,7 +244,22 @@ export const SkyHero = () => {
         <h1 id="sky-h" className="mt-2 font-display text-[50px] leading-[0.9] sm:text-[88px] lg:text-[112px] max-w-[12ch] [text-shadow:0_4px_30px_rgba(0,0,0,0.25)]">
           {greeting}
         </h1>
-        {w && (
+        {preview != null && (
+          <div className="mt-4 [text-shadow:0_1px_10px_rgba(0,0,0,0.3)]" aria-live="polite">
+            <p className="flex items-baseline gap-3">
+              <span className="font-display text-[56px] sm:text-[72px] leading-none tabular">{hh(tlSel)}</span>
+              {selHour && <span className="text-[17px] sm:text-[19px] text-white/90">{Math.round(selHour.temp)}°{selHour.isDay && <span className="block text-[14px] text-white/75">{t("nav.beach")} {selHour.score.toFixed(1)}/10</span>}</span>}
+            </p>
+            {startingThen.length > 0 && (
+              <ul className="mt-3 space-y-1 max-w-xl">
+                {startingThen.map((e) => (
+                  <li key={e.id}><a href={e.url} target="_blank" rel="noopener noreferrer" className="inline-block rounded-md bg-[#0f1530]/80 px-2.5 py-1 text-[14px] hover:bg-[#0f1530]" dir="auto">{e.title}{e.venue ? `, ${e.venue}` : ""}</a></li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+        {w && preview == null && (
           <p className="mt-4 flex items-baseline gap-3 [text-shadow:0_1px_10px_rgba(0,0,0,0.3)]">
             <span className="font-display text-[56px] sm:text-[72px] leading-none tabular">{Math.round(w.temp)}°</span>
             <span className="text-[17px] sm:text-[19px] text-white/90">
@@ -203,7 +270,7 @@ export const SkyHero = () => {
         )}
         <div className="mt-auto flex flex-wrap gap-2">
           {pills.map((x) => (
-            <Link key={x.text} to={x.to} className="inline-flex items-center h-10 rounded-full px-4 text-[14px] font-medium text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.45)] backdrop-blur hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" style={{ background: x.bg }}>
+            <Link key={x.text} to={x.to} className="inline-flex items-center h-9 rounded-md px-3.5 text-[14px] font-medium text-white hover:outline hover:outline-2 hover:outline-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" style={{ background: x.bg }}>
               {x.text}
             </Link>
           ))}

@@ -65,6 +65,8 @@ const STRINGS = {
   "sky.night": { en: "Tel Aviv after dark", he: "תל אביב בלילה" },
   "sky.sunsetIn": { en: "Sunset in", he: "שקיעה בעוד" },
   "sky.sunriseIn": { en: "Sunrise in", he: "זריחה בעוד" },
+  "sky.scrub": { en: "Drag to see any hour today", he: "גררו כדי לראות כל שעה היום" },
+  "sky.now": { en: "Now", he: "עכשיו" },
   "sky.liveMap": { en: "Watch the city live", he: "העיר בשידור חי" },
   "board.films": { en: "films showing in the next 24 hours", he: "סרטים ב־24 השעות הקרובות" },
   "board.thisWeek": { en: "This week", he: "השבוע" },

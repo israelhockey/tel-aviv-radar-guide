@@ -19,14 +19,13 @@ const MiniPoster = ({ e }: { e: FeedEvent }) => {
   const { lang } = useI18n();
   const [broken, setBroken] = useState(false);
   return (
-    <a href={e.url} target="_blank" rel="noopener noreferrer" className="group relative block aspect-[3/4] rounded-xl overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+    <a href={e.url} target="_blank" rel="noopener noreferrer" className="group relative block aspect-[3/4] rounded-md overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
       {e.image && !broken ? (
         <img src={e.image} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
       ) : (
         <span className={`absolute inset-0 ${CAT_BG[e.category] ?? CAT_BG.other}`} />
       )}
-      <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-      <span className="absolute inset-x-0 bottom-0 p-2.5">
+      <span className="absolute inset-x-0 bottom-0 p-2 bg-black/75">
         {!e.allDay && <span className="block text-[13px] font-semibold tabular text-white">{fmtClock(e.start, lang)}</span>}
         <span className="block text-[13px] leading-tight text-white line-clamp-2" dir="auto">{e.title}</span>
       </span>
@@ -85,7 +84,7 @@ export const HomeBoard = () => {
   return (
     <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4 auto-rows-[minmax(150px,auto)]">
       {/* Tonight: the biggest tile, dark so the posters glow */}
-      <section className="col-span-2 lg:row-span-2 rounded-[28px] bg-[hsl(250_45%_12%)] text-white p-4 sm:p-5 flex flex-col">
+      <section className="col-span-2 lg:row-span-2 rounded-xl bg-[#d6336c] text-white p-4 sm:p-5 flex flex-col">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="font-display text-[28px] sm:text-[34px] leading-none">{picks.count ? t("now.tonight") : t("board.thisWeek")}</h2>
           <Link to="/events" className="text-[14px] text-white/80 hover:text-white underline-offset-4 hover:underline">{picks.count ? `${picks.count} ${t("hero.thingsTonight")}` : t("now.seeWeek")}</Link>
@@ -97,8 +96,8 @@ export const HomeBoard = () => {
       </section>
 
       {/* Beach: the sea itself */}
-      <Link to="/beach" className="relative overflow-hidden rounded-[28px] p-4 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea" style={{ background: "linear-gradient(170deg,#1098ad 0%,#0b7285 60%,#085a6b 100%)" }}>
-        <svg viewBox="0 0 200 40" preserveAspectRatio="none" className="absolute inset-x-0 bottom-0 w-full h-10 opacity-30" aria-hidden><path d="M0 20 Q25 8 50 20 T100 20 T150 20 T200 20 V40 H0 Z" fill="#fff" /></svg>
+      <Link to="/beach" className="relative overflow-hidden rounded-xl p-4 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-foreground/70" style={{ background: "#0e7c86" }}>
+        <svg viewBox="0 0 200 20" preserveAspectRatio="none" className="absolute inset-x-0 bottom-3 w-full h-4 opacity-50" aria-hidden><path d="M0 10 Q12.5 2 25 10 T50 10 T75 10 T100 10 T125 10 T150 10 T175 10 T200 10" fill="none" stroke="#fff" strokeWidth="2" /></svg>
         <p className="text-[14px] text-white/85">{t("nav.beach")}</p>
         <p className="mt-1 font-display text-[44px] leading-none tabular">{best ? best.score.toFixed(1) : "…"}</p>
         {best && <p className="mt-1 text-[14px] font-medium">{t(verdict(best.score))}</p>}
@@ -112,18 +111,17 @@ export const HomeBoard = () => {
 
       {/* Top story: a picture you can't miss */}
       {story ? (
-        <a href={story.url} target="_blank" rel="noopener noreferrer" className="relative overflow-hidden rounded-[28px] row-span-2 min-h-[300px] bg-cat-news text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea">
+        <a href={story.url} target="_blank" rel="noopener noreferrer" className="relative overflow-hidden rounded-xl row-span-2 min-h-[300px] bg-cat-news text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-foreground/70">
           {story.image && <img src={story.image} alt="" loading="lazy" referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full object-cover" />}
-          <span className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-          <span className="absolute inset-x-0 bottom-0 p-4">
+          <span className="absolute inset-x-0 bottom-0 p-4 bg-[#0f1530]/90">
             <span className="text-[12px] text-white/80">{story.source}, {relTime(story.published, lang)}</span>
             <span className="mt-1 block font-display text-[17px] sm:text-[22px] leading-tight line-clamp-5 sm:line-clamp-4" lang={story.lang} dir={story.lang === "he" ? "rtl" : "ltr"}>{story.title}</span>
           </span>
         </a>
-      ) : <div className="row-span-2 rounded-[28px] bg-secondary animate-pulse" />}
+      ) : <div className="row-span-2 rounded-xl bg-secondary animate-pulse" />}
 
       {/* Food: citrus, with dark ink */}
-      <Link to="/food" className="rounded-[28px] p-4 bg-[#ffd43b] text-[#2b1d00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea">
+      <Link to="/food" className="rounded-xl p-4 bg-[#ffc233] text-[#2b1d00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-foreground/70">
         <p className="text-[14px] opacity-80">{t("food.title")}</p>
         <p className="mt-1 font-display text-[44px] leading-none tabular">{places.data ? food.open : "…"}</p>
         <p className="text-[13px] font-medium">{t("food.openNow")}</p>
@@ -136,7 +134,7 @@ export const HomeBoard = () => {
       </Link>
 
       {/* The city moving */}
-      <Link to="/getting-around" className="col-span-2 rounded-[28px] p-4 bg-card border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea">
+      <Link to="/getting-around" className="col-span-2 rounded-xl p-4 bg-card border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-foreground/70">
         <p className="text-[14px] text-muted-foreground">{t("go.title")}</p>
         <div className="mt-2 grid grid-cols-3 gap-3">
           <div><Bus className="h-4 w-4 text-[#0b63e5]" aria-hidden /><p className="mt-1 font-display text-[30px] leading-none tabular text-[#0b63e5]">{buses.data?.buses.length ?? "…"}</p><p className="text-[12px] text-muted-foreground">{t("now.busesMoving")}</p></div>
@@ -146,22 +144,22 @@ export const HomeBoard = () => {
       </Link>
 
       {/* Cinema tonight */}
-      <Link to="/cinema" className="rounded-[28px] p-4 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea" style={{ background: "linear-gradient(150deg,#3b1d6e,#9c36b5)" }}>
+      <Link to="/cinema" className="rounded-xl p-4 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-foreground/70" style={{ background: "#5b2a86" }}>
         <p className="text-[14px] text-white/85">{t("cin.title")}</p>
         <p className="mt-1 font-display text-[30px] leading-none tabular">{cinema.data ? films.length : "…"} <span className="text-[14px] font-sans">{t("board.films")}</span></p>
         <div className="mt-3 flex -space-x-3 rtl:space-x-reverse">
           {films.filter((f) => f.poster).slice(0, 4).map((f) => (
-            <img key={f.id} src={f.poster!} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-11 rounded-md object-cover ring-2 ring-[#3b1d6e]" />
+            <img key={f.id} src={f.poster!} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-11 rounded-md object-cover ring-2 ring-[#5b2a86]" />
           ))}
         </div>
       </Link>
 
       {/* Shabbat, or the next holiday */}
-      <Link to="/shabbat" className="rounded-[28px] p-4 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea" style={{ background: "radial-gradient(120% 120% at 90% 0%, #f59f00 0%, #c2255c 40%, #2b1450 100%)" }}>
+      <Link to="/shabbat" className="rounded-xl p-4 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-foreground/70" style={{ background: "#0f1530" }}>
         <p className="text-[14px] text-white/85">{t("shabbat.title")}</p>
         {shabbat.data?.candles ? (
           <>
-            <p className="mt-1 font-display text-[36px] leading-none tabular">{fmtClock(shabbat.data.candles, lang)}</p>
+            <p className="mt-1 font-display text-[36px] leading-none tabular text-[#ffc233]">{fmtClock(shabbat.data.candles, lang)}</p>
             <p className="text-[12px] text-white/85">{t("shabbat.candles")}, {fmtWeekday(shabbat.data.candles, lang)}</p>
           </>
         ) : <p className="mt-1 font-display text-[36px] leading-none">…</p>}
@@ -169,11 +167,11 @@ export const HomeBoard = () => {
       </Link>
 
       {/* The live map */}
-      <Link to="/live" className="relative overflow-hidden col-span-2 lg:col-span-4 min-h-[150px] rounded-[28px] p-5 sm:p-6 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea" style={{ background: "linear-gradient(110deg,#0b3d91 0%,#1864ab 45%,#0c8599 100%)" }}>
-        <span className="absolute -end-10 -bottom-10 h-40 w-40 rounded-full border-2 border-[#15aabf]/50" aria-hidden />
-        <span className="absolute -end-2 -bottom-2 h-24 w-24 rounded-full border-2 border-[#15aabf]/70" aria-hidden />
+      <Link to="/live" className="relative overflow-hidden col-span-2 lg:col-span-4 min-h-[150px] rounded-xl p-5 sm:p-6 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-foreground/70" style={{ background: "#2f6fed" }}>
+        <span className="absolute -end-10 -bottom-10 h-40 w-40 rounded-full border-2 border-white/30" aria-hidden />
+        <span className="absolute -end-2 -bottom-2 h-24 w-24 rounded-full border-2 border-white/50" aria-hidden />
         <span className="absolute end-7 bottom-7 h-6 w-6 rounded-full bg-[#ff5a1f] motion-safe:animate-ping opacity-60" aria-hidden />
-        <Radar className="h-5 w-5 text-[#15aabf]" aria-hidden />
+        <Radar className="h-5 w-5 text-white" aria-hidden />
         <p className="mt-2 font-display text-[28px] sm:text-[36px] leading-tight">{t("board.map")}</p>
         <p className="mt-1 text-[14px] text-white/85 max-w-[44ch]">{t("board.mapBody")}</p>
       </Link>

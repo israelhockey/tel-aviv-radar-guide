@@ -5,62 +5,64 @@ import { readFile, writeFile } from "node:fs/promises";
 
 const UA = "TLV-Radar/1.0 (free public city guide; https://tel-aviv-radar-guide.lovable.app)";
 
-// Our dish keys → Wikipedia articles to draw photos from, best first.
+// Our dish keys → Wikipedia articles. Each article's lead photo (the one its editors chose to
+// show the dish) becomes one photo, so every dish gets several good pictures.
 const DISHES = {
-  coffee: ["Cappuccino", "Latte", "Espresso", "Flat white"],
-  burger: ["Hamburger", "Cheeseburger"],
-  pizza: ["Pizza", "Neapolitan pizza"],
-  hummus: ["Hummus"],
-  falafel: ["Falafel"],
-  shawarma: ["Shawarma"],
-  sabich: ["Sabich"],
-  shakshuka: ["Shakshouka"],
-  sushi: ["Sushi", "Nigiri"],
-  ramen: ["Ramen"],
-  asian: ["Pad thai", "Dim sum", "Bao (food)"],
-  pasta: ["Spaghetti alla carbonara", "Pasta"],
-  mexican: ["Taco"],
-  seafood: ["Seafood", "Calamari"],
-  steak: ["Steak"],
-  chicken: ["Fried chicken"],
-  salad: ["Israeli salad", "Greek salad"],
-  breakfast: ["Israeli breakfast", "Eggs Benedict"],
-  icecream: ["Gelato", "Ice cream"],
-  dessert: ["Cake", "Chocolate cake"],
-  juice: ["Smoothie", "Juice"],
+  coffee: ["Cappuccino", "Caffè latte", "Espresso", "Flat white", "Iced coffee"],
+  burger: ["Hamburger", "Cheeseburger", "Veggie burger"],
+  pizza: ["Pizza", "Neapolitan pizza", "Pizza Margherita"],
+  hummus: ["Hummus", "Ful medames", "Msabbha"],
+  falafel: ["Falafel", "Pita"],
+  shawarma: ["Shawarma", "Gyros", "Doner kebab"],
+  sabich: ["Sabich", "Amba (condiment)"],
+  shakshuka: ["Shakshouka", "Menemen (food)"],
+  sushi: ["Sushi", "Sashimi", "Makizushi"],
+  ramen: ["Ramen", "Udon", "Pho"],
+  asian: ["Pad thai", "Dim sum", "Bao (food)", "Jiaozi"],
+  pasta: ["Spaghetti alla carbonara", "Lasagna", "Cacio e pepe", "Ravioli"],
+  mexican: ["Taco", "Burrito", "Guacamole"],
+  seafood: ["Calamari", "Paella", "Fish and chips"],
+  steak: ["Steak", "Ribeye", "Entrecôte"],
+  chicken: ["Fried chicken", "Schnitzel", "Shashlik"],
+  salad: ["Israeli salad", "Greek salad", "Tabbouleh", "Fattoush"],
+  breakfast: ["Israeli breakfast", "Eggs Benedict", "Pancake", "Brunch"],
+  icecream: ["Gelato", "Ice cream", "Sundae", "Ice cream cone"],
+  dessert: ["Cheesecake", "Chocolate cake", "Malabi", "Knafeh"],
+  juice: ["Smoothie", "Orange juice", "Lemonade"],
   bubbletea: ["Bubble tea"],
-  ethiopian: ["Injera"],
-  indian: ["Curry"],
-  french: ["Croissant"],
-  bagel: ["Bagel"],
-  sandwich: ["Sandwich"],
-  cocktail: ["Cocktail", "Negroni", "Margarita"],
-  beer: ["Beer", "Draught beer"],
-  wine: ["Wine"],
-  kebab: ["Kebab"],
-  bourekas: ["Bourekas"],
-  vegan: ["Buddha bowl", "Salad"],
-  meze: ["Meze", "Mezze"],
+  ethiopian: ["Injera", "Ethiopian cuisine"],
+  indian: ["Chicken tikka masala", "Biryani", "Butter chicken", "Samosa"],
+  french: ["Croissant", "Pain au chocolat", "Crème brûlée"],
+  bagel: ["Bagel", "Ka'ak"],
+  sandwich: ["Club sandwich", "Bánh mì", "Sandwich"],
+  cocktail: ["Cocktail", "Negroni", "Margarita", "Mojito", "Spritz Veneziano"],
+  beer: ["Beer", "India pale ale", "Lager"],
+  wine: ["Rosé", "Red wine", "Sparkling wine", "Wine"],
+  kebab: ["Kebab", "Shish kebab", "Kofta"],
+  bourekas: ["Bourekas", "Börek"],
+  vegan: ["Buddha bowl", "Poke (dish)", "Tofu"],
+  meze: ["Meze", "Baba ghanoush", "Labneh"],
 };
 
-const BAD = /map|logo|flag|icon|diagram|stamp|coat|chart|svg|drawing|sign|menu|portrait|statue|label|commons-logo|wikidata/i;
+const BAD = /map|logo|flag|icon|diagram|stamp|coat|chart|\.svg|drawing|portrait|statue/i;
 
-const api = async (title) => {
+// Lead photo of an article, with an 800px thumbnail and its credit, from one API call.
+const leadPhoto = async (title) => {
   const u = new URL("https://en.wikipedia.org/w/api.php");
-  for (const [k, v] of Object.entries({
-    action: "query", format: "json", titles: title, redirects: "1", generator: "images", gimlimit: "40",
-    prop: "imageinfo", iiprop: "url|extmetadata|size|mime", iiurlwidth: "800",
-  })) u.searchParams.set(k, v);
+  for (const [k, v] of Object.entries({ action: "query", format: "json", titles: title, redirects: "1", prop: "pageimages", piprop: "name", pilicense: "free" })) u.searchParams.set(k, v);
   const res = await fetch(u, { headers: { "User-Agent": UA } });
   if (!res.ok) throw new Error(`${res.status} ${title}`);
-  return res.json();
-};
-
-const lead = async (title) => {
-  const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`, { headers: { "User-Agent": UA } });
-  if (!res.ok) return null;
-  const j = await res.json();
-  return j.originalimage?.source ? decodeURIComponent(j.originalimage.source.split("/").pop()) : null;
+  const page = Object.values((await res.json()).query?.pages ?? {})[0];
+  const name = page?.pageimage;
+  if (!name || BAD.test(name) || !/\.jpe?g$/i.test(name)) return null;
+  const c = new URL("https://commons.wikimedia.org/w/api.php");
+  for (const [k, v] of Object.entries({ action: "query", format: "json", titles: `File:${name}`, prop: "imageinfo", iiprop: "url|extmetadata|size", iiurlwidth: "800" })) c.searchParams.set(k, v);
+  const r2 = await fetch(c, { headers: { "User-Agent": UA } });
+  if (!r2.ok) return null;
+  const ii = Object.values((await r2.json()).query?.pages ?? {})[0]?.imageinfo?.[0];
+  if (!ii || ii.width < 500 || ii.width / ii.height < 0.6 || ii.width / ii.height > 2) return null;
+  const m = ii.extmetadata ?? {};
+  return { file: name, src: ii.thumburl, by: strip(m.Artist?.value).slice(0, 80) || "Wikimedia Commons", license: strip(m.LicenseShortName?.value) || "", page: ii.descriptionurl, dish: title };
 };
 
 const strip = (s = "") => s.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
@@ -73,35 +75,18 @@ const dishes = {};
 for (const [key, titles] of Object.entries(DISHES)) {
   const out = [];
   for (const title of titles) {
-    if (out.length >= 4) break;
     try {
-      const [j, leadFile] = await Promise.all([api(title), lead(title)]);
-      const pages = Object.values(j.query?.pages ?? {});
-      const photos = pages
-        .map((p) => ({ name: p.title.replace(/^File:/, ""), ii: p.imageinfo?.[0] }))
-        .filter(({ name, ii }) => ii && ii.mime === "image/jpeg" && ii.width >= 700 && ii.width / ii.height > 0.65 && ii.width / ii.height < 1.9 && !BAD.test(name));
-      // The article's own lead photo first: editors picked it as the best picture of the dish.
-      photos.sort((a, b) => (b.name.replace(/ /g, "_") === leadFile?.replace(/ /g, "_") ? 1 : 0) - (a.name.replace(/ /g, "_") === leadFile?.replace(/ /g, "_") ? 1 : 0));
-      for (const { name, ii } of photos) {
-        if (out.length >= 4 || out.some((o) => o.file === name)) continue;
-        const m = ii.extmetadata ?? {};
-        out.push({
-          file: name,
-          src: ii.thumburl,
-          by: strip(m.Artist?.value).slice(0, 80) || "Wikimedia Commons",
-          license: strip(m.LicenseShortName?.value) || "",
-          page: ii.descriptionurl,
-        });
-      }
+      const p = await leadPhoto(title);
+      if (p && !out.some((o) => o.file === p.file)) out.push(p);
     } catch (e) {
       console.log(`::warning::${title}: ${String(e).slice(0, 120)}`);
     }
-    await sleep(300);
+    await sleep(250);
   }
   dishes[key] = out.length ? out : prev[key] ?? [];
 }
 
 const n = Object.values(dishes).reduce((s, l) => s + l.length, 0);
 console.log(`::notice::food photos: ${n} photos for ${Object.keys(dishes).length} dishes; empty: ${Object.entries(dishes).filter(([, l]) => !l.length).map(([k]) => k).join(", ") || "none"}`);
-if (n < 30) process.exit(1);
+if (n < 25) process.exit(1);
 await writeFile("public/data/food-photos.json", JSON.stringify({ source: "Wikimedia Commons, via Wikipedia", updated: new Date().toISOString(), dishes }) + "\n");
