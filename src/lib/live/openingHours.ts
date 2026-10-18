@@ -12,6 +12,8 @@ const DAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"] as const;
 
 type Range = { start: number; end: number; openEnd?: boolean }; // minutes from day start; end may exceed 1440
 type Week = (Range[] | null)[]; // index = JS day (0 = Sunday); null = not specified
+// Marker for a day whose hours depend on something we can't compute (e.g. sunset).
+const UNKNOWN: Range[] = [];
 
 const parseTime = (s: string): number | null => {
   const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());
@@ -51,13 +53,13 @@ const parseRanges = (s: string): Range[] | null => {
   for (const part of s.split(",")) {
     const p = part.trim();
     if (!p) continue;
-    if (p.endsWith("+")) {
+    if (p.endsWith("+") && !p.includes("-")) {
       const start = parseTime(p.slice(0, -1));
       if (start == null) return null;
       out.push({ start, end: start + 6 * 60, openEnd: true }); // "open end": assume six hours, never shown as a closing time
       continue;
     }
-    const [a, b] = p.split("-");
+    const [a, b] = p.replace(/\+$/, "").split("-");
     if (a == null || b == null) return null;
     const start = parseTime(a);
     let end = parseTime(b);
@@ -70,14 +72,29 @@ const parseRanges = (s: string): Range[] | null => {
 
 export const parseOpeningHours = (raw: string | undefined): Week | "always" | null => {
   if (!raw) return null;
-  const value = raw.trim();
+  let value = raw.trim();
   if (value === "24/7") return "always";
-  if (/\b(PH|SH|week|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|sunrise|sunset|dawn|dusk)\b|"|\[/.test(value)) return null;
+  // Rules that change by date or season can't be evaluated here.
+  if (/\b(SH|week|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b|"|\[/.test(value)) return null;
+  // Normalise day case ("SU-Th") and the common local style of separating rules with commas
+  // ("Su-Th 16:00-02:00, Fr 11:00-19:00"): a comma right after a time or "off" starts a new rule.
+  value = value.replace(/\b(Su|Mo|Tu|We|Th|Fr|Sa)\b/gi, (d) => d[0].toUpperCase() + d[1].toLowerCase());
+  value = value.replace(/(?<=\d|\+|off|closed),\s*(?=[A-Z][a-z])/g, ";");
 
   const week: Week = [null, null, null, null, null, null, null];
   for (const ruleRaw of value.split(";")) {
     const rule = ruleRaw.trim();
     if (!rule) continue;
+    // Public-holiday rules apply only on holidays; skip them rather than misapply them.
+    if (/^PH\b/.test(rule)) continue;
+    // Times tied to sunset (common for Saturday night openings): that day becomes unknown.
+    if (/sunrise|sunset|dawn|dusk|\?/i.test(rule)) {
+      const dm = /^((?:[A-Z][a-z](?:-[A-Z][a-z])?)(?:\s*,\s*[A-Z][a-z](?:-[A-Z][a-z])?)*)/.exec(rule);
+      const days = dm ? parseDays(dm[1].replace(/\s+/g, "")) : null;
+      if (!days) return null;
+      for (const d of days) week[d] = UNKNOWN;
+      continue;
+    }
     // Split "Mo-Fr 08:00-20:00" into day part and time part.
     const m = /^((?:[A-Z][a-z](?:-[A-Z][a-z])?)(?:\s*,\s*[A-Z][a-z](?:-[A-Z][a-z])?)*)?\s*(.*)$/.exec(rule);
     if (!m) return null;
@@ -122,6 +139,13 @@ export const openStateAt = (raw: string | undefined, now: Date = new Date()): Op
   // A day that no rule mentions is closed (OSM semantics), unless no rule mentioned any day.
   const today = parsed[day] ?? [];
   const yesterday = parsed[(day + 6) % 7] ?? [];
+  if (today === UNKNOWN) {
+    // Still answer if yesterday's late hours cover this moment.
+    for (const r of yesterday) {
+      if (r.end > 1440 && minutes < r.end - 1440) return { status: "open", until: r.openEnd ? undefined : fmt(r.end) };
+    }
+    return { status: "unknown" };
+  }
 
   for (const r of today) {
     if (minutes >= r.start && minutes < r.end) return { status: "open", until: r.openEnd ? undefined : fmt(r.end) };
