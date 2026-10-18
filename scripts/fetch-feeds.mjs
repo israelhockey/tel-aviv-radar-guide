@@ -118,7 +118,7 @@ const fetchLeaan = async () => {
     if (!TLV_RE.test(`${loc.city ?? ""} ${loc.street ?? ""}`)) continue;
     if (!r.event_start || !r.id) continue;
     // Season tickets, refunds and long-running passes are not events people go to tonight.
-    if (r.subscription || /מנוי|החזר|כרטיס עונתי|season/i.test(`${r.event_name ?? ""}`)) continue;
+    if (r.subscription || /מנוי|החזר|פיצוי|כרטיס עונתי|season/i.test(`${r.event_name ?? ""}`)) continue;
     if (r.event_start * 1000 < Date.now() - 24 * 3600_000) continue;
     // categories is an object keyed by category id: { "3": { category_name: "מוזיקה", ... } }
     const cats = Object.keys(r.categories ?? {}).map(Number);

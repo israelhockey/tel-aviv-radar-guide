@@ -22,15 +22,16 @@ jobs:
         with:
           node-version: 20
       - run: node scripts/fetch-places.mjs
+      - run: node scripts/fetch-rail.mjs
       - name: Commit if changed
         run: |
-          if git diff --quiet -- public/data/places.json && git ls-files --error-unmatch public/data/places.json >/dev/null 2>&1; then
+          git add public/data/places.json public/data/rail.json
+          if git diff --cached --quiet; then
             echo "No changes."
             exit 0
           fi
           git config user.name "tlv-radar-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/data/places.json
-          git commit -m "Refresh places from OpenStreetMap"
+          git commit -m "Refresh places and rail from OpenStreetMap"
           git pull --rebase origin main
           git push
