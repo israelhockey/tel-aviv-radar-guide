@@ -58,6 +58,7 @@ const STRINGS = {
   "cin.films": { en: "films playing", he: "סרטים מוקרנים" },
   "cin.none": { en: "No screenings listed for this day yet.", he: "עוד אין הקרנות ליום הזה." },
   "cin.source": { en: "Screenings from the Tel Aviv Cinematheque and Planet Ayalon, refreshed every two hours. Times link to booking.", he: "הקרנות מסינמטק תל אביב ומפלאנט אילון, מתעדכנות כל שעתיים. השעות מובילות להזמנה." },
+  "tiles.films": { en: "films playing tonight", he: "סרטים מוקרנים הערב" },
   "food.title": { en: "Eat & drink", he: "אוכל ושתייה" },
   "food.openNow": { en: "places open right now", he: "מקומות פתוחים עכשיו" },
   "food.happyNow": { en: "happy hours on", he: "הפי האוורים עכשיו" },

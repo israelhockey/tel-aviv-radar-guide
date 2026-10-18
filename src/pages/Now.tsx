@@ -6,6 +6,7 @@ import type { Database } from "@/integrations/supabase/types";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ConditionsStrip } from "@/components/radar/ConditionsStrip";
 import { TonightHero } from "@/components/radar/TonightHero";
+import { CityTiles } from "@/components/radar/CityTiles";
 import { BeachList } from "@/components/radar/BeachList";
 import { ShabbatCard } from "@/components/radar/ShabbatCard";
 import { OpenNearby } from "@/components/radar/OpenNearby";
@@ -102,6 +103,9 @@ const Now = () => {
       <div className="container-page">
         <div className="mt-2">
           <ConditionsStrip />
+        </div>
+        <div className="mt-5">
+          <CityTiles />
         </div>
 
         <div className="mt-8 grid gap-10 lg:grid-cols-[1fr,360px]">
