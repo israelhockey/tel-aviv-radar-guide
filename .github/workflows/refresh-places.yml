@@ -15,7 +15,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -23,9 +23,11 @@ jobs:
           node-version: 20
       - run: node scripts/fetch-places.mjs
       - run: node scripts/fetch-rail.mjs
+        continue-on-error: true
       - name: Commit if changed
         run: |
-          git add public/data/places.json public/data/rail.json
+          git add public/data/places.json
+          [ -f public/data/rail.json ] && git add public/data/rail.json
           if git diff --cached --quiet; then
             echo "No changes."
             exit 0

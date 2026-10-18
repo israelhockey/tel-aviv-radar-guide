@@ -21,9 +21,13 @@ const ENDPOINTS = [
   "https://overpass.kumi.systems/api/interpreter",
 ];
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
 const fetchOverpass = async () => {
   let last;
-  for (const url of ENDPOINTS) {
+  // Overpass rate-limits per IP; the places query runs just before this one.
+  await sleep(15000);
+  for (const url of [...ENDPOINTS, ...ENDPOINTS]) {
     try {
       const res = await fetch(url, {
         method: "POST",
@@ -35,6 +39,7 @@ const fetchOverpass = async () => {
     } catch (e) {
       last = e;
       console.warn(`Overpass endpoint failed: ${e}`);
+      await sleep(10000);
     }
   }
   throw last;
