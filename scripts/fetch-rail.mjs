@@ -8,12 +8,12 @@ const QUERY = `[out:json][timeout:120];
 (
   relation["type"="route"]["route"~"^(light_rail|tram|subway|train)$"](${BBOX});
 )->.routes;
-.routes out geom tags;
+.routes out geom;
 (
   node["railway"="station"](${BBOX});
   node["public_transport"="station"]["light_rail"="yes"](${BBOX});
 );
-out tags;`;
+out;`;
 
 const ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
