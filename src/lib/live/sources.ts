@@ -760,3 +760,13 @@ export const fetchCinema = async (): Promise<{ updated: string | null; cinemas: 
   if (!res.ok) throw new Error(`cinema ${res.status}`);
   return res.json();
 };
+
+/* ---------------- Dish photos (Wikimedia Commons, nightly snapshot) ---------------- */
+
+export type DishPhoto = { file: string; src: string; by: string; license: string; page: string; dish?: string };
+
+export const fetchFoodPhotos = async (): Promise<Record<string, DishPhoto[]>> => {
+  const res = await fetch("/data/food-photos.json", { cache: "no-cache" });
+  if (!res.ok) throw new Error(`photos ${res.status}`);
+  return (await res.json()).dishes ?? {};
+};

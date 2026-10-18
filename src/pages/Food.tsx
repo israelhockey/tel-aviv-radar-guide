@@ -1,32 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Beer, Coffee, LocateFixed, Moon, Search, Sparkles, Sun, UtensilsCrossed, Leaf } from "lucide-react";
+import { LocateFixed, Search } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n, type StringKey } from "@/lib/i18n";
 import { distanceMeters, TLV_CENTER, walkMinutes } from "@/lib/live/geo";
-import { usePlaces } from "@/lib/live/hooks";
+import { useFoodPhotos, usePlaces } from "@/lib/live/hooks";
 import { openStateAt, type OpenState } from "@/lib/live/openingHours";
 import { placeKindLabel } from "@/lib/live/places";
-import type { Place } from "@/lib/live/sources";
+import { CRAVINGS, CRAVING_PHOTO, dishOf, matchesCraving, pickPhoto } from "@/lib/live/dishes";
+import type { DishPhoto, Place } from "@/lib/live/sources";
 
-type Filter = "all" | "cafe" | "food" | "bar" | "late" | "happy" | "kosher" | "vegan" | "outdoor";
-
-const FILTERS: { id: Filter; key: StringKey; icon: typeof Coffee }[] = [
-  { id: "all", key: "food.all", icon: Sparkles },
-  { id: "happy", key: "food.happy", icon: Beer },
-  { id: "cafe", key: "food.cafes", icon: Coffee },
-  { id: "food", key: "food.eat", icon: UtensilsCrossed },
-  { id: "bar", key: "food.bars", icon: Beer },
-  { id: "late", key: "food.late", icon: Moon },
-  { id: "outdoor", key: "food.outdoor", icon: Sun },
-  { id: "kosher", key: "live.kosher", icon: Sparkles },
-  { id: "vegan", key: "food.vegan", icon: Leaf },
+type Toggle = "late" | "happy" | "kosher" | "vegan" | "outdoor";
+const TOGGLES: { id: Toggle; key: StringKey }[] = [
+  { id: "happy", key: "food.happy" },
+  { id: "late", key: "food.late" },
+  { id: "outdoor", key: "food.outdoor" },
+  { id: "kosher", key: "live.kosher" },
+  { id: "vegan", key: "food.vegan" },
 ];
-
-const KIND_BG: Record<string, string> = {
-  cafe: "bg-cat-comedy", restaurant: "bg-cat-food", bar: "bg-cat-music", pub: "bg-cat-music", biergarten: "bg-cat-music",
-  fast_food: "bg-cat-festival", ice_cream: "bg-cat-party",
-};
 
 // Open at half past midnight tonight?
 const lateNight = (p: Place) => {
@@ -36,14 +27,26 @@ const lateNight = (p: Place) => {
   return openStateAt(p.hours, d).status === "open";
 };
 
+const Photo = ({ photo, className = "" }: { photo?: DishPhoto; className?: string }) => {
+  const [broken, setBroken] = useState(false);
+  return photo && !broken ? (
+    <img src={photo.src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} className={`object-cover ${className}`} />
+  ) : (
+    <span className={`block bg-[#ffc233] ${className}`} />
+  );
+};
+
 const Food = () => {
   const { t, lang } = useI18n();
   const places = usePlaces();
-  const [filter, setFilter] = useState<Filter>("all");
+  const photos = useFoodPhotos();
+  const [craving, setCraving] = useState<string | null>(null);
+  const [toggles, setToggles] = useState<Set<Toggle>>(new Set());
   const [openOnly, setOpenOnly] = useState(true);
   const [q, setQ] = useState("");
   const [origin, setOrigin] = useState<{ lat: number; lon: number; exact: boolean }>({ ...TLV_CENTER, exact: false });
   const [tick, setTick] = useState(0);
+  const [limit, setLimit] = useState(24);
 
   useEffect(() => {
     document.title = lang === "he" ? "אוכל ושתייה · TLV Radar" : "Food & drink · TLV Radar";
@@ -52,6 +55,7 @@ const Food = () => {
     const id = setInterval(() => setTick((n) => n + 1), 60_000);
     return () => clearInterval(id);
   }, []);
+  useEffect(() => setLimit(24), [craving, toggles, openOnly, q]);
 
   const locate = () =>
     navigator.geolocation?.getCurrentPosition(
@@ -64,132 +68,170 @@ const Food = () => {
     const now = new Date();
     return (places.data ?? [])
       .filter((p) => p.kind !== "bicycle_rental" && p.name)
-      .map((p) => ({ p, state: openStateAt(p.hours, now), happy: p.happy ? openStateAt(p.happy, now) : null, d: distanceMeters(origin, p) }));
+      .map((p) => ({ p, dish: dishOf(p), state: openStateAt(p.hours, now), happy: p.happy ? openStateAt(p.happy, now) : null, d: distanceMeters(origin, p) }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [places.data, origin, tick]);
 
+  const openRows = rows.filter((r) => r.state.status === "open");
   const happyNow = rows.filter((r) => r.happy?.status === "open").sort((a, b) => a.d - b.d);
   const needle = q.trim().toLowerCase();
+  const crave = CRAVINGS.find((c) => c.id === craving);
 
   const shown = rows
     .filter(({ p, state, happy }) => {
       if (needle && !`${p.name} ${p.nameEn ?? ""} ${p.cuisine ?? ""} ${p.street ?? ""}`.toLowerCase().includes(needle)) return false;
-      if (openOnly && filter !== "happy" && state.status !== "open") return false;
-      switch (filter) {
-        case "cafe": return p.kind === "cafe";
-        case "food": return ["restaurant", "fast_food"].includes(p.kind);
-        case "bar": return ["bar", "pub", "biergarten"].includes(p.kind);
-        case "late": return lateNight(p);
-        case "happy": return !!p.happy && (!openOnly || happy?.status === "open");
-        case "kosher": return p.kosher === "yes" || p.kosher === "only";
-        case "vegan": return p.vegan === "yes" || p.vegan === "only";
-        case "outdoor": return !!p.outdoor;
-        default: return true;
-      }
+      if (crave && !matchesCraving(p, crave)) return false;
+      if (openOnly && !toggles.has("happy") && state.status !== "open") return false;
+      if (toggles.has("late") && !lateNight(p)) return false;
+      if (toggles.has("happy") && !(p.happy && (!openOnly || happy?.status === "open"))) return false;
+      if (toggles.has("kosher") && !(p.kosher === "yes" || p.kosher === "only")) return false;
+      if (toggles.has("vegan") && !(p.vegan === "yes" || p.vegan === "only")) return false;
+      if (toggles.has("outdoor") && !p.outdoor) return false;
+      return true;
     })
-    .sort((a, b) => a.d - b.d)
-    .slice(0, 60);
-
-  const openCount = rows.filter((r) => r.state.status === "open").length;
+    .sort((a, b) => a.d - b.d);
 
   const stateLine = (s: OpenState) =>
-    s.status === "open" ? (s.until ? `${t("live.open")} · ${t("now.closesAt")} ${s.until}` : t("live.open"))
-      : s.status === "closed" ? `${t("live.closed")}${s.opensAt ? ` · ${t("food.opens")} ${s.opensAt}` : ""}`
+    s.status === "open" ? (s.until ? `${t("food.openTill")} ${s.until}` : t("live.open"))
+      : s.status === "closed" ? (s.opensAt ? `${t("food.opens")} ${s.opensAt}` : t("live.closed"))
         : t("live.hoursUnknown");
+
+  const name = (p: Place) => (lang === "en" && p.nameEn) || p.name;
+  const toggle = (id: Toggle) => setToggles((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const heroPhotos = ["shakshuka", "hummus", "coffee", "cocktail", "pizza", "sushi"].map((k, i) => pickPhoto(photos.data?.[k], `hero${i}`));
 
   return (
     <SiteLayout>
-      <section className="relative isolate overflow-hidden text-white" style={{ background: "linear-gradient(135deg, #c2255c 0%, #e8590c 55%, #f59f00 100%)" }}>
-        <div className="container-page py-8 sm:py-12">
-          <h1 className="font-display text-[42px] sm:text-[64px] leading-[0.95]">{t("food.title")}</h1>
-          <p className="mt-2 text-[17px] text-white/90">
-            {places.data ? <><span className="font-semibold tabular">{openCount}</span> {t("food.openNow")}</> : "…"}
-            {happyNow.length > 0 && <> · <span className="font-semibold tabular">{happyNow.length}</span> {t("food.happyNow")}</>}
-          </p>
-          <div className="mt-5 flex flex-wrap items-center gap-2">
-            <label className="flex-1 min-w-[220px] max-w-md flex items-center gap-2 h-11 rounded-full bg-white/95 text-foreground px-4 focus-within:ring-2 focus-within:ring-white">
-              <Search className="h-4 w-4 text-muted-foreground" aria-hidden />
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("food.search")} className="flex-1 bg-transparent outline-none text-[15px] text-[hsl(230_35%_10%)]" dir="auto" />
-            </label>
-            <button onClick={locate} className="inline-flex items-center gap-2 h-11 rounded-full bg-black/25 hover:bg-black/35 px-4 text-[14px] font-medium">
-              <LocateFixed className="h-4 w-4" aria-hidden />
-              {origin.exact ? t("food.nearYou") : t("now.useLocation")}
-            </button>
+      {/* A table full of food: six dishes in a tight grid, the headline on a citrus block */}
+      <section className="relative bg-[#0f1530]">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-[3px] h-[300px] sm:h-[380px]">
+          {heroPhotos.map((ph, i) => <Photo key={i} photo={ph} className={`h-full w-full ${i > 2 ? "hidden sm:block" : ""}`} />)}
+        </div>
+        <div className="container-page relative -mt-24 sm:-mt-28 pb-2">
+          <div className="inline-block max-w-full rounded-lg bg-[#ffc233] text-[#1f1400] px-5 py-4 sm:px-7 sm:py-5">
+            <h1 className="font-display text-[38px] sm:text-[60px] leading-[0.95]">{t("food.hungry")}</h1>
+            <p className="mt-1 text-[16px] sm:text-[18px]">
+              {places.data ? <><span className="font-semibold tabular">{openRows.length}</span> {t("food.openNow")}</> : "…"}
+              {happyNow.length > 0 && <>, <span className="font-semibold tabular">{happyNow.length}</span> {t("food.happyNow")}</>}
+            </p>
           </div>
         </div>
       </section>
 
       <div className="container-page">
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          <label className="flex-1 min-w-[220px] max-w-lg flex items-center gap-2 h-11 rounded-lg border border-border bg-card px-3.5 focus-within:ring-2 focus-within:ring-sea">
+            <Search className="h-4 w-4 text-muted-foreground" aria-hidden />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("food.search")} className="flex-1 bg-transparent outline-none text-[15px]" dir="auto" />
+          </label>
+          <button onClick={locate} className={`inline-flex items-center gap-2 h-11 rounded-lg px-4 text-[14px] font-medium ${origin.exact ? "bg-foreground text-background" : "border border-border hover:bg-secondary"}`}>
+            <LocateFixed className="h-4 w-4" aria-hidden />
+            {origin.exact ? t("food.nearYou") : t("now.useLocation")}
+          </button>
+        </div>
+
+        {/* Cravings: pick with your stomach */}
+        <section className="mt-7" aria-labelledby="crave-h">
+          <h2 id="crave-h" className="font-display text-[28px] leading-none">{t("food.craving")}</h2>
+          <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto pb-2 snap-x [scrollbar-width:none]">
+            {CRAVINGS.map((c) => {
+              const active = craving === c.id;
+              const n = openRows.filter((r) => matchesCraving(r.p, c)).length;
+              return (
+                <button key={c.id} onClick={() => setCraving(active ? null : c.id)} aria-pressed={active}
+                  className={`group snap-start shrink-0 w-[132px] sm:w-[156px] text-start focus-visible:outline-none`}>
+                  <span className={`relative block aspect-square rounded-lg overflow-hidden ${active ? "outline outline-[3px] outline-offset-2 outline-[#d6336c]" : "group-hover:outline group-hover:outline-2 group-hover:outline-offset-2 group-hover:outline-foreground/40"} group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-sea`}>
+                    <Photo photo={pickPhoto(photos.data?.[CRAVING_PHOTO[c.id]], c.id)} className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-105" />
+                    {places.data && <span className="absolute top-2 end-2 rounded-md bg-white text-[#0f1530] px-1.5 py-0.5 text-[12px] font-semibold tabular">{n}</span>}
+                  </span>
+                  <span className={`mt-1.5 block text-[15px] font-medium ${active ? "text-[#d6336c]" : ""}`}>{lang === "he" ? c.he : c.en}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
         {/* Happy hour right now */}
-        {happyNow.length > 0 && filter === "all" && !needle && (
+        {happyNow.length > 0 && !craving && !needle && toggles.size === 0 && (
           <section className="mt-8" aria-labelledby="hh-h">
-            <h2 id="hh-h" className="font-display text-[26px] leading-none">{t("food.happyTitle")}</h2>
+            <h2 id="hh-h" className="font-display text-[28px] leading-none">{t("food.happyTitle")}</h2>
             <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto pb-2">
-              {happyNow.slice(0, 12).map(({ p, happy, d }) => (
-                <a key={p.id} href={`https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lon}`} target="_blank" rel="noopener noreferrer"
-                  className="shrink-0 w-[220px] rounded-[var(--radius)] p-4 text-white shadow-[var(--shadow-card)]" style={{ background: "linear-gradient(140deg, #7048e8, #c2255c)" }}>
-                  <p className="text-[12px] opacity-85">{placeKindLabel(p.kind, lang)} · {walkMinutes(d)} {t("now.walk")}</p>
-                  <p className="mt-1 text-[17px] font-semibold leading-tight line-clamp-2" dir="auto">{(lang === "en" && p.nameEn) || p.name}</p>
-                  {happy?.until && <p className="mt-2 text-[13px] font-medium">{t("food.hhUntil")} {happy.until}</p>}
+              {happyNow.slice(0, 12).map(({ p, happy, d, dish }) => (
+                <a key={p.id} href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&travelmode=walking`} target="_blank" rel="noopener noreferrer"
+                  className="relative shrink-0 w-[240px] h-[160px] rounded-lg overflow-hidden text-white">
+                  <Photo photo={pickPhoto(photos.data?.[dish === "beer" ? "beer" : "cocktail"], p.id)} className="absolute inset-0 h-full w-full" />
+                  <span className="absolute inset-x-0 bottom-0 p-3 bg-[#d6336c]">
+                    <span className="block text-[16px] font-semibold leading-tight truncate" dir="auto">{name(p)}</span>
+                    <span className="block text-[12px]">{happy?.until ? `${t("food.hhUntil")} ${happy.until}` : t("food.happy")}, {walkMinutes(d)} {t("now.walk")}</span>
+                  </span>
                 </a>
               ))}
             </div>
           </section>
         )}
 
-        <div className="mt-8 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-          {FILTERS.map((f) => (
-            <button key={f.id} onClick={() => setFilter(f.id)} aria-pressed={filter === f.id}
-              className={`shrink-0 inline-flex items-center gap-1.5 h-9 rounded-full px-3.5 text-[14px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea ${filter === f.id ? "bg-foreground text-background border-foreground" : "border-border hover:bg-secondary"}`}>
-              <f.icon className="h-4 w-4" aria-hidden />{t(f.key)}
+        <div className="mt-8 flex flex-wrap items-center gap-2">
+          {TOGGLES.map((x) => (
+            <button key={x.id} onClick={() => toggle(x.id)} aria-pressed={toggles.has(x.id)}
+              className={`h-9 rounded-md px-3.5 text-[14px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea ${toggles.has(x.id) ? "bg-foreground text-background border-foreground" : "border-border hover:bg-secondary"}`}>
+              {t(x.key)}
             </button>
           ))}
+          <label className="ms-auto inline-flex items-center gap-2 text-[14px]">
+            <input type="checkbox" checked={openOnly} onChange={(e) => setOpenOnly(e.target.checked)} className="h-4 w-4 accent-[#d6336c]" />
+            {t("food.onlyOpen")}
+          </label>
         </div>
-        <label className="mt-3 inline-flex items-center gap-2 text-[14px]">
-          <input type="checkbox" checked={openOnly} onChange={(e) => setOpenOnly(e.target.checked)} className="h-4 w-4 accent-current" />
-          {t("food.onlyOpen")}
-        </label>
 
-        {places.isError && <p className="mt-6 text-[14px] text-muted-foreground">{t("common.error")}</p>}
+        <p className="mt-4 text-[14px] text-muted-foreground tabular">
+          {places.data ? `${shown.length} ${t("food.places")}${crave ? `: ${lang === "he" ? crave.he : crave.en}` : ""}` : ""}
+        </p>
+        {places.isError && <p className="mt-4 text-[14px] text-muted-foreground">{t("common.error")}</p>}
         {places.data && shown.length === 0 && (
-          <p className="mt-6 text-[15px] text-muted-foreground">{filter === "happy" ? t("food.noHappy") : t("food.none")}</p>
+          <p className="mt-4 text-[15px] text-muted-foreground">{toggles.has("happy") ? t("food.noHappy") : t("food.none")}</p>
         )}
 
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {shown.map(({ p, state, happy, d }) => (
+        <ul className="mt-3 grid gap-x-4 gap-y-6 grid-cols-2 lg:grid-cols-4">
+          {shown.slice(0, limit).map(({ p, state, happy, d, dish }) => (
             <li key={p.id}>
-              <a href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&travelmode=walking`} target="_blank" rel="noopener noreferrer"
-                className="group flex gap-3 rounded-[var(--radius)] bg-card shadow-[var(--shadow-card)] p-3.5 h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea">
-                <span className={`h-11 w-11 shrink-0 rounded-xl ${KIND_BG[p.kind] ?? "bg-cat-other"} text-white flex items-center justify-center font-display text-[18px]`} aria-hidden>
-                  {((lang === "en" && p.nameEn) || p.name).trim().charAt(0)}
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&travelmode=walking`} target="_blank" rel="noopener noreferrer" className="group block focus-visible:outline-none">
+                <span className="relative block aspect-[4/3] rounded-lg overflow-hidden group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-sea">
+                  <Photo photo={pickPhoto(photos.data?.[dish], p.id)} className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-105" />
+                  <span className={`absolute top-2 start-2 rounded-md px-2 py-0.5 text-[12px] font-semibold ${state.status === "open" ? "bg-[#2f9e44] text-white" : "bg-white text-[#0f1530]"}`}>{stateLine(state)}</span>
+                  {happy?.status === "open" && <span className="absolute bottom-2 start-2 rounded-md bg-[#d6336c] text-white px-2 py-0.5 text-[12px] font-semibold">{t("food.happy")}</span>}
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-baseline justify-between gap-2">
-                    <span className="text-[15px] font-medium leading-snug truncate group-hover:text-sea" dir="auto">{(lang === "en" && p.nameEn) || p.name}</span>
-                    <span className="shrink-0 text-[12px] tabular text-muted-foreground">{walkMinutes(d)} {t("now.walk")}</span>
-                  </span>
-                  <span className="block text-[12px] text-muted-foreground truncate" dir="auto">
-                    {[placeKindLabel(p.kind, lang), p.cuisine?.split(";")[0].replace(/_/g, " "), p.street && `${p.street}${p.number ? ` ${p.number}` : ""}`].filter(Boolean).join(" · ")}
-                  </span>
-                  <span className={`mt-1 block text-[12px] font-medium ${state.status === "open" ? "text-surf" : "text-muted-foreground"}`}>{stateLine(state)}</span>
-                  <span className="mt-1.5 flex flex-wrap gap-1">
-                    {happy?.status === "open" && <span className="rounded-full bg-cat-music text-white px-2 py-0.5 text-[11px]">{t("food.happy")}{happy.until ? ` → ${happy.until}` : ""}</span>}
-                    {(p.kosher === "yes" || p.kosher === "only") && <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px]">{t("live.kosher")}</span>}
-                    {(p.vegan === "yes" || p.vegan === "only") && <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px]">{t("food.vegan")}</span>}
-                    {p.outdoor && <span className="rounded-full bg-secondary px-2 py-0.5 text-[11px]">{t("food.outdoor")}</span>}
-                  </span>
+                <span className="mt-2 flex items-baseline justify-between gap-2">
+                  <span className="text-[16px] font-semibold leading-snug truncate group-hover:text-[#d6336c]" dir="auto">{name(p)}</span>
+                  <span className="shrink-0 text-[12px] tabular text-muted-foreground">{walkMinutes(d)} {t("now.walk")}</span>
                 </span>
+                <span className="block text-[13px] text-muted-foreground truncate" dir="auto">
+                  {[p.cuisine?.split(";")[0].replace(/_/g, " ") || placeKindLabel(p.kind, lang), p.street && `${p.street}${p.number ? ` ${p.number}` : ""}`].filter(Boolean).join(", ")}
+                </span>
+                {((p.kosher === "yes" || p.kosher === "only") || (p.vegan === "yes" || p.vegan === "only") || p.outdoor) && (
+                  <span className="mt-1 flex flex-wrap gap-1">
+                    {(p.kosher === "yes" || p.kosher === "only") && <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px]">{t("live.kosher")}</span>}
+                    {(p.vegan === "yes" || p.vegan === "only") && <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px]">{t("food.vegan")}</span>}
+                    {p.outdoor && <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px]">{t("food.outdoor")}</span>}
+                  </span>
+                )}
               </a>
             </li>
           ))}
         </ul>
+        {shown.length > limit && (
+          <div className="mt-6 text-center">
+            <button onClick={() => setLimit((n) => n + 24)} className="h-11 rounded-lg border border-border px-6 text-[14px] font-medium hover:bg-secondary">{t("food.more")}</button>
+          </div>
+        )}
 
-        <div className="mt-10 rounded-[var(--radius)] border border-dashed border-border p-5 text-center">
-          <p className="text-[15px] font-medium">{t("food.knowDeal")}</p>
-          <p className="mt-1 text-[13px] text-muted-foreground">{t("food.knowDealBody")}</p>
-          <Link to="/submit?kind=happy" className="mt-3 inline-flex h-10 items-center rounded-full bg-foreground text-background px-5 text-[14px] font-medium">{t("food.addDeal")}</Link>
+        <div className="mt-12 rounded-lg bg-[#0f1530] text-white p-6 sm:flex sm:items-center sm:justify-between gap-6">
+          <div>
+            <p className="font-display text-[24px] leading-tight">{t("food.knowDeal")}</p>
+            <p className="mt-1 text-[14px] text-white/80">{t("food.knowDealBody")}</p>
+          </div>
+          <Link to="/submit?kind=happy" className="mt-4 sm:mt-0 shrink-0 inline-flex h-11 items-center rounded-lg bg-[#ffc233] text-[#1f1400] px-5 text-[14px] font-semibold">{t("food.addDeal")}</Link>
         </div>
-        <p className="mt-4 text-[12px] text-muted-foreground">{t("food.source")}</p>
+        <p className="mt-4 text-[12px] text-muted-foreground">{t("food.source")} {t("food.photoCredit")}</p>
       </div>
     </SiteLayout>
   );
