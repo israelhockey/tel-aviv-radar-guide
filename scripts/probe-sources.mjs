@@ -68,6 +68,22 @@ const probe = async (url) => {
           return { page: j.page, pagePropsKeys: Object.keys(pp), sample: JSON.stringify(pp).slice(0, 2500) };
         } catch { return "unparseable"; }
       })(),
+      arrays: (() => {
+        // Largest lists inside the embedded page data: where listings usually live.
+        const m = /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(body);
+        if (!m) return undefined;
+        let j; try { j = JSON.parse(m[1]); } catch { return undefined; }
+        const found = [];
+        const walk = (v, path, depth) => {
+          if (depth > 12 || v == null || typeof v !== "object") return;
+          if (Array.isArray(v)) {
+            if (v.length >= 8 && v[0] && typeof v[0] === "object") found.push({ path, n: v.length, keys: Object.keys(v[0]).slice(0, 30), sample: JSON.stringify(v[0]).slice(0, 700) });
+            v.slice(0, 3).forEach((x, i) => walk(x, `${path}[${i}]`, depth + 1));
+          } else for (const [k, x] of Object.entries(v)) walk(x, `${path}.${k}`, depth + 1);
+        };
+        walk(j, "$", 0);
+        return found.sort((a, b) => b.n - a.n).slice(0, 8);
+      })(),
       links: [...new Set([...body.matchAll(/href="([^"]*(tel-aviv|tlv|telaviv|%D7%AA%D7%9C)[^"]*)"/gi)].map((m) => m[1]))].slice(0, 15),
     };
   } catch (e) {
