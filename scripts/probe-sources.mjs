@@ -57,6 +57,17 @@ const probe = async (url) => {
       ical: body.includes("BEGIN:VCALENDAR"), nextData: body.includes("__NEXT_DATA__"), nuxt: body.includes("__NUXT__"),
       icsLinks: count(body, /\.ics["'?]/g), rssLinks: count(body, /application\/rss\+xml/g),
       cloudflare: /cf-chl|challenge-platform|Just a moment/i.test(body),
+      ldSample: ld.length ? ld.join("\n").slice(0, 2500) : undefined,
+      nextSample: (() => {
+        const m = /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(body);
+        if (!m) return undefined;
+        try {
+          const j = JSON.parse(m[1]);
+          const pp = j.props?.pageProps ?? {};
+          return { page: j.page, pagePropsKeys: Object.keys(pp), sample: JSON.stringify(pp).slice(0, 2500) };
+        } catch { return "unparseable"; }
+      })(),
+      links: [...new Set([...body.matchAll(/href="([^"]*(tel-aviv|tlv|telaviv|%D7%AA%D7%9C)[^"]*)"/gi)].map((m) => m[1]))].slice(0, 15),
     };
   } catch (e) {
     return { url, error: String(e).slice(0, 120), ms: Date.now() - t0 };
