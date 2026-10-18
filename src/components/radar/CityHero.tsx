@@ -47,12 +47,16 @@ export const CityHero = () => {
         container: ref.current, style, ...VIEW, interactive: false, attributionControl: { compact: true }, fadeDuration: 0,
       });
       mapRef.current = map;
-      map.on("load", () => {
+      // Some base-style patterns aren't in the sprite; give MapLibre a blank so it stops waiting.
+        map.on("styleimagemissing", (e: { id: string }) => {
+          if (!map.hasImage(e.id)) map.addImage(e.id, { width: 1, height: 1, data: new Uint8Array(4) });
+        });
+        map.once("style.load", () => {
         if (cancelled) return;
         map.addImage("radar-plane", planeIcon(C.plane), { pixelRatio: 2 });
         for (const id of ["buses", "flights", "events"]) map.addSource(id, { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-        map.addLayer({ id: "buses-glow", type: "circle", source: "buses", paint: { "circle-radius": 9, "circle-color": C.busGlow, "circle-opacity": phase === "day" ? 0.14 : 0.24, "circle-blur": 1 } });
-        map.addLayer({ id: "buses-dot", type: "circle", source: "buses", paint: { "circle-radius": 2.8, "circle-color": C.bus } });
+        map.addLayer({ id: "buses-glow", type: "circle", source: "buses", paint: { "circle-radius": 11, "circle-color": C.busGlow, "circle-opacity": phase === "day" ? 0.2 : 0.35, "circle-blur": 1 } });
+        map.addLayer({ id: "buses-dot", type: "circle", source: "buses", paint: { "circle-radius": 3.2, "circle-color": C.bus } });
         map.addLayer({ id: "events-glow", type: "circle", source: "events", paint: { "circle-radius": 22, "circle-color": C.event, "circle-opacity": 0.25, "circle-blur": 1 } });
         map.addLayer({ id: "events-dot", type: "circle", source: "events", paint: { "circle-radius": 5, "circle-color": C.event, "circle-stroke-color": C.halo, "circle-stroke-width": 1.5 } });
         map.addLayer({
@@ -123,7 +127,7 @@ export const CityHero = () => {
             <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
           </span>
           {fmtToday(lang)}
-          {hebrewDate.data && <span lang="he" dir="rtl" className="text-foreground/60">· {hebrewDate.data}</span>}
+          {hebrewDate.data && <><span className="text-foreground/40" aria-hidden>·</span><span lang="he" dir="rtl" className="text-foreground/60">{hebrewDate.data}</span></>}
         </p>
         <h1 id="hero-h" className="mt-2 font-display text-[44px] leading-[0.95] sm:text-[72px] lg:text-[88px] text-foreground">
           {t("hero.title")}

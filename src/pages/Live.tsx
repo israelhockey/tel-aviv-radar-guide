@@ -114,7 +114,11 @@ const Live = () => {
         mapRef.current = map;
         map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), "bottom-right");
 
-        map.on("load", () => {
+        // Some base-style patterns aren't in the sprite; give MapLibre a blank so it stops waiting.
+        map.on("styleimagemissing", (e: { id: string }) => {
+          if (!map.hasImage(e.id)) map.addImage(e.id, { width: 1, height: 1, data: new Uint8Array(4) });
+        });
+        map.once("style.load", () => {
           if (cancelled) return;
           // Prefixed names: the base map style ships its own "bus" icon (a bus-stop sign).
           map.addImage("radar-bus", busIcon(C.bus), { pixelRatio: 2 });
@@ -130,8 +134,9 @@ const Live = () => {
           map.addLayer({
             id: "food-open", type: "circle", source: "food", filter: ["==", ["get", "state"], "open"],
             paint: {
-              "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 2.5, 15, 6],
-              "circle-color": C.open, "circle-stroke-color": C.halo, "circle-stroke-width": 1,
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 1.6, 14, 3, 16, 6],
+              "circle-color": C.open, "circle-opacity": 0.85,
+              "circle-stroke-color": C.halo, "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 13, 0, 15, 1],
             },
           });
           map.addLayer({
