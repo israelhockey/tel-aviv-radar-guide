@@ -19,7 +19,7 @@ const withTimeout = async (url: string, init?: RequestInit) => {
 
 // Our Cloudflare Worker relay (workers/live-proxy/worker.js) for open-data hosts that block
 // browser requests. Empty until the worker is deployed; set it to the worker's URL.
-export const RELAY_URL = "";
+export const RELAY_URL = "https://tlv-radar-relay.fifeflyers2025.workers.dev/";
 
 // Try the source directly from the browser; if that fails (CORS, network), go through the relay.
 const getJSON = async <T,>(url: string, init?: { method?: "GET" | "POST"; body?: string; contentType?: string }): Promise<T> => {
