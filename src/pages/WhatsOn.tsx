@@ -64,6 +64,14 @@ const WhatsOn = () => {
     document.title = lang === "he" ? "מה קורה · TLV Radar" : "What's on · TLV Radar";
   }, [lang]);
 
+  // A quiet night: open on the next 7 days instead of an empty list (unless a range was asked for).
+  const [autoRanged, setAutoRanged] = useState(false);
+  useEffect(() => {
+    if (autoRanged || !data || qRange || path !== "/events") return;
+    setAutoRanged(true);
+    if (!data.events.some((e) => e.category !== "community" && inRange(e.start, e.end, "tonight"))) setRange("week");
+  }, [data, autoRanged, qRange, path]);
+
   const inWindow = useMemo(() => (data?.events ?? []).filter((e) => inRange(e.start, e.end, range)), [data, range]);
   const present = useMemo(() => new Set(inWindow.map((e) => e.category)), [inWindow]);
   const shown = inWindow.filter((e) => (!freeOnly || e.free) && (cats.size === 0 ? e.category !== "community" : cats.has(e.category)));
