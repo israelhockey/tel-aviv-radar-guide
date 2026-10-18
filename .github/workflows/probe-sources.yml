@@ -2,6 +2,14 @@ name: Probe data sources (diagnostic)
 
 on:
   workflow_dispatch:
+    inputs:
+      urls:
+        description: "Space-separated URLs to probe (blank = built-in list)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
 
 jobs:
   probe:
@@ -13,3 +21,16 @@ jobs:
         with:
           node-version: 20
       - run: node scripts/probe-sources.mjs
+        env:
+          PROBE_URLS: ${{ inputs.urls }}
+      - name: Save report to the diagnostics branch
+        run: |
+          cp probe-results.json /tmp/probe-results.json
+          git config user.name "tlv-radar-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan diagnostics
+          git rm -rfq .
+          cp /tmp/probe-results.json probe-results.json
+          git add probe-results.json
+          git commit -qm "Probe results ${{ github.run_id }}"
+          git push -f origin diagnostics

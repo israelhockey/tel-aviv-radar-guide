@@ -2,7 +2,7 @@
 // (schema.org Event JSON-LD, RSS/Atom, iCal, embedded JSON)? Prints a report to the log.
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
 
-const URLS = [
+const URLS = process.env.PROBE_URLS ? process.env.PROBE_URLS.split(/\s+/).filter(Boolean) : [
   // events
   "https://www.eventbrite.com/d/israel--tel-aviv/events/",
   "https://www.eventbrite.com/d/israel--tel-aviv/events--this-weekend/",
@@ -65,3 +65,4 @@ const probe = async (url) => {
 
 const results = await Promise.all(URLS.map(probe));
 for (const r of results) console.log(JSON.stringify(r));
+await import("node:fs").then((fs) => fs.writeFileSync("probe-results.json", JSON.stringify(results, null, 1)));
