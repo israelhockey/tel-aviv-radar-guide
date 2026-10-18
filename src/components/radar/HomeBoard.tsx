@@ -104,7 +104,7 @@ export const HomeBoard = () => {
         {seaNow?.sea != null && <p className="mt-2 text-[12px] text-white/80">{t("now.sea")} {Math.round(seaNow.sea)}°{seaNow.wave != null ? `, ${seaNow.wave.toFixed(1)} m` : ""}</p>}
         {beachHours.length > 0 && (
           <div className="relative mt-3 hidden sm:flex items-end gap-[3px] h-14" aria-hidden>
-            {beachHours.map((h) => <span key={h.time} className="flex-1 rounded-sm bg-white" style={{ height: `${8 + h.score * 9}%`, opacity: 0.35 + h.score / 16 }} />)}
+            {beachHours.map((h) => <span key={h.time} className="flex-1 rounded-[2px] bg-white" style={{ height: `${Math.max(6, h.score * 10)}%`, opacity: 0.4 + h.score / 17 }} />)}
           </div>
         )}
       </Link>

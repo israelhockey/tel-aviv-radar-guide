@@ -36,6 +36,8 @@ const Photo = ({ photo, className = "" }: { photo?: DishPhoto; className?: strin
   );
 };
 
+const cap = (s?: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : "");
+
 const Food = () => {
   const { t, lang } = useI18n();
   const places = usePlaces();
@@ -133,7 +135,7 @@ const Food = () => {
         {/* Cravings: pick with your stomach */}
         <section className="mt-7" aria-labelledby="crave-h">
           <h2 id="crave-h" className="font-display text-[28px] leading-none">{t("food.craving")}</h2>
-          <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto pb-2 snap-x [scrollbar-width:none]">
+          <div className="mt-3 -mx-4 px-4 scroll-px-4 sm:mx-0 sm:px-0 sm:scroll-px-0 flex gap-3 overflow-x-auto pb-2 snap-x [scrollbar-width:none]">
             {CRAVINGS.map((c) => {
               const active = craving === c.id;
               const n = openRows.filter((r) => matchesCraving(r.p, c)).length;
@@ -202,10 +204,11 @@ const Food = () => {
                 </span>
                 <span className="mt-2 flex items-baseline justify-between gap-2">
                   <span className="text-[16px] font-semibold leading-snug truncate group-hover:text-[#d6336c]" dir="auto">{name(p)}</span>
-                  <span className="shrink-0 text-[12px] tabular text-muted-foreground">{walkMinutes(d)} {t("now.walk")}</span>
+                  <span className="hidden sm:inline shrink-0 text-[12px] tabular text-muted-foreground">{walkMinutes(d)} {t("now.walk")}</span>
                 </span>
                 <span className="block text-[13px] text-muted-foreground truncate" dir="auto">
-                  {[p.cuisine?.split(";")[0].replace(/_/g, " ") || placeKindLabel(p.kind, lang), p.street && `${p.street}${p.number ? ` ${p.number}` : ""}`].filter(Boolean).join(", ")}
+                  <span className="sm:hidden tabular">{walkMinutes(d)} {t("now.walk")}, </span>
+                  {[cap(p.cuisine?.split(";")[0].replace(/_/g, " ")) || placeKindLabel(p.kind, lang), p.street && `${p.street}${p.number ? ` ${p.number}` : ""}`].filter(Boolean).join(", ")}
                 </span>
                 {((p.kosher === "yes" || p.kosher === "only") || (p.vegan === "yes" || p.vegan === "only") || p.outdoor) && (
                   <span className="mt-1 flex flex-wrap gap-1">

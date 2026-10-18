@@ -207,10 +207,6 @@ export const SkyHero = () => {
       {/* the Mediterranean in front of the city, catching the sky */}
       <div className="absolute inset-x-0 bottom-0 h-[52px] sm:h-[64px] -z-10 overflow-hidden" aria-hidden
         style={{ background: `linear-gradient(180deg, ${css(mix(horizon, [12, 60, 120], 0.55))} 0%, ${css(mix(top, [4, 20, 60], 0.5))} 100%)` }}>
-        {[18, 36, 58, 74].map((y, i) => (
-          <span key={y} className="absolute h-[2px] rounded-full motion-safe:animate-[pulse_5s_ease-in-out_infinite]"
-            style={{ top: `${y}%`, left: `${10 + i * 19}%`, width: `${18 + (i % 2) * 14}%`, background: css(mix(horizon, [255, 255, 255], 0.5)), opacity: 0.35, animationDelay: `${i * 0.9}s` }} />
-        ))}
       </div>
 
       {/* The horizon is a timeline: drag to see the sky, the weather and what starts at any hour today */}
