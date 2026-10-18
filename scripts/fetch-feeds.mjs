@@ -99,10 +99,46 @@ const meetupCategory = () => "meetup";
 
 const EVENT_SOURCES = [
   { id: "tickchak", name: "Tickchak", url: "https://live.tickchak.co.il/tel-aviv", category: tickchakCategory, alwaysTelAviv: true },
+  { id: "tickchak-week", name: "Tickchak", url: "https://live.tickchak.co.il/tel-aviv/thisWeek", category: tickchakCategory, alwaysTelAviv: true },
   { id: "tickchak-barby", name: "Tickchak", url: "https://live.tickchak.co.il/barby-tlv", category: () => "music", alwaysTelAviv: true },
   { id: "tickchak-menorah", name: "Tickchak", url: "https://live.tickchak.co.il/tel-aviv-menorah-hall", category: tickchakCategory, alwaysTelAviv: true },
   { id: "meetup", name: "Meetup", url: "https://www.meetup.com/find/?location=il--tel-aviv&source=EVENTS", category: meetupCategory },
 ];
+
+// Leaan (a large Israeli ticket office) embeds its whole listing as Next.js page data.
+const LEAAN_CATEGORIES = { 1: "theatre", 2: "family", 3: "music", 4: "comedy", 5: "sport" };
+const fetchLeaan = async () => {
+  const html = await get("https://www.leaan.co.il/events");
+  const m = /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(html);
+  if (!m) throw new Error("no page data");
+  const rows = JSON.parse(m[1])?.props?.pageProps?.initialState?.search?.events ?? [];
+  const out = [];
+  for (const r of rows) {
+    const loc = r.location ?? {};
+    if (!TLV_RE.test(`${loc.city ?? ""} ${loc.street ?? ""}`)) continue;
+    if (!r.event_start || !r.id) continue;
+    const cats = [].concat(r.categories ?? []).map((c) => (typeof c === "object" ? c.id ?? c.category_id : c)).map(Number);
+    out.push({
+      id: `leaan:${r.id}`,
+      title: cleanTitle(decode(r.event_name ?? r.name ?? ""), loc.name ?? ""),
+      start: new Date(r.event_start * 1000).toISOString(),
+      end: r.event_end ? new Date(r.event_end * 1000).toISOString() : null,
+      venue: loc.name ? decode(loc.name) : null,
+      address: [loc.street, loc.city].filter(Boolean).map(decode).join(", ") || null,
+      lat: null, lon: null,
+      priceFrom: Number.isFinite(Number(r.starting_price)) && Number(r.starting_price) > 0 ? Number(r.starting_price) : null,
+      free: false,
+      category: LEAAN_CATEGORIES[cats.find((c) => LEAAN_CATEGORIES[c])] ?? "other",
+      url: `https://www.leaan.co.il/events/${r.id}`,
+      image: r.vivenu_image || null,
+      source: "Leaan",
+    });
+  }
+  return out;
+};
+
+// The same show often appears on several ticket sites: one entry per title + start time.
+const normTitle = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
 
 const fetchEvents = async () => {
   const all = new Map();
@@ -124,6 +160,22 @@ const fetchEvents = async () => {
       report.push(`${src.url}: FAILED ${e}`);
     }
   }
+  try {
+    const leaan = await fetchLeaan();
+    let kept = 0;
+    const seenTitles = new Set([...all.values()].map((e) => `${normTitle(e.title)}|${new Date(e.start).toISOString().slice(0, 16)}`));
+    for (const ev of leaan) {
+      const k = `${normTitle(ev.title)}|${new Date(ev.start).toISOString().slice(0, 16)}`;
+      if (seenTitles.has(k)) continue;
+      seenTitles.add(k);
+      all.set(`${ev.url}|${ev.start}`, ev);
+      kept++;
+    }
+    report.push(`leaan: ${leaan.length} Tel Aviv, ${kept} new`);
+  } catch (e) {
+    report.push(`leaan: FAILED ${e}`);
+  }
+
   const now = Date.now();
   const events = [...all.values()]
     .filter((e) => new Date(e.end ?? e.start).getTime() > now - 3 * 3600_000)
