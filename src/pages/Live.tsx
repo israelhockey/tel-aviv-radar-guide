@@ -344,7 +344,7 @@ const Live = () => {
   const status = (id: LayerId): string => {
     const q = { events: eventsFeed, buses, flights: aircraft, food: places, bikes: places, beaches, rain }[id];
     if (!on[id]) return "";
-    if (q.isError) return "!";
+    if (q.isError && !q.data) return "!";
     if (id === "rain") return q.isLoading ? "…" : "";
     if (q.isLoading || !q.data) return "…";
     if (id === "events") return String(tonightEvents.length);

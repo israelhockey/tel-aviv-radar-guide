@@ -234,34 +234,50 @@ export const fetchBuses = async (): Promise<{ buses: Bus[]; newest: string | nul
   return { buses, newest };
 };
 
-/* ---------------- Aircraft (adsb.lol, ODbL; OpenSky fallback) ---------------- */
+/* ---------------- Aircraft (adsb.lol, then adsb.fi, then OpenSky) ---------------- */
 
 export type Aircraft = { id: string; callsign: string; lat: number; lon: number; track: number; altFt: number | null; speedKt: number | null; type?: string };
 
+// Both adsb.lol and adsb.fi speak the readsb "v2" format.
+const fromReadsb = (j: any): Aircraft[] =>
+  ((j.ac ?? j.aircraft ?? []) as any[])
+    .filter((a) => typeof a.lat === "number" && typeof a.lon === "number")
+    .map((a) => ({
+      id: a.hex, callsign: String(a.flight ?? a.r ?? a.hex ?? "").trim(), lat: a.lat, lon: a.lon,
+      track: a.track ?? a.true_heading ?? 0,
+      altFt: typeof a.alt_baro === "number" ? a.alt_baro : null,
+      speedKt: a.gs ?? null, type: a.t,
+    }));
+
+const fromOpenSky = (j: any): Aircraft[] =>
+  ((j.states ?? []) as any[][])
+    .filter((s) => s[5] != null && s[6] != null)
+    .map((s) => ({
+      id: s[0], callsign: String(s[1] ?? s[0]).trim(), lon: s[5], lat: s[6], track: s[10] ?? 0,
+      altFt: s[7] != null ? Math.round(s[7] * 3.281) : null,
+      speedKt: s[9] != null ? Math.round(s[9] * 1.944) : null,
+    }));
+
+const FLIGHT_SOURCES: [string, (j: any) => Aircraft[]][] = [
+  [`https://api.adsb.lol/v2/lat/${TLV_CENTER.lat}/lon/${TLV_CENTER.lon}/dist/25`, fromReadsb],
+  [`https://opendata.adsb.fi/api/v2/lat/${TLV_CENTER.lat}/lon/${TLV_CENTER.lon}/dist/25`, fromReadsb],
+  ["https://opensky-network.org/api/states/all?lamin=31.85&lamax=32.3&lomin=34.5&lomax=35.1", fromOpenSky],
+];
+
+// The free flight feeds have short gaps. Keep showing the last good positions for up to
+// two minutes rather than emptying the sky.
+let lastFlights: { at: number; planes: Aircraft[] } | null = null;
+
 export const fetchAircraft = async (): Promise<Aircraft[]> => {
-  try {
-    const j = await getJSON<any>(`https://api.adsb.lol/v2/lat/${TLV_CENTER.lat}/lon/${TLV_CENTER.lon}/dist/25`);
-    return (j.ac ?? [])
-      .filter((a: any) => typeof a.lat === "number" && typeof a.lon === "number")
-      .map((a: any) => ({
-        id: a.hex, callsign: (a.flight ?? a.r ?? a.hex ?? "").trim(), lat: a.lat, lon: a.lon,
-        track: a.track ?? a.true_heading ?? 0,
-        altFt: typeof a.alt_baro === "number" ? a.alt_baro : null,
-        speedKt: a.gs ?? null, type: a.t,
-      }));
-  } catch {
-    const u = new URL("https://opensky-network.org/api/states/all");
-    u.searchParams.set("lamin", "31.85"); u.searchParams.set("lamax", "32.3");
-    u.searchParams.set("lomin", "34.5"); u.searchParams.set("lomax", "35.1");
-    const j = await getJSON<any>(u.toString());
-    return (j.states ?? [])
-      .filter((s: any[]) => s[5] != null && s[6] != null)
-      .map((s: any[]) => ({
-        id: s[0], callsign: (s[1] ?? s[0]).trim(), lon: s[5], lat: s[6], track: s[10] ?? 0,
-        altFt: s[7] != null ? Math.round(s[7] * 3.281) : null,
-        speedKt: s[9] != null ? Math.round(s[9] * 1.944) : null,
-      }));
+  for (const [url, parse] of FLIGHT_SOURCES) {
+    try {
+      const planes = parse(await getJSON<any>(url));
+      lastFlights = { at: Date.now(), planes };
+      return planes;
+    } catch { /* try the next source */ }
   }
+  if (lastFlights && Date.now() - lastFlights.at < 2 * 60_000) return lastFlights.planes;
+  throw new Error("No flight source responded");
 };
 
 /* ---------------- Places (OpenStreetMap via Overpass, ODbL) ---------------- */
