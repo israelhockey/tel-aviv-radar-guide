@@ -10,7 +10,10 @@ import { BeachList } from "@/components/radar/BeachList";
 import { ShabbatCard } from "@/components/radar/ShabbatCard";
 import { OpenNearby } from "@/components/radar/OpenNearby";
 import { useI18n } from "@/lib/i18n";
-import { useHebrewDate } from "@/lib/live/hooks";
+import { useEventsFeed, useHebrewDate, useNewsFeed } from "@/lib/live/hooks";
+import { inRange } from "@/lib/live/when";
+import { EventRow } from "./WhatsOn";
+import { NewsRow } from "./News";
 import { fmtClock, fmtToday } from "@/lib/live/format";
 
 type Item = Database["public"]["Tables"]["content_items"]["Row"];
@@ -79,6 +82,12 @@ const Now = () => {
   const hebrewDate = useHebrewDate();
   const tonight = useTonight();
   const briefs = useBriefs();
+  const eventsFeed = useEventsFeed();
+  const newsFeed = useNewsFeed();
+  const feedTonight = (eventsFeed.data?.events ?? []).filter((e) => inRange(e.start, e.end, "tonight")).slice(0, 6);
+  const feedNews = (newsFeed.data?.news ?? []).slice(0, 6);
+  const tonightCount = feedTonight.length + (tonight.data?.length ?? 0);
+  const newsCount = feedNews.length + (briefs.data?.length ?? 0);
 
   useEffect(() => {
     document.title = lang === "he" ? "TLV Radar · מה קורה בתל אביב עכשיו" : "TLV Radar · Tel Aviv right now";
@@ -107,12 +116,13 @@ const Now = () => {
                 <h2 id="tonight-h" className="text-lg font-medium">{t("now.tonight")}</h2>
                 <Link to="/events" className="text-[14px] text-sea hover:underline underline-offset-4">{t("now.seeWeek")}</Link>
               </div>
-              {tonight.data && tonight.data.length > 0 ? (
+              {tonightCount > 0 ? (
                 <ul className="mt-1 divide-y divide-border">
-                  {tonight.data.map((i) => <ItemRow key={i.id} item={i} lead={i.starts_at ? fmtClock(i.starts_at, lang) : ""} />)}
+                  {feedTonight.map((e) => <EventRow key={e.id} e={e} />)}
+                  {(tonight.data ?? []).map((i) => <ItemRow key={i.id} item={i} lead={i.starts_at ? fmtClock(i.starts_at, lang) : ""} />)}
                 </ul>
               ) : (
-                !tonight.isLoading && <p className="mt-3 text-[14px] text-muted-foreground">{t("now.tonightEmpty")}</p>
+                !tonight.isLoading && !eventsFeed.isLoading && <p className="mt-3 text-[14px] text-muted-foreground">{t("now.tonightEmpty")}</p>
               )}
             </section>
 
@@ -121,14 +131,15 @@ const Now = () => {
                 <h2 id="news-h" className="text-lg font-medium">{t("now.news")}</h2>
                 <Link to="/news" className="text-[14px] text-sea hover:underline underline-offset-4">{t("now.allNews")}</Link>
               </div>
-              {briefs.data && briefs.data.length > 0 ? (
+              {newsCount > 0 ? (
                 <ul className="mt-1 divide-y divide-border">
-                  {briefs.data.map((i) => (
+                  {(briefs.data ?? []).map((i) => (
                     <ItemRow key={i.id} item={i} lead={i.published_at ? fmtClock(i.published_at, lang) : ""} />
                   ))}
+                  {feedNews.map((n) => <NewsRow key={n.id} n={n} />)}
                 </ul>
               ) : (
-                !briefs.isLoading && <p className="mt-3 text-[14px] text-muted-foreground">{t("now.newsEmpty")}</p>
+                !briefs.isLoading && !newsFeed.isLoading && <p className="mt-3 text-[14px] text-muted-foreground">{t("now.newsEmpty")}</p>
               )}
             </section>
 

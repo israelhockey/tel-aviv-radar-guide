@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Now from "./pages/Now";
 import Live from "./pages/Live";
+import WhatsOn from "./pages/WhatsOn";
+import News from "./pages/News";
 import { I18nProvider } from "@/lib/i18n";
 import Category from "./pages/Category";
 import Post from "./pages/Post";
@@ -33,13 +35,13 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Now />} />
           <Route path="/live" element={<Live />} />
-          <Route path="/news" element={<Category />} />
-          <Route path="/events" element={<Category />} />
+          <Route path="/news" element={<News />} />
+          <Route path="/events" element={<WhatsOn key="events" />} />
           <Route path="/food" element={<Category />} />
           <Route path="/nightlife" element={<Category />} />
           <Route path="/business" element={<Category />} />
-          <Route path="/weekend" element={<Category />} />
-          <Route path="/free" element={<Category />} />
+          <Route path="/weekend" element={<WhatsOn key="weekend" />} />
+          <Route path="/free" element={<WhatsOn key="free" />} />
           <Route path="/newsletter" element={<Newsletter />} />
           <Route path="/post/:slug" element={<Post />} />
           <Route path="/submit" element={<Submit />} />

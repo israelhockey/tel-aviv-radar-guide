@@ -335,3 +335,27 @@ export const fetchRainTiles = async (): Promise<{ url: string; time: number } | 
   if (!last || !j.host) return null;
   return { url: `${j.host}${last.path}/256/{z}/{x}/{y}/2/1_1.png`, time: last.time };
 };
+
+/* ---------------- Events and news collected by GitHub Actions (static files) ---------------- */
+
+export type FeedEvent = {
+  id: string; title: string; start: string; end: string | null; venue: string | null; address: string | null;
+  lat: number | null; lon: number | null; priceFrom: number | null; free: boolean; category: string;
+  url: string; image: string | null; source: string;
+};
+
+export type FeedNews = { id: string; title: string; url: string; source: string; lang: "he" | "en"; published: string | null };
+
+export const fetchEventsFeed = async (): Promise<{ updated: string | null; events: FeedEvent[] }> => {
+  const res = await fetch("/data/events.json", { cache: "no-cache" });
+  if (!res.ok) throw new Error(`events ${res.status}`);
+  const j = await res.json();
+  return { updated: j.updated ?? null, events: j.events ?? [] };
+};
+
+export const fetchNewsFeed = async (): Promise<{ updated: string | null; news: FeedNews[] }> => {
+  const res = await fetch("/data/news.json", { cache: "no-cache" });
+  if (!res.ok) throw new Error(`news ${res.status}`);
+  const j = await res.json();
+  return { updated: j.updated ?? null, news: j.news ?? [] };
+};

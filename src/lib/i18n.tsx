@@ -89,6 +89,44 @@ const STRINGS = {
   "sea.choppy": { en: "Choppy", he: "גלי" },
   "sea.rough": { en: "Rough", he: "סוער" },
 
+
+  // what's on
+  "on.title": { en: "What's on in Tel Aviv", he: "מה קורה בתל אביב" },
+  "on.tonight": { en: "Tonight", he: "הערב" },
+  "on.tomorrow": { en: "Tomorrow", he: "מחר" },
+  "on.weekend": { en: "This weekend", he: "סוף השבוע" },
+  "on.week": { en: "Next 7 days", he: "7 הימים הקרובים" },
+  "on.all": { en: "Everything", he: "הכל" },
+  "on.free": { en: "Free", he: "חינם" },
+  "on.from": { en: "from", he: "החל מ־" },
+  "on.tickets": { en: "Tickets", he: "כרטיסים" },
+  "on.empty": { en: "Nothing listed for this time yet. Try a wider range.", he: "עוד אין אירועים לזמן הזה. נסו טווח רחב יותר." },
+  "on.sources": { en: "Listings from Tickchak and Meetup, refreshed every two hours. Always check the ticket page before you go.", he: "האירועים מטיקצ'אק ומיטאפ, מתעדכנים כל שעתיים. כדאי לבדוק בעמוד הכרטיסים לפני שיוצאים." },
+  "on.count": { en: "events", he: "אירועים" },
+  "cat.music": { en: "Music", he: "מוזיקה" },
+  "cat.comedy": { en: "Stand-up", he: "סטנדאפ" },
+  "cat.theatre": { en: "Theatre", he: "תיאטרון" },
+  "cat.party": { en: "Parties", he: "מסיבות" },
+  "cat.family": { en: "Family", he: "משפחה" },
+  "cat.talk": { en: "Talks", he: "הרצאות" },
+  "cat.festival": { en: "Festivals", he: "פסטיבלים" },
+  "cat.sport": { en: "Sport", he: "ספורט" },
+  "cat.meetup": { en: "Meetups", he: "מיטאפים" },
+  "cat.other": { en: "Other", he: "אחר" },
+
+  // news
+  "news.title": { en: "Tel Aviv news", he: "חדשות תל אביב" },
+  "news.body": { en: "Headlines about the city from Israeli news sites. Each links to the full story at the source.", he: "כותרות על העיר מאתרי החדשות בישראל. כל כותרת מובילה לכתבה המלאה במקור." },
+  "news.all": { en: "All", he: "הכל" },
+  "news.he": { en: "Hebrew", he: "עברית" },
+  "news.en": { en: "English", he: "אנגלית" },
+  "news.empty": { en: "No Tel Aviv headlines in the last few days.", he: "אין כותרות על תל אביב בימים האחרונים." },
+  "news.today": { en: "Today", he: "היום" },
+  "news.yesterday": { en: "Yesterday", he: "אתמול" },
+
+  // live map events
+  "live.events": { en: "Tonight's events", he: "אירועים הערב" },
+
   // common
   "common.loading": { en: "Loading…", he: "טוען…" },
   "common.error": { en: "This source isn't responding right now. It retries on its own.", he: "המקור לא מגיב כרגע. ננסה שוב אוטומטית." },

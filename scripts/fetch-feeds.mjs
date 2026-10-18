@@ -20,6 +20,7 @@ const decode = (s = "") =>
     .replace(/<[^>]+>/g, " ")
     .replace(/&quot;/g, '"').replace(/&#39;|&apos;|&#039;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
     .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCharCode(parseInt(h, 16)))
     .replace(/&nbsp;/g, " ").replace(/&amp;/g, "&")
     .replace(/\s+/g, " ").trim();
 
@@ -136,10 +137,15 @@ const geocodeVenues = async (events) => {
     .slice(0, 40); // stay well inside the rate limit per run
   for (const k of todo) {
     const ev = events.find((e) => keyOf(e) === k);
+    // Try the full venue + address, the venue name alone (Nominatim knows many venues by name),
+    // and the street address; strip city words that make Nominatim settle for the city itself.
+    const bare = (ev.venue ?? "").replace(/(תל[\s-]?אביב(-?\s?יפו)?|ת"א|tel[\s-]?aviv)/gi, "").replace(/[-–,()\s]+$/g, "").replace(/^[-–,()\s]+/g, "").trim();
+    const street = (ev.address ?? "").split(",")[0].trim();
     const queries = [
       [ev.venue, ev.address].filter(Boolean).join(", "),
-      `${ev.venue ?? ""}, תל אביב`,
-      ev.address,
+      bare,
+      bare && `${bare}, תל אביב`,
+      /\d/.test(street) ? `${street}, תל אביב` : "",
     ].filter(Boolean);
     let hit = null;
     for (const q of queries) {
@@ -153,7 +159,10 @@ const geocodeVenues = async (events) => {
       try {
         const res = await fetch(u, { headers: { "User-Agent": "TLV-Radar/1.0 (free public city guide; github.com/israelhockey)" } });
         const rows = res.ok ? await res.json() : [];
-        if (rows[0]) hit = { lat: Number(rows[0].lat), lon: Number(rows[0].lon) };
+        // A match on the city or a whole district is no better than not knowing: skip it.
+        const r0 = rows[0];
+        const vague = r0 && (/^(city|town|village|municipality|suburb|quarter|neighbourhood|state|county|region|country)$/.test(r0.addresstype ?? "") || r0.class === "boundary");
+        if (r0 && !vague) hit = { lat: Number(r0.lat), lon: Number(r0.lon) };
       } catch { /* try next form */ }
       await sleep(1100);
       if (hit) break;
