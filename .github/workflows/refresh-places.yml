@@ -1,4 +1,4 @@
-name: Refresh places, rail and city layers
+name: Refresh places from OpenStreetMap
 
 on:
   schedule:
@@ -25,13 +25,10 @@ jobs:
         continue-on-error: true
       - run: node scripts/fetch-rail.mjs
         continue-on-error: true
-      - run: node scripts/fetch-city.mjs
-        continue-on-error: true
       - name: Commit if changed
         run: |
           [ -f public/data/places.json ] && git add public/data/places.json
           [ -f public/data/rail.json ] && git add public/data/rail.json
-          [ -f public/data/city.json ] && git add public/data/city.json
           if git diff --cached --quiet; then
             echo "No changes."
             exit 0

@@ -69,6 +69,31 @@ await step("shelters", async () => (await query(592, "ms_miklat,t_sug,Full_Addre
   return { at: pointOf(f), id: a.ms_miklat ?? null, kind: txt(a.t_sug), address: txt(a.Full_Address), addressEn: a.shem_rechov_eng ? `${txt(a.shem_rechov_eng)} ${a.ms_bait ?? ""}`.trim() : null, note: txt(a.hearot) };
 }).filter((s) => s.at));
 
+// Shabbat: the city's free weekend shuttles (Naim BaSofash), taxi stands, shopping zones open on Shabbat.
+await step("naimLines", async () => (await query(992)).filter((f) => f.geometry?.paths).map((f) => ({
+  type: "Feature",
+  geometry: { type: "MultiLineString", coordinates: f.geometry.paths.map((p) => p.map(([x, y]) => [round(x), round(y)])) },
+  properties: { name: txt(f.attributes.Name), line: txt(String(f.attributes.Line ?? "")), color: txt(f.attributes.route_color) },
+})));
+
+await step("naimStops", async () => (await query(993)).map((f) => ({
+  at: pointOf(f), name: txt(f.attributes.Name), line: txt(String(f.attributes.Line ?? "")), lines: txt(f.attributes.all_lines_in_stop), code: f.attributes.stop_code ?? null,
+})).filter((x) => x.at));
+
+await step("taxiStands", async () => (await query(691)).map((f) => ({
+  at: pointOf(f), name: txt(f.attributes.shem), where: txt(f.attributes.mikum) ?? txt(f.attributes.address),
+})).filter((x) => x.at));
+
+await step("shabbatShopping", async () => (await query(981)).filter((f) => f.geometry?.rings).map((f) => ({
+  name: txt(f.attributes.shem_tezuga) ?? txt(f.attributes.shem_mitham), at: centroid(f.geometry.rings),
+})));
+
+// Museums, theatres, galleries and cultural centres, with whether they open on Saturday.
+await step("culture", async () => (await query(745)).map((f) => {
+  const a = f.attributes;
+  return { at: pointOf(f), name: txt(a.NAME), kind: txt(a.SUG) ?? txt(a.MAIN_TARBOT), address: txt(a.KTOVET), phone: txt(a.PHONE), web: txt(a.INTERNET_PAGE), saturday: txt(a.SAT_OP) };
+}).filter((x) => x.at && x.name));
+
 console.log(`::notice::city layers: ${report.join(" · ")}`);
 if (!out.beaches && !out.shelters) process.exit(1);
 
