@@ -56,6 +56,7 @@ const probe = async (url) => {
       rssItems: count(body, /<item[\s>]/g), atomEntries: count(body, /<entry[\s>]/g),
       ical: body.includes("BEGIN:VCALENDAR"), nextData: body.includes("__NEXT_DATA__"), nuxt: body.includes("__NUXT__"),
       icsLinks: count(body, /\.ics["'?]/g), rssLinks: count(body, /application\/rss\+xml/g),
+      head: body.slice(0, 300),
       cloudflare: /cf-chl|challenge-platform|Just a moment/i.test(body),
       ldSample: ld.length ? ld.join("\n").slice(0, 2500) : undefined,
       nextSample: (() => {
