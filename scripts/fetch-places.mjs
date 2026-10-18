@@ -52,6 +52,10 @@ for (const e of json.elements ?? []) {
   if (t["diet:vegan"]) p.vegan = t["diet:vegan"];
   if (t["addr:street"]) p.street = t["addr:street"];
   if (t["addr:housenumber"]) p.number = t["addr:housenumber"];
+  if (t.happy_hours) p.happy = t.happy_hours;
+  if (t.outdoor_seating === "yes") p.outdoor = true;
+  if (t.website || t["contact:website"]) p.web = t.website ?? t["contact:website"];
+  if (t["contact:instagram"]) p.insta = t["contact:instagram"];
   places.push(p);
 }
 places.sort((a, b) => a.id.localeCompare(b.id));
@@ -64,3 +68,4 @@ await writeFile(
   JSON.stringify({ source: "© OpenStreetMap contributors, ODbL", bbox: BBOX, count: places.length, places }) + "\n",
 );
 console.log(`Wrote ${places.length} places.`);
+console.log(`::notice::places: ${places.length}, with happy hours ${places.filter((p) => p.happy).length}, outdoor seating ${places.filter((p) => p.outdoor).length}`);

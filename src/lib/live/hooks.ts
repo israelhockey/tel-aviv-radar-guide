@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  fetchAir, fetchAircraft, fetchBeachForecast, fetchCityData, fetchJellyfish, fetchParking, fetchTelofan, fetchTraffic, fetchBeaches, fetchBuses, fetchEventsFeed, fetchHebrewDate, fetchNewsFeed, fetchPlaces, fetchRail, fetchRainTiles, fetchShabbat, fetchWeather,
+  fetchAir, fetchAircraft, fetchHolidays, fetchBeachForecast, fetchCityData, fetchJellyfish, fetchParking, fetchTelofan, fetchTraffic, fetchBeaches, fetchBuses, fetchEventsFeed, fetchHebrewDate, fetchNewsFeed, fetchPlaces, fetchRail, fetchRainTiles, fetchShabbat, fetchWeather,
 } from "./sources";
 
 const MIN = 60_000;
@@ -33,3 +33,5 @@ export const useBeachForecast = () =>
   useQuery({ queryKey: ["beach-forecast"], queryFn: fetchBeachForecast, staleTime: 30 * MIN, refetchInterval: 60 * MIN });
 export const useCityData = () => useQuery({ queryKey: ["city-data"], queryFn: fetchCityData, staleTime: 12 * 60 * MIN });
 export const useJellyfish = () => useQuery({ queryKey: ["jellyfish"], queryFn: fetchJellyfish, staleTime: 30 * MIN, retry: 1 });
+export const useHolidays = (lang: "en" | "he") =>
+  useQuery({ queryKey: ["holidays", lang], queryFn: () => fetchHolidays(lang), staleTime: 12 * 60 * MIN });

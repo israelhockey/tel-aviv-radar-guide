@@ -450,6 +450,7 @@ export const fetchFlightInfo = (hex: string, callsign: string) => {
 export type Place = {
   id: string; name: string; nameEn?: string; kind: string; lat: number; lon: number;
   hours?: string; cuisine?: string; kosher?: string; vegan?: string; street?: string; number?: string;
+  happy?: string; outdoor?: boolean; web?: string; insta?: string;
 };
 
 const PLACES_CACHE_KEY = "radar.places.v1";
@@ -708,6 +709,11 @@ export type CityData = {
   toilets?: { at: [number, number]; where: string | null; accessible: boolean | null; hours: string | null }[];
   dogParks?: { at: [number, number]; name: string | null; address: string | null; hours: string | null }[];
   shelters?: { at: [number, number]; id: number | null; kind: string | null; address: string | null; addressEn: string | null; note: string | null }[];
+  naimLines?: { type: "Feature"; geometry: unknown; properties: { name: string | null; line: string | null; color: string | null } }[];
+  naimStops?: { at: [number, number]; name: string | null; line: string | null; lines: string | null; code: number | null }[];
+  taxiStands?: { at: [number, number]; name: string | null; where: string | null }[];
+  shabbatShopping?: { name: string; at: [number, number] }[];
+  culture?: { at: [number, number]; name: string; kind: string | null; address: string | null; phone: string | null; web: string | null; saturday: string | null }[];
 };
 
 export const fetchCityData = async (): Promise<CityData> => {
@@ -723,4 +729,20 @@ export const fetchJellyfish = async (): Promise<{ updated: string | null; region
   const res = await fetch("/data/jellyfish.json", { cache: "no-cache" });
   if (!res.ok) throw new Error(`jellyfish ${res.status}`);
   return res.json();
+};
+
+/* ---------------- Upcoming Jewish and Israeli holidays (Hebcal) ---------------- */
+
+export type Holiday = { date: string; title: string; yomtov: boolean; subcat: string; memo?: string };
+
+export const fetchHolidays = async (lang: "en" | "he"): Promise<Holiday[]> => {
+  const start = new Date();
+  const end = new Date(Date.now() + 120 * 86400_000);
+  const ymd = (d: Date) => d.toISOString().slice(0, 10);
+  const u = new URL("https://www.hebcal.com/hebcal");
+  for (const [k, v] of Object.entries({ v: "1", cfg: "json", maj: "on", min: "off", mod: "on", nx: "off", ss: "off", mf: "off", c: "off", i: "on", geo: "geoname", geonameid: String(HEBCAL_GEONAME_ID), lg: lang === "he" ? "he" : "s", start: ymd(start), end: ymd(end) })) u.searchParams.set(k, v);
+  const j = await getJSON<any>(u.toString());
+  return ((j.items ?? []) as any[])
+    .filter((i) => i.category === "holiday")
+    .map((i) => ({ date: i.date, title: i.title, yomtov: !!i.yomtov, subcat: i.subcat ?? "", memo: i.memo }));
 };

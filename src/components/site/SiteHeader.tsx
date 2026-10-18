@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { CalendarDays, Menu, Moon, Newspaper, Radar, Sun, SunMoon, Waves } from "lucide-react";
+import { CalendarDays, Menu, Moon, Newspaper, Radar, Sun, SunMoon, UtensilsCrossed, Waves } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -7,17 +7,21 @@ import {
 import { useI18n, type StringKey } from "@/lib/i18n";
 import { Logo } from "./Logo";
 
-export const TABS: { to: string; key: StringKey; icon: typeof Sun; end?: boolean }[] = [
+export const TABS: { to: string; key: StringKey; icon: typeof Sun; end?: boolean; desktopOnly?: boolean }[] = [
   { to: "/", key: "nav.now", icon: Sun, end: true },
   { to: "/live", key: "nav.live", icon: Radar },
   { to: "/events", key: "nav.whatson", icon: CalendarDays },
+  { to: "/food", key: "nav.foodShort", icon: UtensilsCrossed },
   { to: "/beach", key: "nav.beach", icon: Waves },
-  { to: "/news", key: "nav.news", icon: Newspaper },
+  { to: "/news", key: "nav.news", icon: Newspaper, desktopOnly: true },
 ];
 
-const MORE: { to: string; key: StringKey }[] = [
-  { to: "/food", key: "nav.food" },
-  { to: "/nightlife", key: "nav.nightlife" },
+const MORE: { to: string; key: StringKey; mobileOnly?: boolean }[] = [
+  { to: "/news", key: "nav.news", mobileOnly: true },
+  { to: "/shabbat", key: "nav.shabbat" },
+  { to: "/cinema", key: "nav.cinema" },
+  { to: "/getting-around", key: "nav.around" },
+  { to: "/guide", key: "nav.guide" },
   { to: "/weekend", key: "nav.weekend" },
   { to: "/free", key: "nav.free" },
   { to: "/newsletter", key: "nav.newsletter" },
@@ -93,7 +97,7 @@ export const SiteHeader = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[200px]">
               {MORE.map((m) => (
-                <DropdownMenuItem key={m.to} asChild>
+                <DropdownMenuItem key={m.to} asChild className={m.mobileOnly ? "md:hidden" : undefined}>
                   <Link to={m.to}>{t(m.key)}</Link>
                 </DropdownMenuItem>
               ))}
@@ -113,8 +117,8 @@ export const BottomTabs = () => {
       aria-label="Main"
       className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
     >
-      <div className="grid grid-cols-4">
-        {TABS.map((tab) => (
+      <div className="grid grid-cols-5">
+        {TABS.filter((tab) => !tab.desktopOnly).map((tab) => (
           <NavLink
             key={tab.to}
             to={tab.to}

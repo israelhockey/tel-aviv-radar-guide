@@ -8,6 +8,8 @@ import Live from "./pages/Live";
 import WhatsOn from "./pages/WhatsOn";
 import News from "./pages/News";
 import Beach from "./pages/Beach";
+import Food from "./pages/Food";
+import Shabbat from "./pages/Shabbat";
 import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
 import Category from "./pages/Category";
@@ -41,7 +43,8 @@ const App = () => (
           <Route path="/news" element={<News />} />
           <Route path="/beach" element={<Beach />} />
           <Route path="/events" element={<WhatsOn key="events" />} />
-          <Route path="/food" element={<Category />} />
+          <Route path="/food" element={<Food />} />
+          <Route path="/shabbat" element={<Shabbat />} />
           <Route path="/nightlife" element={<Category />} />
           <Route path="/business" element={<Category />} />
           <Route path="/weekend" element={<WhatsOn key="weekend" />} />
