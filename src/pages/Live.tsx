@@ -414,7 +414,7 @@ const DetailPanel = ({
     if (e.venue) rows.push(["", e.venue]);
     if (e.address) rows.push(["", e.address]);
     if (e.free) rows.push(["", t("on.free")]);
-    else if (e.priceFrom != null) rows.push(["", `${t("on.from")}₪${Math.round(e.priceFrom)}`]);
+    else if (e.priceFrom != null) rows.push(["", `${t("on.from")}${lang === "he" ? "" : " "}₪${Math.round(e.priceFrom)}`]);
     link = e.url;
   } else if (selected.kind === "bus") {
     const b = selected.bus;

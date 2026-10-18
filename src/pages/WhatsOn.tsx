@@ -39,7 +39,7 @@ export const EventRow = ({ e, showDay = false }: { e: FeedEvent; showDay?: boole
             {e.free ? (
               <span className="text-surf font-medium">{t("on.free")}</span>
             ) : e.priceFrom != null ? (
-              <span className="tabular">{t("on.from")}₪{Math.round(e.priceFrom)}</span>
+              <span className="tabular">{t("on.from")}{lang === "he" ? "" : " "}₪{Math.round(e.priceFrom)}</span>
             ) : null}
           </span>
         </span>

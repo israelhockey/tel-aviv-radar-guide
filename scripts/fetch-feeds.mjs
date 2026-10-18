@@ -46,6 +46,19 @@ const TLV_RE = /תל[\s-]?אביב|ת"א|יפו|tel[\s-]?aviv|jaffa|yafo/i;
 
 const first = (v) => (Array.isArray(v) ? v[0] : v);
 
+// Ticket sites pad titles for search engines: "Show - לוח הופעות והזמנת כרטיסים | Venue - 18.10".
+const cleanTitle = (title, venue) => {
+  let t = title
+    .replace(/\s*[-–|]\s*(לוח הופעות|הזמנת כרטיסים|כרטיסים|tickets?)[^|]*$/i, "")
+    .replace(/\s*[-–]\s*\d{1,2}[./]\d{1,2}([./]\d{2,4})?\s*$/, "");
+  if (venue) {
+    const parts = t.split(/\s*\|\s*/);
+    if (parts.length > 1 && venue.includes(parts.at(-1).slice(0, 6))) parts.pop();
+    t = parts.join(" | ");
+  }
+  return t.replace(/\s*[-–]\s*\d{1,2}[./]\d{1,2}([./]\d{2,4})?\s*$/, "").trim() || title;
+};
+
 const toEvent = (e, source) => {
   const loc = first(e.location) ?? {};
   const addr = typeof loc.address === "string" ? { streetAddress: loc.address } : (loc.address ?? {});
@@ -60,7 +73,7 @@ const toEvent = (e, source) => {
   const city = [addr.addressLocality, addr.streetAddress, loc.name].filter(Boolean).join(" ");
   return {
     id: `${source.id}:${String(url).replace(/[#?].*$/, "").split("/").filter(Boolean).pop()}`,
-    title: decode(e.name),
+    title: cleanTitle(decode(e.name), loc.name ? decode(loc.name) : ""),
     start: e.startDate,
     end: e.endDate ?? null,
     venue: loc.name ? decode(loc.name) : null,
