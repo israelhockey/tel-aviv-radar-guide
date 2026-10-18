@@ -746,3 +746,17 @@ export const fetchHolidays = async (lang: "en" | "he"): Promise<Holiday[]> => {
     .filter((i) => i.category === "holiday")
     .map((i) => ({ date: i.date, title: i.title, yomtov: !!i.yomtov, subcat: i.subcat ?? "", memo: i.memo }));
 };
+
+/* ---------------- Cinema (snapshot every two hours) ---------------- */
+
+export type Cinema = { id: string; name: string; nameEn: string; address: string; lat: number; lon: number; url: string };
+export type Film = {
+  id: string; title: string; poster: string | null; link: string; minutes: number | null; tags: string[]; trailer?: string | null;
+  cinema: string; shows: { at: string; booking: string }[];
+};
+
+export const fetchCinema = async (): Promise<{ updated: string | null; cinemas: Cinema[]; films: Film[] }> => {
+  const res = await fetch("/data/cinema.json", { cache: "no-cache" });
+  if (!res.ok) throw new Error(`cinema ${res.status}`);
+  return res.json();
+};

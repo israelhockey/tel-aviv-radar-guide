@@ -10,6 +10,9 @@ import News from "./pages/News";
 import Beach from "./pages/Beach";
 import Food from "./pages/Food";
 import Shabbat from "./pages/Shabbat";
+import GettingAround from "./pages/GettingAround";
+import Guide from "./pages/Guide";
+import CinemaPage from "./pages/CinemaPage";
 import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
 import Category from "./pages/Category";
@@ -45,6 +48,9 @@ const App = () => (
           <Route path="/events" element={<WhatsOn key="events" />} />
           <Route path="/food" element={<Food />} />
           <Route path="/shabbat" element={<Shabbat />} />
+          <Route path="/getting-around" element={<GettingAround />} />
+          <Route path="/guide" element={<Guide />} />
+          <Route path="/cinema" element={<CinemaPage />} />
           <Route path="/nightlife" element={<Category />} />
           <Route path="/business" element={<Category />} />
           <Route path="/weekend" element={<WhatsOn key="weekend" />} />

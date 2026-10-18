@@ -1,0 +1,22 @@
+{
+  "name": "TLV Radar · Tel Aviv right now",
+  "short_name": "TLV Radar",
+  "description": "A free live guide to Tel Aviv-Yafo: events, beaches, food, transit and a live city map.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#10102a",
+  "theme_color": "#10102a",
+  "lang": "en",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Live map", "url": "/live" },
+    { "name": "What's on", "url": "/events" },
+    { "name": "Beach", "url": "/beach" },
+    { "name": "Food & drink", "url": "/food" }
+  ]
+}

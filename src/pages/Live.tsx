@@ -96,11 +96,12 @@ const Live = () => {
   const weekend = (() => { const d = new Date(); return (d.getDay() === 5 && d.getHours() >= 14) || (d.getDay() === 6 && d.getHours() < 20); })();
   const [on, setOn] = useState<Record<LayerId, boolean>>({
     shabbat: weekend || linked.includes("shabbat"),
-    events: true, traffic: linked.includes("traffic"), buses: true, rail: true, flights: true, food: true, parking: false, bikes: false, beaches: true, rain: false,
+    events: true, traffic: linked.includes("traffic"),
+    buses: true, rail: true, flights: true, food: true, parking: linked.includes("parking"), bikes: linked.includes("bikes"), beaches: true, rain: false,
   });
   const [selected, setSelected] = useState<Selected | null>(null);
   const [tick, setTick] = useState(0); // re-evaluates "open now" every minute
-  const [whereOpen, setWhereOpen] = useState(false);
+  const [whereOpen, setWhereOpen] = useState(() => new URLSearchParams(window.location.search).has("where"));
   const [where, setWhere] = useState<WhereResult | null>(null);
   const [lineFilter, setLineFilter] = useState<number | null>(null);
   const myPos = useRef<{ lat: number; lon: number } | null>(null);
