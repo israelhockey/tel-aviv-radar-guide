@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
-import { CalendarDays, Menu, Newspaper, Radar, Sun } from "lucide-react";
+import { CalendarDays, Menu, Moon, Newspaper, Radar, Sun, SunMoon } from "lucide-react";
+import { useTheme } from "@/lib/theme";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -35,6 +36,27 @@ export const LanguageToggle = () => {
   );
 };
 
+// Auto follows the real sunset; a tap pins day or night.
+export const ThemeToggle = () => {
+  const { choice, setChoice } = useTheme();
+  const { lang } = useI18n();
+  const next = choice === "auto" ? "day" : choice === "day" ? "night" : "auto";
+  const Icon = choice === "auto" ? SunMoon : choice === "day" ? Sun : Moon;
+  const label = lang === "he"
+    ? ({ auto: "מצב תאורה: לפי השקיעה", day: "מצב תאורה: יום", night: "מצב תאורה: לילה" } as const)[choice]
+    : ({ auto: "Theme: follows sunset", day: "Theme: day", night: "Theme: night" } as const)[choice];
+  return (
+    <button
+      onClick={() => setChoice(next)}
+      aria-label={label}
+      title={label}
+      className="h-9 w-9 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"
+    >
+      <Icon className="h-4 w-4" aria-hidden />
+    </button>
+  );
+};
+
 export const SiteHeader = () => {
   const { t } = useI18n();
   return (
@@ -59,6 +81,7 @@ export const SiteHeader = () => {
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <LanguageToggle />
           <DropdownMenu>
             <DropdownMenuTrigger

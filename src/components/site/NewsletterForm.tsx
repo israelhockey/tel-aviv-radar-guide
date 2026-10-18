@@ -28,11 +28,11 @@ export const NewsletterForm = ({
   };
 
   const inputClasses = variant === "dark"
-    ? "bg-white text-foreground placeholder:text-muted-foreground"
-    : "bg-white text-foreground placeholder:text-muted-foreground border border-border";
+    ? "bg-card text-foreground placeholder:text-muted-foreground"
+    : "bg-card text-foreground placeholder:text-muted-foreground border border-border";
 
   return (
-    <form onSubmit={submit} className="flex items-center rounded-full p-1 bg-white shadow-sm">
+    <form onSubmit={submit} className="flex items-center rounded-full p-1 bg-card shadow-sm">
       <div className="flex-1 flex items-center gap-2 px-4">
         <Mail className="h-4 w-4 text-muted-foreground" />
         <input

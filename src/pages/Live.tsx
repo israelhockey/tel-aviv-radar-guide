@@ -5,7 +5,10 @@ import { useI18n, type StringKey } from "@/lib/i18n";
 import { BEACHES, TLV_CENTER } from "@/lib/live/geo";
 import { useAircraft, useBeaches, useBuses, useEventsFeed, usePlaces, useRain } from "@/lib/live/hooks";
 import { inRange } from "@/lib/live/when";
-import { loadMapLibre, MAP_STYLE, type MapLibre } from "@/lib/live/maplibre";
+import { loadMapLibre, type MapLibre } from "@/lib/live/maplibre";
+import { liveColors, mapStyleFor } from "@/lib/live/mapStyle";
+import { createTweener } from "@/lib/live/tween";
+import { useTheme } from "@/lib/theme";
 import { busIcon, planeIcon } from "@/lib/live/mapIcons";
 import { openStateAt } from "@/lib/live/openingHours";
 import { placeKindLabel } from "@/lib/live/places";
@@ -27,7 +30,7 @@ const LAYERS: { id: LayerId; key: StringKey; icon: typeof BusIcon; color: string
 // Map layer ids that belong to each toggle.
 const MAP_LAYERS: Record<LayerId, string[]> = {
   events: ["events-halo", "events"],
-  buses: ["buses-dot", "buses-icon", "buses-label"],
+  buses: ["buses-glow", "buses-dot", "buses-icon", "buses-label"],
   flights: ["flights-icon", "flights-label"],
   food: ["food-closed", "food-open"],
   bikes: ["bikes"],
@@ -65,6 +68,7 @@ const Live = () => {
   const beaches = useBeaches();
   const rain = useRain(on.rain);
   const eventsFeed = useEventsFeed();
+  const { phase } = useTheme();
 
   useEffect(() => {
     document.title = lang === "he" ? "מפה חיה · TLV Radar" : "Live map · TLV Radar";
@@ -75,34 +79,46 @@ const Live = () => {
     return () => clearInterval(id);
   }, []);
 
+  // Buses glide between reported positions; planes too, faster.
+  const tweenBuses = useRef(createTweener(2200));
+  const tweenPlanes = useRef(createTweener(1200));
+
   // Full objects behind each feature id, for the detail panel.
   const lookup = useRef({ buses: new Map<string, Bus>(), planes: new Map<string, Aircraft>(), places: new Map<string, Place>(), events: new Map<string, FeedEvent>() });
 
-  /* ---------- create the map once ---------- */
+  /* ---------- create the map (again whenever day turns to night) ---------- */
   useEffect(() => {
     let cancelled = false;
     let map: MapLibre | null = null;
-    loadMapLibre()
-      .then((maplibregl) => {
+    const C = liveColors(phase);
+    setReady(false);
+    // Keep the view when the map is rebuilt for a new phase.
+    const prev = mapRef.current;
+    const view = prev
+      ? { center: prev.getCenter(), zoom: prev.getZoom(), pitch: prev.getPitch(), bearing: prev.getBearing() }
+      : { center: [TLV_CENTER.lon, TLV_CENTER.lat], zoom: 13.2, pitch: 50, bearing: -24 };
+    Promise.all([loadMapLibre(), mapStyleFor(phase)])
+      .then(([maplibregl, style]) => {
         if (cancelled || !containerRef.current) return;
+        prev?.remove();
         map = new maplibregl.Map({
           container: containerRef.current,
-          style: MAP_STYLE,
-          center: [TLV_CENTER.lon, TLV_CENTER.lat],
-          zoom: 12.4,
+          style,
+          ...view,
           minZoom: 9,
           maxZoom: 18,
+          maxPitch: 70,
           attributionControl: { compact: true },
           cooperativeGestures: false,
         });
         mapRef.current = map;
-        map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: false }), "bottom-right");
+        map.addControl(new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }), "bottom-right");
 
         map.on("load", () => {
           if (cancelled) return;
           // Prefixed names: the base map style ships its own "bus" icon (a bus-stop sign).
-          map.addImage("radar-bus", busIcon("#0b63e5"), { pixelRatio: 2 });
-          map.addImage("radar-plane", planeIcon("#ff5a1f"), { pixelRatio: 2 });
+          map.addImage("radar-bus", busIcon(C.bus), { pixelRatio: 2 });
+          map.addImage("radar-plane", planeIcon(C.plane), { pixelRatio: 2 });
 
           const empty = fc([]);
           for (const id of ["events", "buses", "flights", "food", "bikes", "beaches", "me"]) map.addSource(id, { type: "geojson", data: empty });
@@ -115,29 +131,29 @@ const Live = () => {
             id: "food-open", type: "circle", source: "food", filter: ["==", ["get", "state"], "open"],
             paint: {
               "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 2.5, 15, 6],
-              "circle-color": "#e8590c", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1,
+              "circle-color": C.open, "circle-stroke-color": C.halo, "circle-stroke-width": 1,
             },
           });
           map.addLayer({
             id: "bikes", type: "circle", source: "bikes",
             paint: {
               "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 3, 15, 6],
-              "circle-color": "#2f9e44", "circle-stroke-color": "#ffffff", "circle-stroke-width": 1.5,
+              "circle-color": C.bike, "circle-stroke-color": C.halo, "circle-stroke-width": 1.5,
             },
           });
           map.addLayer({
             id: "events-halo", type: "circle", source: "events",
-            paint: { "circle-radius": 14, "circle-color": "#7048e8", "circle-opacity": 0.18 },
+            paint: { "circle-radius": 16, "circle-color": C.event, "circle-opacity": 0.22, "circle-blur": 0.6 },
           });
           map.addLayer({
             id: "events", type: "circle", source: "events",
-            paint: { "circle-radius": 6.5, "circle-color": "#7048e8", "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 },
+            paint: { "circle-radius": 6.5, "circle-color": C.event, "circle-stroke-color": C.halo, "circle-stroke-width": 2 },
           });
           map.addLayer({
             id: "beaches", type: "circle", source: "beaches",
             paint: {
               "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 5, 14, 9],
-              "circle-color": "#0f8a9d", "circle-stroke-color": "#ffffff", "circle-stroke-width": 2,
+              "circle-color": C.beach, "circle-stroke-color": C.halo, "circle-stroke-width": 2,
             },
           });
           map.addLayer({
@@ -146,14 +162,21 @@ const Live = () => {
               "text-field": ["get", "label"], "text-font": ["Noto Sans Regular"], "text-size": 12,
               "text-offset": [-1.2, 0], "text-anchor": "right", "text-allow-overlap": false,
             },
-            paint: { "text-color": "#0b4f5a", "text-halo-color": "#ffffff", "text-halo-width": 1.5 },
+            paint: { "text-color": C.text, "text-halo-color": C.halo, "text-halo-width": 1.5 },
           });
           // City-wide view: buses as small dots, so the map stays readable with ~1,000 of them.
           map.addLayer({
+            id: "buses-glow", type: "circle", source: "buses", maxzoom: 15,
+            paint: {
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 4, 14, 10],
+              "circle-color": C.busGlow, "circle-opacity": phase === "day" ? 0.12 : 0.22, "circle-blur": 1,
+            },
+          });
+          map.addLayer({
             id: "buses-dot", type: "circle", source: "buses", maxzoom: 14,
             paint: {
-              "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 1.4, 13.9, 3],
-              "circle-color": "#0b63e5", "circle-opacity": 0.75,
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 1.6, 13.9, 3.2],
+              "circle-color": C.bus, "circle-opacity": 0.9,
             },
           });
           map.addLayer({
@@ -170,7 +193,7 @@ const Live = () => {
               "text-field": ["get", "line"], "text-font": ["Noto Sans Regular"], "text-size": 11,
               "text-offset": [0, 1.4], "text-anchor": "top",
             },
-            paint: { "text-color": "#0b3d91", "text-halo-color": "#ffffff", "text-halo-width": 1.5 },
+            paint: { "text-color": C.text, "text-halo-color": C.halo, "text-halo-width": 1.5 },
           });
           map.addLayer({
             id: "flights-icon", type: "symbol", source: "flights",
@@ -186,11 +209,11 @@ const Live = () => {
               "text-field": ["get", "callsign"], "text-font": ["Noto Sans Regular"], "text-size": 11,
               "text-offset": [0, 1.6], "text-anchor": "top",
             },
-            paint: { "text-color": "#7a2a0a", "text-halo-color": "#ffffff", "text-halo-width": 1.5 },
+            paint: { "text-color": C.plane, "text-halo-color": C.halo, "text-halo-width": 1.5 },
           });
           map.addLayer({
             id: "me", type: "circle", source: "me",
-            paint: { "circle-radius": 7, "circle-color": "#0b63e5", "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 },
+            paint: { "circle-radius": 7, "circle-color": C.bus, "circle-stroke-color": C.halo, "circle-stroke-width": 3 },
           });
 
           const pick = (layer: string, fn: (props: Record<string, unknown>) => void) => {
@@ -219,26 +242,25 @@ const Live = () => {
 
     return () => {
       cancelled = true;
-      map?.remove();
-      mapRef.current = null;
     };
-  }, []);
+  }, [phase]);
+
+  // Remove the map when leaving the page.
+  useEffect(() => () => { mapRef.current?.remove(); mapRef.current = null; }, []);
 
   /* ---------- push data into the map ---------- */
   useEffect(() => {
     if (!ready || !buses.data) return;
     lookup.current.buses = new Map(buses.data.buses.map((b) => [b.id, b]));
-    mapRef.current?.getSource("buses")?.setData(
-      fc(buses.data.buses.map((b) => pt(b.lon, b.lat, { id: b.id, bearing: b.bearing, line: b.line ?? "" }))),
-    );
+    tweenBuses.current(mapRef.current, "buses",
+      buses.data.buses.map((b) => ({ id: b.id, lon: b.lon, lat: b.lat, props: { bearing: b.bearing, line: b.line ?? "" } })));
   }, [ready, buses.data]);
 
   useEffect(() => {
     if (!ready || !aircraft.data) return;
     lookup.current.planes = new Map(aircraft.data.map((a) => [a.id, a]));
-    mapRef.current?.getSource("flights")?.setData(
-      fc(aircraft.data.map((a) => pt(a.lon, a.lat, { id: a.id, track: a.track, callsign: a.callsign }))),
-    );
+    tweenPlanes.current(mapRef.current, "flights",
+      aircraft.data.map((a) => ({ id: a.id, lon: a.lon, lat: a.lat, props: { track: a.track, callsign: a.callsign } })));
   }, [ready, aircraft.data]);
 
   const foodCounts = useMemo(() => {

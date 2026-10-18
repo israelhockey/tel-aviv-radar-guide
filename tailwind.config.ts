@@ -7,7 +7,7 @@ export default {
   theme: {
     container: { center: true, padding: "1.5rem", screens: { "2xl": "1280px" } },
     extend: {
-      fontFamily: { sans: ['Rubik', 'system-ui', 'sans-serif'] },
+      fontFamily: { sans: ['Rubik', 'system-ui', 'sans-serif'], display: ['"Secular One"', 'Rubik', 'system-ui', 'sans-serif'] },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -21,6 +21,8 @@ export default {
         accent: { DEFAULT: "hsl(var(--accent))", foreground: "hsl(var(--accent-foreground))" },
         sea: { DEFAULT: "hsl(var(--sea))", foreground: "hsl(var(--sea-foreground))" },
         surf: "hsl(var(--surf))",
+        sand: "hsl(var(--sand))",
+        gold: "hsl(var(--gold))",
         popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
         card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
         cat: {
@@ -36,6 +38,15 @@ export default {
           business: "hsl(var(--cat-business))",
           free: "hsl(var(--cat-free))",
           cafe: "hsl(var(--cat-cafe))",
+          comedy: "hsl(var(--cat-comedy))",
+          theatre: "hsl(var(--cat-theatre))",
+          party: "hsl(var(--cat-party))",
+          family: "hsl(var(--cat-family))",
+          talk: "hsl(var(--cat-talk))",
+          festival: "hsl(var(--cat-festival))",
+          meetup: "hsl(var(--cat-meetup))",
+          sport: "hsl(var(--cat-sport))",
+          other: "hsl(var(--cat-other))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

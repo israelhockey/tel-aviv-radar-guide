@@ -91,6 +91,10 @@ const STRINGS = {
   "sea.rough": { en: "Rough", he: "סוער" },
 
 
+  // hero
+  "hero.title": { en: "Tel Aviv, right now", he: "תל אביב, עכשיו" },
+  "hero.eventsTonight": { en: "events tonight", he: "אירועים הערב" },
+
   // what's on
   "on.title": { en: "What's on in Tel Aviv", he: "מה קורה בתל אביב" },
   "on.tonight": { en: "Tonight", he: "הערב" },

@@ -53,7 +53,7 @@ const News = () => {
   return (
     <SiteLayout>
       <div className="container-page pt-6 sm:pt-8 max-w-3xl">
-        <h1 className="text-[28px] sm:text-[40px] font-medium leading-tight">{t("news.title")}</h1>
+        <h1 className="font-display text-[40px] sm:text-[60px] leading-[0.95]">{t("news.title")}</h1>
         <p className="mt-2 text-[15px] text-muted-foreground max-w-xl">{t("news.body")}</p>
         <div className="mt-5 flex gap-2">
           {(["all", "he", "en"] as const).map((f) => (

@@ -6,6 +6,7 @@ import { useEventsFeed } from "@/lib/live/hooks";
 import { fmtClock } from "@/lib/live/format";
 import { dayHeading, inRange, nightKey, type Range } from "@/lib/live/when";
 import type { FeedEvent } from "@/lib/live/sources";
+import { PosterCard } from "@/components/radar/PosterCard";
 
 const RANGES: { id: Range; key: StringKey }[] = [
   { id: "tonight", key: "on.tonight" },
@@ -80,8 +81,8 @@ const WhatsOn = () => {
 
   return (
     <SiteLayout>
-      <div className="container-page pt-6 sm:pt-8 max-w-3xl">
-        <h1 className="text-[28px] sm:text-[40px] font-medium leading-tight">{t("on.title")}</h1>
+      <div className="container-page pt-6 sm:pt-10 max-w-5xl">
+        <h1 className="font-display text-[40px] sm:text-[60px] leading-[0.95]">{t("on.title")}</h1>
 
         <div className="mt-5 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]" role="tablist">
           {RANGES.map((r) => (
@@ -119,10 +120,10 @@ const WhatsOn = () => {
 
         {groups.map(([key, list]) => (
           <section key={key} className="mt-6" aria-label={dayHeading(key, lang)}>
-            <h2 className="text-[13px] font-medium text-muted-foreground border-b border-border pb-2">{dayHeading(key, lang)}</h2>
-            <ul className="divide-y divide-border">
-              {list.map((e) => <EventRow key={e.id} e={e} />)}
-            </ul>
+            <h2 className="font-display text-[24px] leading-none">{dayHeading(key, lang)}</h2>
+            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              {list.map((e) => <PosterCard key={e.id} e={e} />)}
+            </div>
           </section>
         ))}
 

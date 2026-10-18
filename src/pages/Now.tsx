@@ -5,16 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { ConditionsStrip } from "@/components/radar/ConditionsStrip";
-import { LiveTeaser } from "@/components/radar/LiveTeaser";
+import { CityHero } from "@/components/radar/CityHero";
 import { BeachList } from "@/components/radar/BeachList";
 import { ShabbatCard } from "@/components/radar/ShabbatCard";
 import { OpenNearby } from "@/components/radar/OpenNearby";
 import { useI18n } from "@/lib/i18n";
-import { useEventsFeed, useHebrewDate, useNewsFeed } from "@/lib/live/hooks";
+import { useEventsFeed, useNewsFeed } from "@/lib/live/hooks";
 import { inRange } from "@/lib/live/when";
-import { EventRow } from "./WhatsOn";
+import { PosterCard } from "@/components/radar/PosterCard";
 import { NewsRow } from "./News";
-import { fmtClock, fmtToday } from "@/lib/live/format";
+import { fmtClock } from "@/lib/live/format";
 
 type Item = Database["public"]["Tables"]["content_items"]["Row"];
 
@@ -79,12 +79,14 @@ const ItemRow = ({ item, lead }: { item: Item; lead?: string }) => (
 
 const Now = () => {
   const { t, lang } = useI18n();
-  const hebrewDate = useHebrewDate();
   const tonight = useTonight();
   const briefs = useBriefs();
   const eventsFeed = useEventsFeed();
   const newsFeed = useNewsFeed();
-  const feedTonight = (eventsFeed.data?.events ?? []).filter((e) => inRange(e.start, e.end, "tonight")).slice(0, 6);
+  // Tonight first; on a quiet night, fill the row with what's coming up this week.
+  const allEvents = eventsFeed.data?.events ?? [];
+  const tonightOnly = allEvents.filter((e) => inRange(e.start, e.end, "tonight"));
+  const feedTonight = (tonightOnly.length >= 3 ? tonightOnly : [...tonightOnly, ...allEvents.filter((e) => !tonightOnly.includes(e) && inRange(e.start, e.end, "week"))]).slice(0, 10);
   const feedNews = (newsFeed.data?.news ?? []).slice(0, 6);
   const tonightCount = feedTonight.length + (tonight.data?.length ?? 0);
   const newsCount = feedNews.length + (briefs.data?.length ?? 0);
@@ -95,17 +97,9 @@ const Now = () => {
 
   return (
     <SiteLayout>
-      <div className="container-page pt-6 sm:pt-8">
-        <header className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-          <h1 className="text-[28px] sm:text-[40px] font-medium leading-tight">{fmtToday(lang)}</h1>
-          <p className="text-[14px] text-muted-foreground">
-            {hebrewDate.data && <span lang="he" dir="rtl">{hebrewDate.data}</span>}
-            {hebrewDate.data && " · "}
-            {t("now.city")}
-          </p>
-        </header>
-
-        <div className="mt-5">
+      <CityHero />
+      <div className="container-page">
+        <div className="mt-2">
           <ConditionsStrip />
         </div>
 
@@ -113,14 +107,24 @@ const Now = () => {
           <div className="space-y-10 min-w-0">
             <section aria-labelledby="tonight-h">
               <div className="flex items-baseline justify-between">
-                <h2 id="tonight-h" className="text-lg font-medium">{t("now.tonight")}</h2>
+                <h2 id="tonight-h" className="font-display text-[26px] leading-none">{t("now.tonight")}</h2>
                 <Link to="/events" className="text-[14px] text-sea hover:underline underline-offset-4">{t("now.seeWeek")}</Link>
               </div>
               {tonightCount > 0 ? (
-                <ul className="mt-1 divide-y divide-border">
-                  {feedTonight.map((e) => <EventRow key={e.id} e={e} />)}
-                  {(tonight.data ?? []).map((i) => <ItemRow key={i.id} item={i} lead={i.starts_at ? fmtClock(i.starts_at, lang) : ""} />)}
-                </ul>
+                <>
+                  {feedTonight.length > 0 && (
+                    <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 [scrollbar-width:thin]">
+                      {feedTonight.map((e) => (
+                        <PosterCard key={e.id} e={e} showDay={!tonightOnly.includes(e)} className="snap-start shrink-0 w-[46%] sm:w-[220px]" />
+                      ))}
+                    </div>
+                  )}
+                  {(tonight.data ?? []).length > 0 && (
+                    <ul className="mt-2 divide-y divide-border">
+                      {(tonight.data ?? []).map((i) => <ItemRow key={i.id} item={i} lead={i.starts_at ? fmtClock(i.starts_at, lang) : ""} />)}
+                    </ul>
+                  )}
+                </>
               ) : (
                 !tonight.isLoading && !eventsFeed.isLoading && <p className="mt-3 text-[14px] text-muted-foreground">{t("now.tonightEmpty")}</p>
               )}
@@ -128,7 +132,7 @@ const Now = () => {
 
             <section aria-labelledby="news-h">
               <div className="flex items-baseline justify-between">
-                <h2 id="news-h" className="text-lg font-medium">{t("now.news")}</h2>
+                <h2 id="news-h" className="font-display text-[26px] leading-none">{t("now.news")}</h2>
                 <Link to="/news" className="text-[14px] text-sea hover:underline underline-offset-4">{t("now.allNews")}</Link>
               </div>
               {newsCount > 0 ? (
@@ -147,7 +151,6 @@ const Now = () => {
           </div>
 
           <aside className="space-y-8">
-            <LiveTeaser />
             <ShabbatCard />
             <BeachList />
           </aside>

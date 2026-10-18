@@ -8,6 +8,7 @@ import Live from "./pages/Live";
 import WhatsOn from "./pages/WhatsOn";
 import News from "./pages/News";
 import { I18nProvider } from "@/lib/i18n";
+import { ThemeProvider } from "@/lib/theme";
 import Category from "./pages/Category";
 import Post from "./pages/Post";
 import Submit from "./pages/Submit";
@@ -28,6 +29,7 @@ const queryClient = new QueryClient({
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <I18nProvider>
+    <ThemeProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -56,6 +58,7 @@ const App = () => (
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+    </ThemeProvider>
     </I18nProvider>
   </QueryClientProvider>
 );
