@@ -16,7 +16,7 @@ const RANGES: { id: Range; key: StringKey }[] = [
   { id: "all", key: "on.all" },
 ];
 
-const CATS = ["music", "comedy", "theatre", "party", "family", "talk", "festival", "sport", "meetup", "other"] as const;
+const CATS = ["music", "comedy", "theatre", "party", "family", "talk", "festival", "art", "market", "sport", "meetup", "community", "other"] as const;
 
 export const EventRow = ({ e, showDay = false }: { e: FeedEvent; showDay?: boolean }) => {
   const { t, lang } = useI18n();
@@ -29,7 +29,7 @@ export const EventRow = ({ e, showDay = false }: { e: FeedEvent; showDay?: boole
         className="group grid grid-cols-[3.5rem,1fr] gap-3 py-3 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"
       >
         <span className="text-[14px] tabular text-muted-foreground pt-0.5">
-          {fmtClock(e.start, lang)}
+          {!e.allDay && fmtClock(e.start, lang)}
           {showDay && <span className="block text-[11px]">{dayHeading(nightKey(e.start), lang)}</span>}
         </span>
         <span className="min-w-0">
@@ -65,7 +65,7 @@ const WhatsOn = () => {
 
   const inWindow = useMemo(() => (data?.events ?? []).filter((e) => inRange(e.start, e.end, range)), [data, range]);
   const present = useMemo(() => new Set(inWindow.map((e) => e.category)), [inWindow]);
-  const shown = inWindow.filter((e) => (!freeOnly || e.free) && (cats.size === 0 || cats.has(e.category)));
+  const shown = inWindow.filter((e) => (!freeOnly || e.free) && (cats.size === 0 ? e.category !== "community" : cats.has(e.category)));
 
   const groups = useMemo(() => {
     const m = new Map<string, FeedEvent[]>();

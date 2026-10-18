@@ -47,6 +47,7 @@ export default {
           meetup: "hsl(var(--cat-meetup))",
           sport: "hsl(var(--cat-sport))",
           other: "hsl(var(--cat-other))",
+          community: "hsl(var(--cat-community))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",

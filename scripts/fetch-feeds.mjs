@@ -141,6 +141,103 @@ const fetchLeaan = async () => {
   return out;
 };
 
+// The City of Tel Aviv-Yafo publishes its own events and community-centre activities on its
+// public map server: free concerts, festivals, talks, tours, classes. Most are free or cheap.
+const CITY_GIS = "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer";
+
+// The city stores local wall-clock time as if it were UTC; turn it into a real instant.
+const israelIso = (ms) => {
+  const wall = new Date(ms).toISOString().slice(0, 19);
+  const guess = new Date(`${wall}Z`);
+  const off = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Jerusalem", timeZoneName: "shortOffset" })
+    .formatToParts(guess).find((p) => p.type === "timeZoneName")?.value.replace("GMT", "") || "+2";
+  const [h, m = "0"] = off.split(":");
+  const sign = h.startsWith("-") ? "-" : "+";
+  return `${wall}${sign}${String(Math.abs(Number(h))).padStart(2, "0")}:${m.padStart(2, "0")}`;
+};
+
+const CITY_CATS = [
+  [/סטנד.?אפ|stand.?up|קומדי/i, "comedy"],
+  [/הופע|קונצרט|מוזיק|ג'אז|ג׳אז|תזמורת|מקהל|אופרה|רסיטל|concert|music|jazz|dj\b/i, "music"],
+  [/הצג|תיאטר|מחזה|theat/i, "theatre"],
+  [/מסיב|רייב|party|rave/i, "party"],
+  [/פסטיבל|festival|חגיג|קרנבל/i, "festival"],
+  [/ילד|משפח|הורים|פעוט|תינוק|kids|family/i, "family"],
+  [/מרוץ|ריצ|אופני|ספורט|יוגה|פילאטיס|שחי|כדור|race|run\b|sport|yoga/i, "sport"],
+  [/תערוכ|גלרי|אמנות|אומנות|מוזיאון|exhibit|gallery|art\b/i, "art"],
+  [/הרצא|כנס|מפגש|סיור|שיח|lecture|talk|tour/i, "talk"],
+];
+const cityCategory = (title, summary) => CITY_CATS.find(([re]) => re.test(title))?.[1] ?? CITY_CATS.find(([re]) => re.test(summary))?.[1] ?? "other";
+
+const fetchCityEvents = async () => {
+  const u = `${CITY_GIS}/410/query?where=1%3D1&outFields=OBJECTID,title,startdate,location,type,image_url,sitemapurl,summary,lon,lat&returnGeometry=false&f=json`;
+  const j = JSON.parse(await get(u, UA));
+  const now = Date.now();
+  const out = [];
+  for (const { attributes: a } of j.features ?? []) {
+    if (!a?.title || !a.startdate || !a.sitemapurl) continue;
+    const type = String(a.type ?? "");
+    if (/הודעות/.test(type)) continue; // announcements, not events
+    const community = /קויינג/.test(type);
+    // No time given (midnight): file it under that day, shown without a clock.
+    const allDay = new Date(a.startdate).toISOString().slice(11, 16) === "00:00";
+    const start = israelIso(allDay ? a.startdate + 9 * 3600_000 : a.startdate);
+    const t = new Date(start).getTime();
+    // Community classes repeat weekly; two weeks ahead is plenty. City events: two months.
+    if (t < now - 6 * 3600_000 || t > now + (community ? 14 : 60) * 24 * 3600_000) continue;
+    const title = decode(a.title).replace(/\s*[-|]\s*(נדחה|בוטל).*$/, "");
+    if (/נדחה|בוטל|cancel/i.test(a.title)) continue;
+    const summary = decode(a.summary ?? "");
+    out.push({
+      id: `tlv:${/ItemID=(\d+)/.exec(a.sitemapurl)?.[1] ?? a.OBJECTID}:${start.slice(0, 16)}`,
+      title,
+      start,
+      end: null,
+      allDay,
+      venue: a.location ? decode(a.location) : null,
+      address: a.location ? `${decode(a.location)}, תל אביב-יפו` : null,
+      lat: a.lat || null, lon: a.lon || null,
+      priceFrom: null,
+      free: /חינם|ללא עלות|free/i.test(`${title} ${summary}`),
+      category: community ? "community" : cityCategory(title, summary),
+      url: a.sitemapurl,
+      image: a.image_url || null,
+      summary: summary.slice(0, 240) || null,
+      source: "עיריית תל אביב-יפו",
+    });
+  }
+  return out;
+};
+
+// Regular weekly happenings that never appear on ticket sites. Days: 0 = Sunday.
+const WEEKLY = [
+  { id: "nahalat-binyamin", title: "יריד האמנים בנחלת בנימין · Nahalat Binyamin crafts fair", days: [2, 5], from: "09:00", to: "17:00",
+    venue: "נחלת בנימין", lat: 32.0668, lon: 34.7703, url: "https://www.timeout.com/israel/shopping/nahalat-binyamin-arts-and-crafts-fair" },
+  { id: "dizengoff-food", title: "שוק האוכל בדיזנגוף סנטר · Dizengoff Center food market", days: [5], from: "09:00", to: "14:00",
+    venue: "דיזנגוף סנטר", lat: 32.0753, lon: 34.7748, url: "https://www.google.com/maps/search/?api=1&query=Dizengoff+Center+Tel+Aviv" },
+  { id: "port-farmers", title: "שוק האיכרים בנמל · Port farmers' market", days: [5], from: "08:00", to: "14:00",
+    venue: "נמל תל אביב", lat: 32.0985, lon: 34.7737, url: "https://www.google.com/maps/search/?api=1&query=Tel+Aviv+Port+Market" },
+];
+
+const weeklyEvents = () => {
+  const out = [];
+  for (let d = 0; d < 14; d++) {
+    const day = new Date(Date.now() + d * 86400_000);
+    const ymd = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Jerusalem" }).format(day);
+    const dow = new Date(`${ymd}T12:00:00Z`).getUTCDay();
+    for (const w of WEEKLY) {
+      if (!w.days.includes(dow)) continue;
+      const at = (hm) => israelIso(Date.parse(`${ymd}T${hm}:00Z`));
+      out.push({
+        id: `weekly:${w.id}:${ymd}`, title: w.title, start: at(w.from), end: at(w.to),
+        venue: w.venue, address: `${w.venue}, תל אביב-יפו`, lat: w.lat, lon: w.lon,
+        priceFrom: null, free: true, category: "market", url: w.url, image: null, source: "TLV Radar",
+      });
+    }
+  }
+  return out;
+};
+
 // The same show often appears on several ticket sites: one entry per title + start time.
 const normTitle = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
 
@@ -179,6 +276,16 @@ const fetchEvents = async () => {
   } catch (e) {
     report.push(`leaan: FAILED ${e}`);
   }
+
+  try {
+    const city = await fetchCityEvents();
+    for (const ev of city) all.set(ev.id, ev);
+    report.push(`city of Tel Aviv: ${city.length} events (${city.filter((e) => e.category === "community").length} community classes)`);
+  } catch (e) {
+    report.push(`city of Tel Aviv: FAILED ${e}`);
+  }
+
+  for (const ev of weeklyEvents()) all.set(ev.id, ev);
 
   const now = Date.now();
   const events = [...all.values()]

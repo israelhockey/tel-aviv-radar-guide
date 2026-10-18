@@ -12,6 +12,7 @@ import { OpenNearby } from "@/components/radar/OpenNearby";
 import { useI18n } from "@/lib/i18n";
 import { useEventsFeed, useNewsFeed } from "@/lib/live/hooks";
 import { inRange } from "@/lib/live/when";
+import { isEveningOut } from "@/lib/live/sources";
 import { PosterCard } from "@/components/radar/PosterCard";
 import { NewsCard } from "@/components/radar/NewsCard";
 import { fmtClock } from "@/lib/live/format";
@@ -84,7 +85,7 @@ const Now = () => {
   const eventsFeed = useEventsFeed();
   const newsFeed = useNewsFeed();
   // Tonight first; on a quiet night, fill the row with what's coming up this week.
-  const allEvents = eventsFeed.data?.events ?? [];
+  const allEvents = (eventsFeed.data?.events ?? []).filter(isEveningOut);
   const tonightOnly = allEvents.filter((e) => inRange(e.start, e.end, "tonight"));
   const feedTonight = (tonightOnly.length >= 3 ? tonightOnly : [...tonightOnly, ...allEvents.filter((e) => !tonightOnly.includes(e) && inRange(e.start, e.end, "week"))]).slice(0, 10);
   const feedNews = (newsFeed.data?.news ?? []).slice(0, 8);

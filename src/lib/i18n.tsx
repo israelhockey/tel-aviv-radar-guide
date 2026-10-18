@@ -150,7 +150,7 @@ const STRINGS = {
   "on.from": { en: "from", he: "החל מ־" },
   "on.tickets": { en: "Tickets", he: "כרטיסים" },
   "on.empty": { en: "Nothing listed for this time yet. Try a wider range.", he: "עוד אין אירועים לזמן הזה. נסו טווח רחב יותר." },
-  "on.sources": { en: "Listings from Tickchak and Meetup, refreshed every two hours. Always check the ticket page before you go.", he: "האירועים מטיקצ'אק ומיטאפ, מתעדכנים כל שעתיים. כדאי לבדוק בעמוד הכרטיסים לפני שיוצאים." },
+  "on.sources": { en: "Listings from the City of Tel Aviv-Yafo, Tickchak, Leaan and Meetup, refreshed every two hours. Always check the event page before you go.", he: "האירועים מעיריית תל אביב-יפו, טיקצ'אק, לאן ומיטאפ, מתעדכנים כל שעתיים. כדאי לבדוק בעמוד האירוע לפני שיוצאים." },
   "on.count": { en: "events", he: "אירועים" },
   "cat.music": { en: "Music", he: "מוזיקה" },
   "cat.comedy": { en: "Stand-up", he: "סטנדאפ" },
@@ -161,6 +161,9 @@ const STRINGS = {
   "cat.festival": { en: "Festivals", he: "פסטיבלים" },
   "cat.sport": { en: "Sport", he: "ספורט" },
   "cat.meetup": { en: "Meetups", he: "מיטאפים" },
+  "cat.art": { en: "Art", he: "אמנות" },
+  "cat.market": { en: "Markets & fairs", he: "שווקים וירידים" },
+  "cat.community": { en: "Classes & community", he: "חוגים וקהילה" },
   "cat.other": { en: "Other", he: "אחר" },
 
   // news

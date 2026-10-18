@@ -8,7 +8,7 @@ import type { FeedEvent } from "@/lib/live/sources";
 export const CAT_BG: Record<string, string> = {
   music: "bg-cat-music", comedy: "bg-cat-comedy", theatre: "bg-cat-theatre", party: "bg-cat-party",
   family: "bg-cat-family", talk: "bg-cat-talk", festival: "bg-cat-festival", sport: "bg-cat-sport",
-  meetup: "bg-cat-meetup", other: "bg-cat-other",
+  meetup: "bg-cat-meetup", art: "bg-cat-art", market: "bg-cat-food", community: "bg-cat-community", other: "bg-cat-other",
 };
 
 export const PosterCard = ({ e, showDay = false, className = "" }: { e: FeedEvent; showDay?: boolean; className?: string }) => {
@@ -38,7 +38,7 @@ export const PosterCard = ({ e, showDay = false, className = "" }: { e: FeedEven
         )}
         <span className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/75 to-transparent" aria-hidden />
         <span className="absolute bottom-3 start-3 flex items-baseline gap-2 text-white">
-          <span className="text-[22px] font-medium tabular leading-none">{fmtClock(e.start, lang)}</span>
+          {!e.allDay && <span className="text-[22px] font-medium tabular leading-none">{fmtClock(e.start, lang)}</span>}
           {showDay && <span className="text-[12px] opacity-85">{dayHeading(nightKey(e.start), lang)}</span>}
         </span>
         <span className={`absolute top-3 start-3 rounded-full px-2.5 py-1 text-[11px] font-medium text-white ${cat}`}>

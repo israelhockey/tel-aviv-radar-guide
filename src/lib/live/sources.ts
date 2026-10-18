@@ -531,8 +531,11 @@ export const fetchRainTiles = async (): Promise<{ url: string; time: number } | 
 export type FeedEvent = {
   id: string; title: string; start: string; end: string | null; venue: string | null; address: string | null;
   lat: number | null; lon: number | null; priceFrom: number | null; free: boolean; category: string;
-  url: string; image: string | null; source: string;
+  url: string; image: string | null; source: string; allDay?: boolean; summary?: string | null;
 };
+
+// Weekly community-centre classes: plenty of them, so they only show when asked for.
+export const isEveningOut = (e: FeedEvent) => e.category !== "community";
 
 export type FeedNews = { id: string; title: string; url: string; source: string; lang: "he" | "en"; published: string | null; image?: string | null; summary?: string | null };
 
@@ -559,4 +562,84 @@ export const fetchRail = async (): Promise<RailData | null> => {
   if (!res.ok) return null; // not generated yet
   const j = await res.json();
   return { lines: j.lines, stations: j.stations };
+};
+
+/* ---------------- City of Tel Aviv live layers (municipal GIS, public) ---------------- */
+
+const CITY_GIS = "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer";
+
+const cityQuery = async (layer: number, fields: string, geometry = true): Promise<any[]> => {
+  const u = new URL(`${CITY_GIS}/${layer}/query`);
+  u.searchParams.set("where", "1=1");
+  u.searchParams.set("outFields", fields);
+  u.searchParams.set("returnGeometry", String(geometry));
+  u.searchParams.set("outSR", "4326");
+  u.searchParams.set("f", "json");
+  const j = await getJSON<any>(u.toString());
+  if (j.error) throw new Error(j.error.message ?? "GIS error");
+  return j.features ?? [];
+};
+
+// Traffic jams and road reports from Waze, as published by the city.
+export type Jam = { level: number; kmh: number; delay: number; street: string; path: [number, number][][] };
+export type RoadReport = { type: string; subtype: string; street: string; since: number; lat: number; lon: number };
+
+export const fetchTraffic = async (): Promise<{ jams: Jam[]; reports: RoadReport[] }> => {
+  const [j, r] = await Promise.all([
+    cityQuery(892, "level,speedKMH,delay,street"),
+    cityQuery(891, "type,subtype,street,pubMillis,reliability").catch(() => []),
+  ]);
+  return {
+    jams: j.filter((f) => f.geometry?.paths).map((f) => ({
+      level: f.attributes.level ?? 0, kmh: f.attributes.speedKMH ?? 0, delay: f.attributes.delay ?? 0,
+      street: f.attributes.street ?? "", path: f.geometry.paths,
+    })),
+    reports: r.filter((f) => f.geometry?.x != null && (f.attributes.reliability ?? 10) >= 5).map((f) => ({
+      type: f.attributes.type ?? "", subtype: f.attributes.subtype ?? "", street: f.attributes.street ?? "",
+      since: Number(f.attributes.pubMillis) || 0, lat: f.geometry.y, lon: f.geometry.x,
+    })),
+  };
+};
+
+// Ahuzot HaHof car parks with their live status sign (free / few / full).
+export type CarPark = {
+  id: string; name: string; address: string; lat: number; lon: number;
+  status: "free" | "few" | "full" | "closed" | "unknown"; statusAt: number | null;
+  dayRate?: string; nightRate?: string; dailyMax?: string; notes?: string; hours?: string;
+};
+
+const parkStatus = (s?: string): CarPark["status"] =>
+  !s ? "unknown" : /פנוי/.test(s) ? "free" : /מעט/.test(s) ? "few" : /מלא/.test(s) ? "full" : /סגור/.test(s) ? "closed" : "unknown";
+
+export const fetchParking = async (): Promise<CarPark[]> => {
+  const rows = await cityQuery(970, "code_achoza,shem_chenyon,ktovet,lon,lat,taarif_yom,taarif_layla,taarif_yomi,hearot_taarif,chalon_zman_chenyon_patoach,status_chenyon,tr_status_chenyon", false);
+  const clean = (v: unknown) => (typeof v === "string" ? v.replace(/\s+/g, " ").trim() || undefined : undefined);
+  return rows
+    .map((f) => f.attributes)
+    .filter((a) => a.lat && a.lon)
+    .map((a) => ({
+      id: String(a.code_achoza), name: a.shem_chenyon ?? "", address: a.ktovet ?? "", lat: a.lat, lon: a.lon,
+      status: parkStatus(a.status_chenyon), statusAt: a.tr_status_chenyon ?? null,
+      dayRate: clean(a.taarif_yom), nightRate: clean(a.taarif_layla), dailyMax: clean(a.taarif_yomi),
+      notes: clean(a.hearot_taarif), hours: clean(a.chalon_zman_chenyon_patoach),
+    }));
+};
+
+// Tel-O-Fun bike share docks with live bike counts.
+export type BikeDock = { id: number; name: string; lat: number; lon: number; bikes: number; ebikes: number; docks: number };
+
+export const fetchTelofan = async (): Promise<BikeDock[]> => {
+  const j = await getJSON<any>("https://api.tel-aviv.gov.il/telofan/stations");
+  // The feed repeats stations across imports; keep the newest row for each.
+  const best = new Map<number, any>();
+  for (const f of j.features ?? []) {
+    const a = f.attributes;
+    if (!a?.lat) continue;
+    const prev = best.get(a.tachana_id);
+    if (!prev || a.OBJECTID > prev.OBJECTID) best.set(a.tachana_id, a);
+  }
+  return [...best.values()].map((a) => ({
+    id: a.tachana_id, name: a.Shem_tachana ?? "", lat: a.lat, lon: a.lon,
+    bikes: a.free_bikes ?? 0, ebikes: a.free_bikesE ?? 0, docks: (a.free_amudim ?? 0) + (a.free_amudimE ?? 0),
+  }));
 };

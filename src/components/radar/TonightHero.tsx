@@ -5,7 +5,7 @@ import { useI18n, type StringKey } from "@/lib/i18n";
 import { useEventsFeed, useHebrewDate } from "@/lib/live/hooks";
 import { fmtClock, fmtToday } from "@/lib/live/format";
 import { inRange } from "@/lib/live/when";
-import type { FeedEvent } from "@/lib/live/sources";
+import { isEveningOut, type FeedEvent } from "@/lib/live/sources";
 import { CAT_BG } from "./PosterCard";
 
 // A poster in the moving wall. Without artwork, the title on its category colour.
@@ -26,7 +26,7 @@ const Tile = ({ e }: { e: FeedEvent }) => {
       ) : (
         <span className="absolute inset-0 p-2.5 flex items-end font-display text-[15px] sm:text-[18px] leading-tight text-white" dir="auto">{e.title}</span>
       )}
-      <span className="absolute top-1.5 start-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white tabular">{fmtClock(e.start, lang)}</span>
+      {!e.allDay && <span className="absolute top-1.5 start-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white tabular">{fmtClock(e.start, lang)}</span>}
     </a>
   );
 };
@@ -47,7 +47,7 @@ export const TonightHero = () => {
   const hebrewDate = useHebrewDate();
 
   const { tonight, wall, cats } = useMemo(() => {
-    const all = events.data?.events ?? [];
+    const all = (events.data?.events ?? []).filter(isEveningOut);
     const tonight = all.filter((e) => inRange(e.start, e.end, "tonight"));
     const week = all.filter((e) => !tonight.includes(e) && inRange(e.start, e.end, "week"));
     // Posters with artwork first, so the wall looks like a street of gig posters.

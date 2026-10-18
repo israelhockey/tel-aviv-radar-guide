@@ -13,7 +13,7 @@ import { useTheme } from "@/lib/theme";
 import { busIcon, planeIcon } from "@/lib/live/mapIcons";
 import { openStateAt } from "@/lib/live/openingHours";
 import { placeKindLabel } from "@/lib/live/places";
-import { fetchBusTrip, fetchFlightInfo, lineRoutePath, seaState, type Aircraft, type Bus, type BusTrip, type FeedEvent, type FlightInfo, type Place } from "@/lib/live/sources";
+import { isEveningOut, fetchBusTrip, fetchFlightInfo, lineRoutePath, seaState, type Aircraft, type Bus, type BusTrip, type FeedEvent, type FlightInfo, type Place } from "@/lib/live/sources";
 import { WhereTo, type WhereResult } from "@/components/radar/WhereTo";
 import { fmtClock, minutesAgo } from "@/lib/live/format";
 
@@ -407,7 +407,7 @@ const Live = () => {
 
   // Tonight's events with a known venue location.
   const tonightEvents = useMemo(
-    () => (eventsFeed.data?.events ?? []).filter((e) => e.lat != null && e.lon != null && inRange(e.start, e.end, "tonight")),
+    () => (eventsFeed.data?.events ?? []).filter((e) => e.lat != null && e.lon != null && isEveningOut(e) && inRange(e.start, e.end, "tonight")),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [eventsFeed.data, tick],
   );

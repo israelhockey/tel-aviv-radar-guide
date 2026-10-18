@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  fetchAir, fetchAircraft, fetchBeaches, fetchBuses, fetchEventsFeed, fetchHebrewDate, fetchNewsFeed, fetchPlaces, fetchRail, fetchRainTiles, fetchShabbat, fetchWeather,
+  fetchAir, fetchAircraft, fetchParking, fetchTelofan, fetchTraffic, fetchBeaches, fetchBuses, fetchEventsFeed, fetchHebrewDate, fetchNewsFeed, fetchPlaces, fetchRail, fetchRainTiles, fetchShabbat, fetchWeather,
 } from "./sources";
 
 const MIN = 60_000;
@@ -23,3 +23,9 @@ export const useRain = (enabled = true) =>
 export const useEventsFeed = () => useQuery({ queryKey: ["events-feed"], queryFn: fetchEventsFeed, staleTime: 10 * MIN, refetchInterval: 30 * MIN });
 export const useNewsFeed = () => useQuery({ queryKey: ["news-feed"], queryFn: fetchNewsFeed, staleTime: 10 * MIN, refetchInterval: 15 * MIN });
 export const useRail = () => useQuery({ queryKey: ["rail"], queryFn: fetchRail, staleTime: 12 * 60 * MIN });
+export const useTraffic = (enabled = true) =>
+  useQuery({ queryKey: ["traffic"], queryFn: fetchTraffic, enabled, refetchInterval: 2 * MIN, staleTime: MIN, retry: 1 });
+export const useParking = (enabled = true) =>
+  useQuery({ queryKey: ["parking"], queryFn: fetchParking, enabled, refetchInterval: 3 * MIN, staleTime: 2 * MIN, retry: 1 });
+export const useTelofan = (enabled = true) =>
+  useQuery({ queryKey: ["telofan"], queryFn: fetchTelofan, enabled, refetchInterval: 3 * MIN, staleTime: 2 * MIN, retry: 1 });
