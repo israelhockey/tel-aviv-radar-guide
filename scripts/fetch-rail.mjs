@@ -38,7 +38,7 @@ const fetchOverpass = async () => {
       return await res.json();
     } catch (e) {
       last = e;
-      console.warn(`Overpass endpoint failed: ${e}`);
+      console.log(`::warning::Overpass endpoint failed: ${String(e).slice(0, 200)}`);
       await sleep(10000);
     }
   }
@@ -85,7 +85,12 @@ const stations = (j.elements ?? [])
     };
   });
 
-if (lines.size < 2) throw new Error(`Only ${lines.size} rail lines returned; refusing to overwrite.`);
+const relCount = (j.elements ?? []).filter((e) => e.type === "relation").length;
+console.log(`::notice::rail: ${relCount} relations, ${lines.size} lines, ${stations.length} stations`);
+if (lines.size < 2) {
+  console.log(`::error::Only ${lines.size} rail lines from ${relCount} relations; sample: ${JSON.stringify((j.elements ?? []).find((e) => e.type === "relation")?.members?.slice(0, 2) ?? null).slice(0, 300)}`);
+  process.exit(1);
+}
 
 await mkdir("public/data", { recursive: true });
 await writeFile(
