@@ -27,7 +27,7 @@ const LAYERS: { id: LayerId; key: StringKey; icon: typeof BusIcon; color: string
 // Map layer ids that belong to each toggle.
 const MAP_LAYERS: Record<LayerId, string[]> = {
   events: ["events-halo", "events"],
-  buses: ["buses-icon", "buses-label"],
+  buses: ["buses-dot", "buses-icon", "buses-label"],
   flights: ["flights-icon", "flights-label"],
   food: ["food-closed", "food-open"],
   bikes: ["bikes"],
@@ -100,8 +100,9 @@ const Live = () => {
 
         map.on("load", () => {
           if (cancelled) return;
-          map.addImage("bus", busIcon("#0b63e5"), { pixelRatio: 2 });
-          map.addImage("plane", planeIcon("#ff5a1f"), { pixelRatio: 2 });
+          // Prefixed names: the base map style ships its own "bus" icon (a bus-stop sign).
+          map.addImage("radar-bus", busIcon("#0b63e5"), { pixelRatio: 2 });
+          map.addImage("radar-plane", planeIcon("#ff5a1f"), { pixelRatio: 2 });
 
           const empty = fc([]);
           for (const id of ["events", "buses", "flights", "food", "bikes", "beaches", "me"]) map.addSource(id, { type: "geojson", data: empty });
@@ -134,20 +135,31 @@ const Live = () => {
           });
           map.addLayer({
             id: "beaches", type: "circle", source: "beaches",
-            paint: { "circle-radius": 9, "circle-color": "#0f8a9d", "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 },
+            paint: {
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 11, 5, 14, 9],
+              "circle-color": "#0f8a9d", "circle-stroke-color": "#ffffff", "circle-stroke-width": 2,
+            },
           });
           map.addLayer({
-            id: "beaches-label", type: "symbol", source: "beaches",
+            id: "beaches-label", type: "symbol", source: "beaches", minzoom: 13.3,
             layout: {
               "text-field": ["get", "label"], "text-font": ["Noto Sans Regular"], "text-size": 12,
               "text-offset": [-1.2, 0], "text-anchor": "right", "text-allow-overlap": false,
             },
             paint: { "text-color": "#0b4f5a", "text-halo-color": "#ffffff", "text-halo-width": 1.5 },
           });
+          // City-wide view: buses as small dots, so the map stays readable with ~1,000 of them.
           map.addLayer({
-            id: "buses-icon", type: "symbol", source: "buses",
+            id: "buses-dot", type: "circle", source: "buses", maxzoom: 14,
+            paint: {
+              "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 1.4, 13.9, 3],
+              "circle-color": "#0b63e5", "circle-opacity": 0.75,
+            },
+          });
+          map.addLayer({
+            id: "buses-icon", type: "symbol", source: "buses", minzoom: 14,
             layout: {
-              "icon-image": "bus", "icon-size": ["interpolate", ["linear"], ["zoom"], 11, 0.55, 16, 1],
+              "icon-image": "radar-bus", "icon-size": ["interpolate", ["linear"], ["zoom"], 14, 0.7, 17, 1],
               "icon-rotate": ["get", "bearing"], "icon-rotation-alignment": "map",
               "icon-allow-overlap": true, "icon-ignore-placement": true,
             },
@@ -163,7 +175,7 @@ const Live = () => {
           map.addLayer({
             id: "flights-icon", type: "symbol", source: "flights",
             layout: {
-              "icon-image": "plane", "icon-size": 0.9,
+              "icon-image": "radar-plane", "icon-size": 0.9,
               "icon-rotate": ["get", "track"], "icon-rotation-alignment": "map",
               "icon-allow-overlap": true, "icon-ignore-placement": true,
             },
@@ -190,6 +202,7 @@ const Live = () => {
             map.on("mouseleave", layer, () => { map.getCanvas().style.cursor = ""; });
           };
           // Feature properties come back flattened; the full objects are kept in a lookup.
+          pick("buses-dot", (p) => { const b = lookup.current.buses.get(String(p.id)); if (b) setSelected({ kind: "bus", bus: b }); });
           pick("buses-icon", (p) => { const b = lookup.current.buses.get(String(p.id)); if (b) setSelected({ kind: "bus", bus: b }); });
           pick("flights-icon", (p) => { const a = lookup.current.planes.get(String(p.id)); if (a) setSelected({ kind: "plane", plane: a }); });
           pick("food-open", (p) => { const pl = lookup.current.places.get(String(p.id)); if (pl) setSelected({ kind: "place", place: pl }); });
