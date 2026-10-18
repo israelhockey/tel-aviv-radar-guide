@@ -71,7 +71,7 @@ const probe = async (url) => {
       links: [...new Set([...body.matchAll(/href="([^"]*(tel-aviv|tlv|telaviv|%D7%AA%D7%9C)[^"]*)"/gi)].map((m) => m[1]))].slice(0, 15),
     };
   } catch (e) {
-    return { url, error: String(e).slice(0, 120), ms: Date.now() - t0 };
+    return { url, error: `${String(e)} ${e?.cause?.code ?? ""} ${e?.cause?.message ?? ""}`.slice(0, 200), ms: Date.now() - t0 };
   }
 };
 
