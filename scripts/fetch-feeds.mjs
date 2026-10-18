@@ -486,6 +486,36 @@ const fetchNews = async () => {
   return { news, report };
 };
 
+/* ------------------------------ jellyfish ------------------------------ */
+// Weekly regional jellyfish summaries from Meduzot BaAm (citizen science, with the Israel
+// Oceanographic and Limnological Research institute), read from their public overview map.
+
+const JF_STATUS = {
+  No_JF: "none", Single_Blue: "few", Single_Red: "fewStinging", Multi_Blue: "many",
+  Multi_Partial: "mixed", Multi_Red: "manyStinging", Stingy_water: "stingingWater",
+};
+
+const fetchJellyfish = async () => {
+  const html = await get("https://www.meduzot.co.il/en/overview-map");
+  const out = [];
+  const re = /pop_content = `([\s\S]*?)`;\s*L\.marker\(\[([\d.]+),\s*([\d.]+)\],\s*\{icon: new LeafIcon\(\{iconUrl: '([^']+)'/g;
+  for (const m of html.matchAll(re)) {
+    const [, body, lat, lon, icon] = m;
+    const la = Number(lat), lo = Number(lon);
+    if (la < 31.95 || la > 32.25) continue; // Bat Yam to Herzliya
+    const key = /overview\/([A-Za-z_]+?)(?:_lg)?\.png/.exec(icon)?.[1] ?? "";
+    out.push({
+      region: decode((/map_pop_header">([\s\S]*?)<\/div>/.exec(body) ?? [])[1] ?? ""),
+      lat: la, lon: lo,
+      status: JF_STATUS[key] ?? "unknown",
+      sightings: Number((/(\d+)\s+sightings?/i.exec(body) ?? [])[1] ?? 0),
+      summary: decode((/<span>([\s\S]*?)<\/span>/.exec(body) ?? [])[1] ?? ""),
+      link: (() => { const l = /href='([^']+)'/.exec(body)?.[1]; return l ? new URL(l, "https://www.meduzot.co.il").toString() : "https://www.meduzot.co.il/en/overview-map"; })(),
+    });
+  }
+  return out;
+};
+
 /* ------------------------------ write ------------------------------ */
 
 const keepPrevious = async (path, key, fresh) => {
@@ -512,4 +542,11 @@ const writeIfChanged = async (path, key, rows) => {
 };
 await writeIfChanged("public/data/events.json", "events", ev);
 await writeIfChanged("public/data/news.json", "news", nw);
+try {
+  const jf = await fetchJellyfish();
+  console.log(`jellyfish: ${jf.length} Tel Aviv-area regions`);
+  if (jf.length) await writeIfChanged("public/data/jellyfish.json", "regions", jf);
+} catch (e) {
+  console.log(`jellyfish: FAILED ${e}`);
+}
 console.log(`Wrote ${ev.length} events and ${nw.length} news items.`);

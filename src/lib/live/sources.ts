@@ -643,3 +643,84 @@ export const fetchTelofan = async (): Promise<BikeDock[]> => {
     bikes: a.free_bikes ?? 0, ebikes: a.free_bikesE ?? 0, docks: (a.free_amudim ?? 0) + (a.free_amudimE ?? 0),
   }));
 };
+
+/* ---------------- Beach day: hourly forecast for the coast ---------------- */
+
+export type BeachHour = {
+  time: string; temp: number; feels: number; uv: number; wind: number; rain: number; cloud: number;
+  wave: number | null; sea: number | null; isDay: boolean; score: number;
+};
+
+// 0-10: how good an hour is for the beach. Warm not scorching, small waves, little wind, no rain.
+export const beachScore = (h: Omit<BeachHour, "score">) => {
+  if (!h.isDay) return 0;
+  let s = 10;
+  const t = h.feels;
+  if (t < 24) s -= Math.min(6, (24 - t) * 0.6);
+  if (t > 32) s -= Math.min(4, (t - 32) * 0.5);
+  if (h.wave != null) s -= h.wave > 1.5 ? 3.5 : h.wave > 1 ? 2 : h.wave > 0.6 ? 0.8 : 0;
+  s -= h.wind > 35 ? 3.5 : h.wind > 25 ? 1.8 : h.wind > 18 ? 0.6 : 0;
+  s -= h.rain >= 50 ? 4.5 : h.rain >= 25 ? 2 : h.rain >= 10 ? 0.5 : 0;
+  s -= h.cloud > 85 ? 1.5 : h.cloud > 60 ? 0.5 : 0;
+  if (h.sea != null) s -= h.sea < 18 ? 2.5 : h.sea < 21 ? 1 : 0;
+  return Math.max(0, Math.min(10, Math.round(s * 10) / 10));
+};
+
+export const fetchBeachForecast = async (): Promise<BeachHour[]> => {
+  const f = new URL("https://api.open-meteo.com/v1/forecast");
+  f.searchParams.set("latitude", "32.08");
+  f.searchParams.set("longitude", "34.766");
+  f.searchParams.set("hourly", "temperature_2m,apparent_temperature,uv_index,wind_speed_10m,precipitation_probability,cloud_cover,is_day");
+  f.searchParams.set("timezone", "Asia/Jerusalem");
+  f.searchParams.set("forecast_days", "4");
+  const m = new URL("https://marine-api.open-meteo.com/v1/marine");
+  m.searchParams.set("latitude", "32.08");
+  m.searchParams.set("longitude", String(34.766 + OFFSHORE_LON_SHIFT));
+  m.searchParams.set("hourly", "wave_height,sea_surface_temperature");
+  m.searchParams.set("timezone", "Asia/Jerusalem");
+  m.searchParams.set("forecast_days", "4");
+  const [w, s] = await Promise.all([getJSON<any>(f.toString()), getJSON<any>(m.toString()).catch(() => null)]);
+  const H = w.hourly;
+  const marine = new Map<string, [number | null, number | null]>(
+    (s?.hourly?.time ?? []).map((t: string, i: number) => [t, [s.hourly.wave_height[i], s.hourly.sea_surface_temperature[i]]]),
+  );
+  return (H.time as string[]).map((time, i) => {
+    const [wave, sea] = marine.get(time) ?? [null, null];
+    const h = {
+      time, temp: H.temperature_2m[i], feels: H.apparent_temperature[i], uv: H.uv_index[i] ?? 0,
+      wind: H.wind_speed_10m[i], rain: H.precipitation_probability[i] ?? 0, cloud: H.cloud_cover[i] ?? 0,
+      wave, sea, isDay: H.is_day[i] === 1,
+    };
+    return { ...h, score: beachScore(h) };
+  });
+};
+
+/* ---------------- City static layers and jellyfish (nightly / two-hourly snapshots) ---------------- */
+
+export type CityBeach = {
+  name: string; station: number | null; at: [number, number]; accessible: boolean | null; showers: string | null;
+  sport: boolean | null; playground: boolean | null; watersport: boolean | null; volleyball: boolean | null;
+  cafe: boolean | null; lighting: boolean | null; parking: string | null; dogs: boolean | null;
+};
+export type CityData = {
+  beaches?: CityBeach[];
+  beachZones?: { type: "Feature"; geometry: unknown; properties: { beach: string | null; kind: string | null; what: string | null } }[];
+  toilets?: { at: [number, number]; where: string | null; accessible: boolean | null; hours: string | null }[];
+  dogParks?: { at: [number, number]; name: string | null; address: string | null; hours: string | null }[];
+  shelters?: { at: [number, number]; id: number | null; kind: string | null; address: string | null; addressEn: string | null; note: string | null }[];
+};
+
+export const fetchCityData = async (): Promise<CityData> => {
+  const res = await fetch("/data/city.json", { cache: "no-cache" });
+  if (!res.ok) throw new Error(`city ${res.status}`);
+  return res.json();
+};
+
+export type JellyStatus = "none" | "few" | "fewStinging" | "many" | "mixed" | "manyStinging" | "stingingWater" | "unknown";
+export type JellyRegion = { region: string; lat: number; lon: number; status: JellyStatus; sightings: number; summary: string; link: string };
+
+export const fetchJellyfish = async (): Promise<{ updated: string | null; regions: JellyRegion[] }> => {
+  const res = await fetch("/data/jellyfish.json", { cache: "no-cache" });
+  if (!res.ok) throw new Error(`jellyfish ${res.status}`);
+  return res.json();
+};

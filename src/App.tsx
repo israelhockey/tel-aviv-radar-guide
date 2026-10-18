@@ -7,6 +7,7 @@ import Now from "./pages/Now";
 import Live from "./pages/Live";
 import WhatsOn from "./pages/WhatsOn";
 import News from "./pages/News";
+import Beach from "./pages/Beach";
 import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
 import Category from "./pages/Category";
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/" element={<Now />} />
           <Route path="/live" element={<Live />} />
           <Route path="/news" element={<News />} />
+          <Route path="/beach" element={<Beach />} />
           <Route path="/events" element={<WhatsOn key="events" />} />
           <Route path="/food" element={<Category />} />
           <Route path="/nightlife" element={<Category />} />

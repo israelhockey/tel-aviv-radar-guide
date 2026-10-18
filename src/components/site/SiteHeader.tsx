@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { CalendarDays, Menu, Moon, Newspaper, Radar, Sun, SunMoon } from "lucide-react";
+import { CalendarDays, Menu, Moon, Newspaper, Radar, Sun, SunMoon, Waves } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -11,6 +11,7 @@ export const TABS: { to: string; key: StringKey; icon: typeof Sun; end?: boolean
   { to: "/", key: "nav.now", icon: Sun, end: true },
   { to: "/live", key: "nav.live", icon: Radar },
   { to: "/events", key: "nav.whatson", icon: CalendarDays },
+  { to: "/beach", key: "nav.beach", icon: Waves },
   { to: "/news", key: "nav.news", icon: Newspaper },
 ];
 
