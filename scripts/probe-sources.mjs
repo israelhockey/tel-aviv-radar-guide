@@ -77,7 +77,7 @@ const probe = async (url) => {
         const walk = (v, path, depth) => {
           if (depth > 12 || v == null || typeof v !== "object") return;
           if (Array.isArray(v)) {
-            if (v.length >= 8 && v[0] && typeof v[0] === "object") found.push({ path, n: v.length, keys: Object.keys(v[0]).slice(0, 30), sample: JSON.stringify(v[0]).slice(0, 700) });
+            if (v.length >= 8 && v[0] && typeof v[0] === "object") found.push({ path, n: v.length, keys: Object.keys(v[0]).slice(0, 30), sample: JSON.stringify(v[0]).slice(0, 3000) });
             v.slice(0, 3).forEach((x, i) => walk(x, `${path}[${i}]`, depth + 1));
           } else for (const [k, x] of Object.entries(v)) walk(x, `${path}.${k}`, depth + 1);
         };

@@ -117,6 +117,10 @@ const fetchLeaan = async () => {
     const loc = r.location ?? {};
     if (!TLV_RE.test(`${loc.city ?? ""} ${loc.street ?? ""}`)) continue;
     if (!r.event_start || !r.id) continue;
+    // Season tickets, refunds and long-running passes are not events people go to tonight.
+    if (r.subscription || /מנוי|החזר|כרטיס עונתי|season/i.test(`${r.event_name ?? ""}`)) continue;
+    if (r.event_start * 1000 < Date.now() - 24 * 3600_000) continue;
+    if (!globalThis.__leaanSample) { globalThis.__leaanSample = true; console.log("leaan sample categories:", JSON.stringify({ c: r.categories, l: r.labels }).slice(0, 300)); }
     const cats = [].concat(r.categories ?? []).map((c) => (typeof c === "object" ? c.id ?? c.category_id : c)).map(Number);
     out.push({
       id: `leaan:${r.id}`,
