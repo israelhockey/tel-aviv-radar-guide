@@ -347,7 +347,10 @@ const Live = () => {
 
   return (
     <SiteLayout fill>
-      <div ref={containerRef} className="absolute inset-0" aria-label={t("nav.live")} role="region" />
+      {/* MapLibre's stylesheet sets its container to position:relative, so size it via a wrapper. */}
+      <div className="absolute inset-0">
+        <div ref={containerRef} className="h-full w-full" aria-label={t("nav.live")} role="region" />
+      </div>
 
       {mapError && (
         <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-[15px] text-muted-foreground">

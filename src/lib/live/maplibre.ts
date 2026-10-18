@@ -3,7 +3,8 @@
 const VERSION = "4.7.1";
 const JS = `https://unpkg.com/maplibre-gl@${VERSION}/dist/maplibre-gl.js`;
 const CSS = `https://unpkg.com/maplibre-gl@${VERSION}/dist/maplibre-gl.css`;
-const RTL_PLUGIN = "https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.3.0/dist/mapbox-gl-rtl-text.js";
+// The UMD build: MapLibre loads it inside its web workers with importScripts.
+const RTL_PLUGIN = "https://unpkg.com/@mapbox/mapbox-gl-rtl-text@0.2.3/mapbox-gl-rtl-text.min.js";
 
 // OpenFreeMap: free vector tiles, no key, no usage limits for public sites.
 export const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
