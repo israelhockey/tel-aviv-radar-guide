@@ -156,9 +156,10 @@ const lookupRoutes = async (lineRefs: number[]) => {
   const missing = lineRefs.filter((r) => !routeCache.has(r));
   if (!missing.length) return;
   const today = new Date().toISOString().slice(0, 10);
-  // Batch to keep URLs short.
-  for (let i = 0; i < missing.length; i += 120) {
-    const chunk = missing.slice(i, i + 120);
+  // Batch to keep URLs short; batches run in parallel.
+  const chunks: number[][] = [];
+  for (let i = 0; i < missing.length; i += 120) chunks.push(missing.slice(i, i + 120));
+  await Promise.all(chunks.map(async (chunk) => {
     const u = new URL(`${STRIDE}/gtfs_routes/list`);
     u.searchParams.set("line_refs", chunk.join(","));
     u.searchParams.set("date_from", today);
@@ -174,31 +175,45 @@ const lookupRoutes = async (lineRefs: number[]) => {
       }
     } catch { /* names are a nice-to-have; positions still show */ }
     for (const r of chunk) if (!routeCache.has(r)) routeCache.set(r, {});
-  }
+  }));
 };
 
 export const fetchBuses = async (): Promise<{ buses: Bus[]; newest: string | null }> => {
-  const query = async (minutes: number) => {
-    const u = new URL(`${STRIDE}/siri_vehicle_locations/list`);
-    u.searchParams.set("recorded_at_time_from", new Date(Date.now() - minutes * 60000).toISOString());
-    // Upper bound too: the feed contains a few rows with bogus far-future timestamps.
-    u.searchParams.set("recorded_at_time_to", new Date(Date.now() + 60000).toISOString());
-    u.searchParams.set("lat__greater_or_equal", String(TLV_BBOX.south));
-    u.searchParams.set("lat__lower_or_equal", String(TLV_BBOX.north));
-    u.searchParams.set("lon__greater_or_equal", String(TLV_BBOX.west));
-    u.searchParams.set("lon__lower_or_equal", String(TLV_BBOX.east));
-    u.searchParams.set("order_by", "recorded_at_time desc");
-    u.searchParams.set("limit", "5000");
-    return getJSON<any[]>(u.toString());
-  };
-  // The public feed usually lags a few minutes behind real time; widen the window if it's empty.
-  let rows = await query(8);
-  if (!rows.length) rows = await query(30);
+  // The public feed arrives in batches roughly 15-25 minutes behind real time, with a thin
+  // trickle of stragglers after the last full batch. Pull the most recent rows, find the
+  // newest minute that holds a full batch, and show every bus seen in the 3 minutes up to it.
+  const u = new URL(`${STRIDE}/siri_vehicle_locations/list`);
+  u.searchParams.set("recorded_at_time_from", new Date(Date.now() - 60 * 60000).toISOString());
+  // Upper bound too: the feed contains a few rows with bogus far-future timestamps.
+  u.searchParams.set("recorded_at_time_to", new Date(Date.now() + 60000).toISOString());
+  u.searchParams.set("lat__greater_or_equal", String(TLV_BBOX.south));
+  u.searchParams.set("lat__lower_or_equal", String(TLV_BBOX.north));
+  u.searchParams.set("lon__greater_or_equal", String(TLV_BBOX.west));
+  u.searchParams.set("lon__lower_or_equal", String(TLV_BBOX.east));
+  u.searchParams.set("order_by", "recorded_at_time desc");
+  u.searchParams.set("limit", "4000");
+  const rows = await getJSON<any[]>(u.toString());
+  if (!rows.length) return { buses: [], newest: null };
+
+  const perMinute = new Map<string, number>();
+  for (const r of rows) {
+    const k = String(r.recorded_at_time).slice(0, 16);
+    perMinute.set(k, (perMinute.get(k) ?? 0) + 1);
+  }
+  const peak = Math.max(...perMinute.values());
+  const threshold = Math.max(20, peak * 0.3);
+  const anchorKey = [...perMinute.entries()].filter(([, n]) => n >= threshold).map(([k]) => k).sort().at(-1);
+  const anchor = anchorKey ? new Date(`${anchorKey}:59Z`).getTime() : new Date(rows[0].recorded_at_time).getTime();
+  const windowStart = anchor - 3 * 60000;
 
   const latest = new Map<string, Bus>();
+  let newest: string | null = null;
   for (const r of rows) {
+    const t = new Date(r.recorded_at_time).getTime();
+    if (t > anchor || t < windowStart) continue;
     const id = String(r.siri_ride__vehicle_ref ?? r.siri_ride__id ?? r.id);
     if (latest.has(id)) continue; // rows are newest-first
+    newest ??= r.recorded_at_time;
     latest.set(id, {
       id, lat: r.lat, lon: r.lon, bearing: r.bearing ?? 0, speed: r.velocity ?? 0, recordedAt: r.recorded_at_time,
       lineRef: r.siri_route__line_ref, operatorRef: r.siri_route__operator_ref,
@@ -207,7 +222,7 @@ export const fetchBuses = async (): Promise<{ buses: Bus[]; newest: string | nul
   const buses = [...latest.values()];
   await lookupRoutes([...new Set(buses.map((b) => b.lineRef).filter(Boolean))]);
   for (const b of buses) Object.assign(b, routeCache.get(b.lineRef) ?? {});
-  return { buses, newest: rows[0]?.recorded_at_time ?? null };
+  return { buses, newest };
 };
 
 /* ---------------- Aircraft (adsb.lol, ODbL; OpenSky fallback) ---------------- */

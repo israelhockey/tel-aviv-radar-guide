@@ -63,7 +63,7 @@ const STRINGS = {
   "live.beaches": { en: "Beaches", he: "חופים" },
   "live.rain": { en: "Rain radar", he: "מכ״ם גשם" },
   "live.locate": { en: "Near me", he: "לידי" },
-  "live.updated": { en: "updated", he: "עודכן" },
+  "live.updated": { en: "positions from", he: "מיקומים" },
   "live.ago": { en: "ago", he: "לפני" },
   "live.minutes": { en: "min", he: "דק׳" },
   "live.loading": { en: "loading", he: "טוען" },
