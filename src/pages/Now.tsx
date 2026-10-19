@@ -12,6 +12,8 @@ import { OpenNearby } from "@/components/radar/OpenNearby";
 import { useI18n } from "@/lib/i18n";
 import { useNewsFeed } from "@/lib/live/hooks";
 import { NewsCard } from "@/components/radar/NewsCard";
+import { ARTICLES } from "@/lib/articles";
+import { ArticleCard } from "./Magazine";
 import { fmtClock } from "@/lib/live/format";
 
 type Item = Database["public"]["Tables"]["content_items"]["Row"];
@@ -92,6 +94,16 @@ const Now = () => {
           ) : (
             !briefs.isLoading && !newsFeed.isLoading && <p className="mt-3 text-[14px] text-muted-foreground">{t("now.newsEmpty")}</p>
           )}
+        </section>
+
+        <section aria-labelledby="mag-h" className="mt-12">
+          <div className="flex items-baseline justify-between">
+            <h2 id="mag-h" className="font-display text-[28px] leading-none">{t("mag.title")}</h2>
+            <Link to="/magazine" className="text-[14px] text-sea hover:underline underline-offset-4">{t("now.allGuides")}</Link>
+          </div>
+          <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {ARTICLES.filter((a) => a.featured).slice(0, 4).map((a) => <ArticleCard key={a.slug} a={a} />)}
+          </div>
         </section>
 
         <div className="mt-12 grid gap-10 lg:grid-cols-[1fr,360px]">

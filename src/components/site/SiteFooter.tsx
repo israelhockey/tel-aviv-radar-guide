@@ -17,7 +17,7 @@ export const SiteFooter = () => {
           </p>
         </div>
         <ul className="space-y-2 text-sm">
-          {([["/events", "nav.whatson"], ["/food", "nav.food"], ["/beach", "nav.beach"], ["/cinema", "nav.cinema"], ["/shabbat", "nav.shabbat"], ["/getting-around", "nav.around"], ["/guide", "nav.guide"], ["/news", "nav.news"]] as const).map(([to, key]) => (
+          {([["/events", "nav.whatson"], ["/weekend", "nav.weekend"], ["/magazine", "nav.magazine"], ["/food", "nav.food"], ["/beach", "nav.beach"], ["/hotels", "nav.hotels"], ["/walks", "nav.walks"], ["/cinema", "nav.cinema"], ["/jobs", "nav.jobs"], ["/shabbat", "nav.shabbat"], ["/getting-around", "nav.around"], ["/guide", "nav.guide"], ["/news", "nav.news"]] as const).map(([to, key]) => (
             <li key={to}>
               <Link to={to} className="hover:text-sea">{t(key)}</Link>
             </li>
