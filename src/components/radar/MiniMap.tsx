@@ -10,10 +10,15 @@ export const MiniMap = ({ lat, lon, zoom = 15.5, className = "", line }: { lat: 
   useEffect(() => {
     let map: MapLibre | null = null;
     let cancelled = false;
+    // The map must re-measure once its box has its final size (grids settle after first paint).
+    const ro = new ResizeObserver(() => map?.resize());
+    if (box.current) ro.observe(box.current);
     Promise.all([loadMapLibre(), mapStyleFor(phase)]).then(([maplibregl, style]) => {
       if (cancelled || !box.current) return;
       map = new maplibregl.Map({ container: box.current, style, center: [lon, lat], zoom, pitch: 40, interactive: true, attributionControl: { compact: true }, cooperativeGestures: true });
+      requestAnimationFrame(() => map?.resize());
       map.once("style.load", () => {
+        map.resize();
         if (line && line.length > 1) {
           map.addSource("walk", { type: "geojson", data: { type: "Feature", geometry: { type: "LineString", coordinates: line }, properties: {} } });
           map.addLayer({ id: "walk", type: "line", source: "walk", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#d6336c", "line-width": 5 } });
@@ -29,7 +34,7 @@ export const MiniMap = ({ lat, lon, zoom = 15.5, className = "", line }: { lat: 
         }
       });
     }).catch(() => undefined);
-    return () => { cancelled = true; map?.remove(); };
+    return () => { cancelled = true; ro.disconnect(); map?.remove(); };
   }, [lat, lon, zoom, phase, line]);
   return (
     <div className={`relative overflow-hidden rounded-xl bg-secondary ${className}`}>
