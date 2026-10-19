@@ -527,6 +527,8 @@ const keepPrevious = async (path, key, fresh) => {
 
 const [{ events, report: er }, { news, report: nr }] = await Promise.all([fetchEvents(), fetchNews()]);
 console.log([...er, ...nr].join("\n"));
+// Also as notices, so the run summary shows which sources worked.
+if (process.env.GITHUB_ACTIONS) for (const line of [...er, ...nr].filter((l) => !/^https?:/.test(l) || /FAILED/.test(l))) console.log(`::notice::${line.replace(/\n/g, " ").slice(0, 300)}`);
 
 await mkdir("public/data", { recursive: true });
 const looked = await geocodeVenues(events);
