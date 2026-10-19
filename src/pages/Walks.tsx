@@ -7,6 +7,7 @@ import { WALKS, type Walk } from "@/content/walks";
 import { distanceMeters } from "@/lib/live/geo";
 import { MiniMap } from "@/components/radar/MiniMap";
 import { Credit, usePhoto } from "@/components/article/Blocks";
+import { Disclosure, ToursCard } from "@/components/site/Partners";
 
 const lengthOf = (w: Walk) => w.stops.slice(1).reduce((s, x, i) => s + distanceMeters(w.stops[i], x), 0) * 1.25; // streets aren't straight
 
@@ -39,6 +40,8 @@ export const Walks = () => {
         <div className="mt-8 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
           {WALKS.map((w) => <WalkCard key={w.slug} w={w} />)}
         </div>
+        <ToursCard query="Tel Aviv" className="mt-12" />
+        <Disclosure className="mt-2" />
       </div>
     </SiteLayout>
   );
@@ -88,6 +91,10 @@ export const WalkPage = () => {
           {p && <img src={p.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[16/9] object-cover rounded-xl" />}
           {p && <Credit p={p} />}
         </div>
+      </div>
+      <div className="container-page">
+        <ToursCard query={w.slug.includes("jaffa") ? "Jaffa" : w.slug.includes("carmel") ? "Tel Aviv food tour" : w.slug.includes("bauhaus") ? "Tel Aviv Bauhaus" : w.slug.includes("florentin") ? "Tel Aviv street art" : "Tel Aviv"} className="mt-12" />
+        <Disclosure className="mt-2" />
       </div>
     </SiteLayout>
   );

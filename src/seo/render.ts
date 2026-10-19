@@ -206,6 +206,7 @@ const sectionPages = (d: Data): Page[] => {
     S("/getting-around", "Getting around Tel Aviv: buses, trains, bikes and taxis · Discover Tel Aviv", "How to get around Tel Aviv: the light rail, buses, trains, Tel-O-Fun bikes, scooters, taxis, the airport and the Shabbat shuttle.", "", 0.7, "monthly"),
     S("/guide", "Tel Aviv city guide: everything visitors and newcomers need · Discover Tel Aviv", "Practical help for Tel Aviv: money, phones, safety and shelters, public toilets, dog parks, Shabbat, and where to find what.", "", 0.7, "monthly"),
     S("/jobs", "Jobs in Tel Aviv: open positions at tech companies · Discover Tel Aviv", "Open jobs in Tel Aviv from the city's tech companies and startups, updated every day.", "", 0.7, "daily"),
+    S("/about", "About Discover Tel Aviv: who we are, how we make money, privacy", "Discover Tel Aviv is a free, independent guide to Tel Aviv-Yafo. Where our data comes from, how affiliate links work, and our privacy policy.", "", 0.3, "monthly"),
     S("/newsletter", "The Discover Tel Aviv weekly email", "Every Thursday: the best of the weekend in Tel Aviv, new places to eat and drink, and what's coming up.", "", 0.4, "monthly"),
   ];
 };

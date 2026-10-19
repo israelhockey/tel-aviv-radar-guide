@@ -34,3 +34,5 @@ The view north from the hill of old Jaffa, with the Tel Aviv skyline across the 
 ## Getting there
 
 Walk or cycle the promenade south from central Tel Aviv, or take the Red Line to Elifelet and walk west.
+
+[[tours: Jaffa | Prefer a guided tour of Jaffa?]]

@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { ToursCard } from "@/components/site/Partners";
 import { EventsBlock, HolidayBlock, PhotoBlock, PickBlock, PlaceListBlock, TipBlock } from "./Blocks";
 
 // A small Markdown renderer for our own articles: headings, paragraphs, lists, quotes,
@@ -45,6 +46,7 @@ const block = (line: string, key: string): ReactNode => {
     case "tip": return <TipBlock key={key}>{inline(rest.trim(), key)}</TipBlock>;
     case "photo": return <PhotoBlock key={key} src={first.trim()} caption={text} />;
     case "holiday": return <HolidayBlock key={key} name={first.trim()} />;
+    case "tours": return <ToursCard key={key} query={first.trim()} title={text || undefined} className="mt-8" />;
     default: return null;
   }
 };

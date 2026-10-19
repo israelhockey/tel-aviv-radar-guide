@@ -20,6 +20,7 @@ import { Hotels, HotelPage } from "./pages/Hotels";
 import { Walks, WalkPage } from "./pages/Walks";
 import EventPage from "./pages/EventPage";
 import AreaPage from "./pages/Area";
+import About from "./pages/About";
 import Jobs from "./pages/Jobs";
 import Weekend from "./pages/Weekend";
 import { I18nProvider } from "@/lib/i18n";
@@ -68,6 +69,8 @@ const App = () => (
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/walks/:slug" element={<WalkPage />} />
           <Route path="/hotel/:id" element={<HotelPage />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<About />} />
           <Route path="/event/:slug" element={<EventPage />} />
           <Route path="/area" element={<AreaPage />} />
           <Route path="/area/:hood" element={<AreaPage />} />

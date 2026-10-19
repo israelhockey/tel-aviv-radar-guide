@@ -27,3 +27,5 @@ Tel Aviv is a great city for kids: safe, walkable and full of playgrounds, with 
 ## Ice cream
 
 [[list: craving=icecream; open=now; limit=6; title=Ice cream open right now]]
+
+[[tours: Tel Aviv family | Family tours and activities]]

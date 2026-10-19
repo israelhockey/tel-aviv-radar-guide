@@ -24,3 +24,5 @@ Architects adapted European modernism to the Mediterranean climate: smaller wind
 Follow our free [White City walk](/walks/white-city-bauhaus), from Dizengoff Square along Bialik Street to Rothschild Boulevard and Independence Hall.
 
 [[photo: city:whitecity | Rothschild Boulevard, the White City's grand avenue]]
+
+[[tours: Tel Aviv Bauhaus | Take a guided Bauhaus tour]]

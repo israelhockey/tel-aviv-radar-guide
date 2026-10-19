@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Phone } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
+import { Essentials } from "@/components/site/Partners";
 import { useI18n } from "@/lib/i18n";
 import { useCityData } from "@/lib/live/hooks";
 
@@ -118,6 +119,7 @@ const Guide = () => {
             </section>
           </aside>
         </div>
+        <Essentials className="mt-14" />
       </div>
     </SiteLayout>
   );

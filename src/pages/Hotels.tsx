@@ -12,6 +12,7 @@ import { isEveningOut, type Hotel } from "@/lib/live/sources";
 import { MiniMap } from "@/components/radar/MiniMap";
 import { placeSlug } from "@/lib/placeMatch";
 import { usePhoto, Credit } from "@/components/article/Blocks";
+import { BookButton, Disclosure, Essentials } from "@/components/site/Partners";
 
 type Kind = "all" | "hotel" | "hostel" | "guest_house" | "apartment";
 const KINDS: { id: Kind; key: StringKey }[] = [
@@ -57,6 +58,7 @@ export const Hotels = () => {
             <h1 className="font-display text-[40px] sm:text-[64px] leading-[0.95]">{t("hot.title")}</h1>
             <p className="mt-1 text-[16px] sm:text-[18px]">{hotels.data ? `${hotels.data.length} ${t("hot.count")}` : "…"}</p>
           </div>
+          <div className="mt-4"><BookButton name="" className="bg-white !text-[#1971c2]" /></div>
         </div>
       </section>
       <div className="container-page">
@@ -85,6 +87,8 @@ export const Hotels = () => {
           ))}
         </ul>
         <p className="mt-6 text-[12px] text-muted-foreground">{t("hot.source")}</p>
+        <Disclosure className="mt-1" />
+        <Essentials className="mt-12" />
       </div>
     </SiteLayout>
   );
@@ -130,7 +134,8 @@ export const HotelPage = () => {
       <div className="container-page mt-6 grid gap-10 lg:grid-cols-[1fr,380px]">
         <div className="min-w-0">
           <div className="flex flex-wrap gap-2">
-            {h.web && <a href={h.web} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 h-11 rounded-lg bg-foreground text-background px-4 text-[14px] font-semibold"><Globe className="h-4 w-4" aria-hidden />{t("hot.site")}</a>}
+            <BookButton name={h.nameEn || h.name} lat={h.lat} lon={h.lon} />
+            {h.web && <a href={h.web} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 h-11 rounded-lg border border-border px-4 text-[14px] font-semibold"><Globe className="h-4 w-4" aria-hidden />{t("hot.site")}</a>}
             <a href={`https://www.google.com/maps/dir/?api=1&destination=${h.lat},${h.lon}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 h-11 rounded-lg border border-border px-4 text-[14px] font-medium hover:bg-secondary"><Navigation className="h-4 w-4" aria-hidden />{t("live.directions")}</a>
           </div>
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -161,6 +166,7 @@ export const HotelPage = () => {
           <MiniMap lat={h.lat} lon={h.lon} className="h-[280px]" />
           {h.street && <p className="text-[15px]" dir="auto">{h.street}{h.number ? ` ${h.number}` : ""}, {lang === "he" ? "תל אביב-יפו" : "Tel Aviv-Yafo"}</p>}
           <p className="text-[12px] text-muted-foreground">{t("hot.source")}</p>
+          <Disclosure />
         </aside>
       </div>
     </SiteLayout>

@@ -79,7 +79,8 @@ export const seoPages = (): Plugin => {
           fs.writeFileSync(file, html);
         }
         const day = now.slice(0, 10);
-        const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${pages
+        const unique = pages.filter((p, i) => pages.findIndex((x) => x.path === p.path) === i);
+        const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${unique
           .map((p) => `  <url><loc>${esc(`${site}${p.path}`)}</loc><lastmod>${p.lastmod ?? day}</lastmod>${p.changefreq ? `<changefreq>${p.changefreq}</changefreq>` : ""}${p.priority != null ? `<priority>${p.priority.toFixed(1)}</priority>` : ""}</url>`)
           .join("\n")}\n</urlset>\n`;
         fs.writeFileSync(path.join(outDir, "sitemap.xml"), sitemap);

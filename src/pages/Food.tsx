@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { LocateFixed, Search } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n, type StringKey } from "@/lib/i18n";
-import { distanceMeters, TLV_CENTER, walkMinutes } from "@/lib/live/geo";
+import { distanceMeters, NEIGHBOURHOODS, TLV_CENTER, walkMinutes } from "@/lib/live/geo";
+import { hoodSlug } from "@/lib/areas";
 import { useFoodPhotos, usePlaces } from "@/lib/live/hooks";
 import { openStateAt, type OpenState } from "@/lib/live/openingHours";
 import { placeKindLabel } from "@/lib/live/places";
@@ -227,6 +228,17 @@ const Food = () => {
             <button onClick={() => setLimit((n) => n + 24)} className="h-11 rounded-lg border border-border px-6 text-[14px] font-medium hover:bg-secondary">{t("food.more")}</button>
           </div>
         )}
+
+        <section className="mt-12 grid gap-6 sm:grid-cols-2">
+          <div>
+            <h2 className="font-display text-[22px]">{t("food.craving")}</h2>
+            <div className="mt-2 flex flex-wrap gap-2">{CRAVINGS.map((c) => <Link key={c.id} to={`/eat/${c.id}`} className="h-9 inline-flex items-center rounded-md bg-secondary px-3 text-[14px] hover:bg-secondary/70">{lang === "he" ? c.he : c.en}</Link>)}</div>
+          </div>
+          <div>
+            <h2 className="font-display text-[22px]">{t("eat.byArea")}</h2>
+            <div className="mt-2 flex flex-wrap gap-2">{NEIGHBOURHOODS.map((h) => <Link key={h.en} to={`/area/${hoodSlug(h)}`} className="h-9 inline-flex items-center rounded-md bg-secondary px-3 text-[14px] hover:bg-secondary/70">{lang === "he" ? h.he : h.en}</Link>)}</div>
+          </div>
+        </section>
 
         <div className="mt-12 rounded-lg bg-[#0f1530] text-white p-6 sm:flex sm:items-center sm:justify-between gap-6">
           <div>

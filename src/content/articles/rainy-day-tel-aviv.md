@@ -19,3 +19,5 @@ It doesn't rain often in Tel Aviv, but when it does, it pours. Here's how to spe
 [[events: category=theatre,music,talk,art; range=week; limit=8]]
 
 [[tip: Check the [rain radar on the live map](/live) to time your dash between places.]]
+
+[[tours: Tel Aviv museum tickets | Museum tickets and indoor tours]]

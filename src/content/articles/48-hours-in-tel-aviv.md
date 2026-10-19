@@ -38,3 +38,5 @@ Two days is enough to fall for Tel Aviv. This plan mixes the classics with the t
 [[events: range=tonight; limit=6]]
 
 [[tip: Visiting over Shabbat? Many places stay open in Tel Aviv, but buses and trains stop. Read our [Shabbat guide](/shabbat).]]
+
+[[tours: Tel Aviv | Want someone to show you around?]]
