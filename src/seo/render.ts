@@ -397,7 +397,8 @@ const cravingPages = (d: Data): Page[] =>
 
 export const renderSite = (d: Data): Page[] => {
   const nowMs = Date.parse(d.now);
-  const events = d.events.filter((e) => Date.parse(e.end ?? e.start) > nowMs);
+  // Weekly community classes are thin pages; leave them out of the index.
+  const events = d.events.filter((e) => Date.parse(e.end ?? e.start) > nowMs && e.category !== "community");
   const data = { ...d, events };
   return [
     ...sectionPages(data),
