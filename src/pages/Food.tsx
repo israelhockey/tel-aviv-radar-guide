@@ -51,7 +51,7 @@ const Food = () => {
   const [limit, setLimit] = useState(24);
 
   useEffect(() => {
-    document.title = lang === "he" ? "אוכל ושתייה · TLV Radar" : "Food & drink · TLV Radar";
+    document.title = lang === "he" ? "אוכל ושתייה · Discover Tel Aviv" : "Food & drink · Discover Tel Aviv";
   }, [lang]);
   useEffect(() => {
     const id = setInterval(() => setTick((n) => n + 1), 60_000);

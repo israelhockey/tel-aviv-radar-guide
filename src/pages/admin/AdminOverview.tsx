@@ -8,7 +8,7 @@ const AdminOverview = () => {
   const [stats, setStats] = useState({ published: 0, drafts: 0, queue: 0, subscribers: 0, sources: 0, runs: 0 });
 
   useEffect(() => {
-    document.title = "Admin — TLV Radar";
+    document.title = "Admin — Discover Tel Aviv";
     (async () => {
       const counts = await Promise.all([
         supabase.from("content_items").select("*", { count: "exact", head: true }).eq("status", "published"),
@@ -40,7 +40,7 @@ const AdminOverview = () => {
 
   return (
     <AdminShell>
-      <h1 className="font-display text-4xl font-black tracking-tight">Today on TLV Radar</h1>
+      <h1 className="font-display text-4xl font-black tracking-tight">Today on Discover Tel Aviv</h1>
       <p className="text-muted-foreground mt-1">Operational overview of the local-media engine.</p>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-8">
         {tiles.map((t) => (

@@ -19,7 +19,7 @@ const SourcesAdmin = () => {
     setSources(data ?? []);
   };
 
-  useEffect(() => { document.title = "Sources — TLV Radar"; load(); }, []);
+  useEffect(() => { document.title = "Sources — Discover Tel Aviv"; load(); }, []);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();

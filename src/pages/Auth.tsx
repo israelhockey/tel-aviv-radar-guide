@@ -16,7 +16,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    document.title = "Sign in — TLV Radar";
+    document.title = "Sign in — Discover Tel Aviv";
     supabase.auth.getSession().then(({ data }) => { if (data.session) nav("/admin"); });
   }, [nav]);
 
@@ -53,7 +53,7 @@ const Auth = () => {
       <div className="container-page py-16 max-w-md">
         <p className="kicker text-accent">Editors</p>
         <h1 className="font-display text-5xl font-black tracking-tight mt-2">Sign in</h1>
-        <p className="text-muted-foreground mt-2 mb-8">Access the TLV Radar editorial dashboard.</p>
+        <p className="text-muted-foreground mt-2 mb-8">Access the Discover Tel Aviv editorial dashboard.</p>
 
         <Tabs defaultValue="signin" className="w-full">
           <TabsList className="grid grid-cols-2 w-full">
@@ -89,7 +89,7 @@ const Auth = () => {
         </Button>
 
         <p className="text-xs text-muted-foreground mt-8">
-          <Link to="/" className="hover:text-accent">← Back to TLV Radar</Link>
+          <Link to="/" className="hover:text-accent">← Back to Discover Tel Aviv</Link>
         </p>
       </div>
     </SiteLayout>

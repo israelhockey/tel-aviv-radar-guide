@@ -26,7 +26,7 @@ const NewsletterAdmin = () => {
     setSubCount(s.count ?? 0);
   };
 
-  useEffect(() => { document.title = "Newsletter — TLV Radar"; load(); }, []);
+  useEffect(() => { document.title = "Newsletter — Discover Tel Aviv"; load(); }, []);
 
   const build = async () => {
     setBuilding(true);

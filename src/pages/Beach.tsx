@@ -74,7 +74,7 @@ const Beach = () => {
   const jelly = useJellyfish();
 
   useEffect(() => {
-    document.title = lang === "he" ? "חופים · TLV Radar" : "Beaches · TLV Radar";
+    document.title = lang === "he" ? "חופים · Discover Tel Aviv" : "Beaches · Discover Tel Aviv";
   }, [lang]);
 
   const days = useMemo(() => {

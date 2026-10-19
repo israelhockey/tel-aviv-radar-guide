@@ -120,7 +120,7 @@ const Live = () => {
   const { phase } = useTheme();
 
   useEffect(() => {
-    document.title = lang === "he" ? "מפה חיה · TLV Radar" : "Live map · TLV Radar";
+    document.title = lang === "he" ? "מפה חיה · Discover Tel Aviv" : "Live map · Discover Tel Aviv";
   }, [lang]);
 
   useEffect(() => {

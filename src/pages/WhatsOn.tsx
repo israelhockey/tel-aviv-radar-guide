@@ -61,7 +61,7 @@ const WhatsOn = () => {
   const { data, isLoading, isError } = useEventsFeed();
 
   useEffect(() => {
-    document.title = lang === "he" ? "מה קורה · TLV Radar" : "What's on · TLV Radar";
+    document.title = lang === "he" ? "מה קורה · Discover Tel Aviv" : "What's on · Discover Tel Aviv";
   }, [lang]);
 
   // A quiet night: open on the next 7 days instead of an empty list (unless a range was asked for).

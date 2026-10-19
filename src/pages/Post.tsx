@@ -19,7 +19,7 @@ const Post = () => {
       setItem(data);
       setLoading(false);
       if (data) {
-        document.title = `${data.title} — TLV Radar`;
+        document.title = `${data.title} — Discover Tel Aviv`;
         await supabase.from("engagement_events").insert({ content_id: data.id, event: "view" });
       }
     })();

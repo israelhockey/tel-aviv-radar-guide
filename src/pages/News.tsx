@@ -12,7 +12,7 @@ const News = () => {
   const { data, isLoading, isError } = useNewsFeed();
 
   useEffect(() => {
-    document.title = lang === "he" ? "חדשות · TLV Radar" : "News · TLV Radar";
+    document.title = lang === "he" ? "חדשות · Discover Tel Aviv" : "News · Discover Tel Aviv";
   }, [lang]);
 
   const groups = useMemo(() => {

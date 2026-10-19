@@ -18,7 +18,7 @@ const ReviewQueue = () => {
     setItems(data ?? []);
   };
 
-  useEffect(() => { document.title = "Review queue — TLV Radar"; load(); }, []);
+  useEffect(() => { document.title = "Review queue — Discover Tel Aviv"; load(); }, []);
 
   const approve = async (s: Sub) => {
     setBusy(s.id);

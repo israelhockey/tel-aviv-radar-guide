@@ -20,7 +20,7 @@ const ContentAdmin = () => {
     setItems(data ?? []);
   };
 
-  useEffect(() => { document.title = "Content — TLV Radar"; load(); /* eslint-disable-next-line */ }, [filter]);
+  useEffect(() => { document.title = "Content — Discover Tel Aviv"; load(); /* eslint-disable-next-line */ }, [filter]);
 
   const togglePublish = async (i: Item) => {
     const newStatus = i.status === "published" ? "draft" : "published";

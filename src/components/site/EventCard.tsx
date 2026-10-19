@@ -75,7 +75,7 @@ export const BriefRow = ({ item }: { item: Item }) => {
       <h4 className="font-bold text-[14px] leading-snug mt-2 line-clamp-2 group-hover:text-accent">{item.title}</h4>
       {item.summary && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{item.summary}</p>}
       <p className="text-[11px] text-muted-foreground mt-3">
-        {item.source_name || "TLV Radar"}
+        {item.source_name || "Discover Tel Aviv"}
         {item.published_at && ` · ${timeAgo(item.published_at)}`}
       </p>
     </Link>

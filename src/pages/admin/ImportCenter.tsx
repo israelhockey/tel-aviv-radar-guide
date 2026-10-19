@@ -35,7 +35,7 @@ const ImportCenter = () => {
     setRuns(r.data ?? []);
   };
 
-  useEffect(() => { document.title = "Import — TLV Radar"; load(); }, []);
+  useEffect(() => { document.title = "Import — Discover Tel Aviv"; load(); }, []);
 
   const runRss = async (s: Source) => {
     setBusy(s.id);

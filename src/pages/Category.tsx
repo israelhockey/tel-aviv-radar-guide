@@ -51,7 +51,7 @@ const Category = () => {
 
   useEffect(() => {
     if (!meta) return;
-    document.title = `${meta.title} — TLV Radar`;
+    document.title = `${meta.title} — Discover Tel Aviv`;
     (async () => {
       setLoading(true);
       const q = supabase.from("content_items").select("*").eq("status", "published")

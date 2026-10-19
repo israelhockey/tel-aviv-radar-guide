@@ -29,7 +29,7 @@ const CinemaPage = () => {
   const [cinema, setCinema] = useState<string>("all");
 
   useEffect(() => {
-    document.title = lang === "he" ? "קולנוע · TLV Radar" : "Cinema · TLV Radar";
+    document.title = lang === "he" ? "קולנוע · Discover Tel Aviv" : "Cinema · Discover Tel Aviv";
   }, [lang]);
 
   const days = useMemo(() => [0, 1, 2].map((d) => nightKey(new Date(Date.now() + d * 86400_000).toISOString())), []);

@@ -54,7 +54,7 @@ const Now = () => {
   const newsCount = feedNews.length + (briefs.data?.length ?? 0);
 
   useEffect(() => {
-    document.title = lang === "he" ? "TLV Radar · מה קורה בתל אביב עכשיו" : "TLV Radar · Tel Aviv right now";
+    document.title = lang === "he" ? "Discover Tel Aviv · מה קורה בתל אביב עכשיו" : "Discover Tel Aviv · Tel Aviv right now";
   }, [lang]);
 
   return (

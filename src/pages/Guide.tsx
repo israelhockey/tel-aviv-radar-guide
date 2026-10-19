@@ -38,7 +38,7 @@ const Guide = () => {
   const L = (x: T) => (lang === "he" ? x.he : x.en);
 
   useEffect(() => {
-    document.title = lang === "he" ? "מדריך לעיר · TLV Radar" : "City guide · TLV Radar";
+    document.title = lang === "he" ? "מדריך לעיר · Discover Tel Aviv" : "City guide · Discover Tel Aviv";
   }, [lang]);
 
   const counts: [number | undefined, T, string][] = [

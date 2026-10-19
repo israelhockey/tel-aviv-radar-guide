@@ -6,7 +6,7 @@ const Newsletter = () => (
   <SiteLayout>
     <section className="container-page py-16 max-w-3xl">
       <p className="text-xs uppercase tracking-widest font-bold text-accent">Newsletter</p>
-      <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight mt-2">The TLV Radar morning brief.</h1>
+      <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight mt-2">The Discover Tel Aviv morning brief.</h1>
       <p className="mt-4 text-lg text-muted-foreground">
         Tel Aviv in your inbox at 07:30. Tonight's events, openings, and what changed in the city — short, daily, free.
       </p>

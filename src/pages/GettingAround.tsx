@@ -32,7 +32,7 @@ const GettingAround = () => {
   const traffic = useTraffic();
 
   useEffect(() => {
-    document.title = lang === "he" ? "התניידות בעיר · TLV Radar" : "Getting around · TLV Radar";
+    document.title = lang === "he" ? "התניידות בעיר · Discover Tel Aviv" : "Getting around · Discover Tel Aviv";
   }, [lang]);
 
   const bikes = docks.data?.reduce((n, d) => n + d.bikes + d.ebikes, 0) ?? null;

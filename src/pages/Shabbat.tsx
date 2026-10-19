@@ -23,7 +23,7 @@ const Shabbat = () => {
   const places = usePlaces();
 
   useEffect(() => {
-    document.title = lang === "he" ? "שבת וחגים · TLV Radar" : "Shabbat & holidays · TLV Radar";
+    document.title = lang === "he" ? "שבת וחגים · Discover Tel Aviv" : "Shabbat & holidays · Discover Tel Aviv";
   }, [lang]);
 
   const now = Date.now();

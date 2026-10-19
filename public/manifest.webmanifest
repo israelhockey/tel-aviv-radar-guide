@@ -1,6 +1,6 @@
 {
-  "name": "TLV Radar · Tel Aviv right now",
-  "short_name": "TLV Radar",
+  "name": "Discover Tel Aviv · Tel Aviv right now",
+  "short_name": "Discover Tel Aviv",
   "description": "A free live guide to Tel Aviv-Yafo: events, beaches, food, transit and a live city map.",
   "start_url": "/",
   "scope": "/",
