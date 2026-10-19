@@ -151,7 +151,7 @@ const STRINGS = {
   "hot.rooms": { en: "rooms", he: "חדרים" },
   "hot.openNear": { en: "Open nearby right now", he: "פתוח בסביבה עכשיו" },
   "hot.eventsNear": { en: "On nearby this week", he: "קורה בסביבה השבוע" },
-  "hot.source": { en: "Hotel locations from OpenStreetMap contributors. Book directly with the hotel; we don't take commission.", he: "מיקומי המלונות מתורמי OpenStreetMap. מזמינים ישירות מהמלון; אנחנו לא לוקחים עמלה." },
+  "hot.source": { en: "Hotel locations from OpenStreetMap contributors. Compare prices, or book directly with the hotel.", he: "מיקומי המלונות מתורמי OpenStreetMap. אפשר להשוות מחירים או להזמין ישירות מהמלון." },
   "walk.title": { en: "Walking tours", he: "סיורים רגליים" },
   "walk.body": { en: "Free self-guided walks through the city, with a map, stops and the story at each one.", he: "סיורים חינמיים בהדרכה עצמית ברחבי העיר, עם מפה, תחנות והסיפור של כל אחת." },
   "walk.about": { en: "about", he: "בערך" },
