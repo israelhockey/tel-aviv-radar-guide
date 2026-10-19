@@ -3,6 +3,21 @@
 import { supabase } from "@/integrations/supabase/client";
 import { BEACHES, HEBCAL_GEONAME_ID, OFFSHORE_LON_SHIFT, TLV_BBOX, TLV_CENTER } from "./geo";
 
+// Live data files are refreshed in the public GitHub repo every few hours by GitHub Actions.
+// Read them from there so the site stays current without republishing; fall back to the copy
+// bundled with the site if GitHub is slow or unreachable.
+const DATA_REMOTE = "https://raw.githubusercontent.com/israelhockey/tel-aviv-radar-guide/main/public/data/";
+export const fetchData = async (file: string): Promise<Response> => {
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch(DATA_REMOTE + file, { cache: "no-cache", signal: ctrl.signal });
+    clearTimeout(timer);
+    if (res.ok) return res;
+  } catch { /* fall back */ }
+  return fetch(`/data/${file}`, { cache: "no-cache" });
+};
+
 const TIMEOUT_MS = 15000;
 
 const withTimeout = async (url: string, init?: RequestInit) => {
@@ -466,7 +481,7 @@ export const fetchPlaces = async (): Promise<Place[]> => {
 
   // 1) The nightly snapshot committed to the site by GitHub Actions (same origin, no CORS).
   try {
-    const res = await fetch("/data/places.json", { cache: "no-cache" });
+    const res = await fetchData("places.json");
     if (res.ok) {
       const snap = await res.json();
       if (Array.isArray(snap.places) && snap.places.length) {
@@ -541,14 +556,14 @@ export const isEveningOut = (e: FeedEvent) => e.category !== "community";
 export type FeedNews = { id: string; title: string; url: string; source: string; lang: "he" | "en"; published: string | null; image?: string | null; summary?: string | null };
 
 export const fetchEventsFeed = async (): Promise<{ updated: string | null; events: FeedEvent[] }> => {
-  const res = await fetch("/data/events.json", { cache: "no-cache" });
+  const res = await fetchData("events.json");
   if (!res.ok) throw new Error(`events ${res.status}`);
   const j = await res.json();
   return { updated: j.updated ?? null, events: j.events ?? [] };
 };
 
 export const fetchNewsFeed = async (): Promise<{ updated: string | null; news: FeedNews[] }> => {
-  const res = await fetch("/data/news.json", { cache: "no-cache" });
+  const res = await fetchData("news.json");
   if (!res.ok) throw new Error(`news ${res.status}`);
   const j = await res.json();
   return { updated: j.updated ?? null, news: j.news ?? [] };
@@ -559,7 +574,7 @@ export const fetchNewsFeed = async (): Promise<{ updated: string | null; news: F
 export type RailData = { lines: { type: "FeatureCollection"; features: unknown[] }; stations: { type: "FeatureCollection"; features: unknown[] } };
 
 export const fetchRail = async (): Promise<RailData | null> => {
-  const res = await fetch("/data/rail.json", { cache: "no-cache" });
+  const res = await fetchData("rail.json");
   if (!res.ok) return null; // not generated yet
   const j = await res.json();
   return { lines: j.lines, stations: j.stations };
@@ -717,7 +732,7 @@ export type CityData = {
 };
 
 export const fetchCityData = async (): Promise<CityData> => {
-  const res = await fetch("/data/city.json", { cache: "no-cache" });
+  const res = await fetchData("city.json");
   if (!res.ok) throw new Error(`city ${res.status}`);
   return res.json();
 };
@@ -726,7 +741,7 @@ export type JellyStatus = "none" | "few" | "fewStinging" | "many" | "mixed" | "m
 export type JellyRegion = { region: string; lat: number; lon: number; status: JellyStatus; sightings: number; summary: string; link: string };
 
 export const fetchJellyfish = async (): Promise<{ updated: string | null; regions: JellyRegion[] }> => {
-  const res = await fetch("/data/jellyfish.json", { cache: "no-cache" });
+  const res = await fetchData("jellyfish.json");
   if (!res.ok) throw new Error(`jellyfish ${res.status}`);
   return res.json();
 };
@@ -756,7 +771,7 @@ export type Film = {
 };
 
 export const fetchCinema = async (): Promise<{ updated: string | null; cinemas: Cinema[]; films: Film[] }> => {
-  const res = await fetch("/data/cinema.json", { cache: "no-cache" });
+  const res = await fetchData("cinema.json");
   if (!res.ok) throw new Error(`cinema ${res.status}`);
   return res.json();
 };
@@ -769,7 +784,7 @@ export type PhotoLibrary = Record<string, DishPhoto[]> & { __city?: Record<strin
 
 // Dish photos keyed by dish; city photos (for articles) under __city.
 export const fetchFoodPhotos = async (): Promise<PhotoLibrary> => {
-  const res = await fetch("/data/food-photos.json", { cache: "no-cache" });
+  const res = await fetchData("food-photos.json");
   if (!res.ok) throw new Error(`photos ${res.status}`);
   const j = await res.json();
   return Object.assign({}, j.dishes ?? {}, { __city: j.city ?? {} }) as PhotoLibrary;
@@ -783,7 +798,7 @@ export type Hotel = {
 };
 
 export const fetchHotels = async (): Promise<Hotel[]> => {
-  const res = await fetch("/data/hotels.json", { cache: "no-cache" });
+  const res = await fetchData("hotels.json");
   if (!res.ok) throw new Error(`hotels ${res.status}`);
   return (await res.json()).hotels ?? [];
 };
@@ -793,7 +808,7 @@ export const fetchHotels = async (): Promise<Hotel[]> => {
 export type Job = { id: string; title: string; company: string; location: string; url: string; posted: string | null; dept: string | null; source: string };
 
 export const fetchJobs = async (): Promise<{ updated: string | null; jobs: Job[] }> => {
-  const res = await fetch("/data/jobs.json", { cache: "no-cache" });
+  const res = await fetchData("jobs.json");
   if (!res.ok) throw new Error(`jobs ${res.status}`);
   return res.json();
 };
