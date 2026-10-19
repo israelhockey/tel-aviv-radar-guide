@@ -1,0 +1,34 @@
+name: Grab images (design mockups)
+
+on:
+  workflow_dispatch:
+    inputs:
+      items:
+        description: "Space-separated name=url or name=wiki:Title"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  grab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/grab-assets.mjs
+        env:
+          ITEMS: ${{ inputs.items }}
+      - run: |
+          cp -r grab /tmp/grab
+          git config user.name "tlv-radar-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan grabbed
+          git rm -rfq .
+          cp /tmp/grab/* .
+          git add .
+          git commit -qm "Grabbed ${{ github.run_id }}"
+          git push -f origin grabbed
