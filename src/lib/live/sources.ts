@@ -774,3 +774,16 @@ export const fetchFoodPhotos = async (): Promise<PhotoLibrary> => {
   const j = await res.json();
   return Object.assign({}, j.dishes ?? {}, { __city: j.city ?? {} }) as PhotoLibrary;
 };
+
+/* ---------------- Hotels (OpenStreetMap, nightly snapshot) ---------------- */
+
+export type Hotel = {
+  id: string; name: string; nameEn?: string; kind: "hotel" | "hostel" | "guest_house" | "apartment" | "motel";
+  lat: number; lon: number; stars?: number; web?: string; street?: string; number?: string; rooms?: number; wheelchair?: string; wifi?: boolean;
+};
+
+export const fetchHotels = async (): Promise<Hotel[]> => {
+  const res = await fetch("/data/hotels.json", { cache: "no-cache" });
+  if (!res.ok) throw new Error(`hotels ${res.status}`);
+  return (await res.json()).hotels ?? [];
+};

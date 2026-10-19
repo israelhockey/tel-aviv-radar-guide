@@ -20,6 +20,9 @@ export const TABS: { to: string; key: StringKey; icon: typeof Sun; end?: boolean
 const MORE: { to: string; key: StringKey; mobileOnly?: boolean }[] = [
   { to: "/magazine", key: "nav.magazine", mobileOnly: true },
   { to: "/news", key: "nav.news", mobileOnly: true },
+  { to: "/hotels", key: "nav.hotels" },
+  { to: "/walks", key: "nav.walks" },
+  { to: "/jobs", key: "nav.jobs" },
   { to: "/shabbat", key: "nav.shabbat" },
   { to: "/cinema", key: "nav.cinema" },
   { to: "/getting-around", key: "nav.around" },
