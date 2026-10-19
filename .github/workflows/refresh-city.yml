@@ -25,10 +25,13 @@ jobs:
         continue-on-error: true
       - run: node scripts/fetch-food-photos.mjs
         continue-on-error: true
+      - run: node scripts/fetch-jobs.mjs
+        continue-on-error: true
       - name: Commit if changed
         run: |
           [ -f public/data/city.json ] && git add public/data/city.json
           [ -f public/data/food-photos.json ] && git add public/data/food-photos.json
+          [ -f public/data/jobs.json ] && git add public/data/jobs.json
           if git diff --cached --quiet; then
             echo "No changes."
             exit 0
