@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
-  fetchAir, fetchAircraft, fetchHotels, fetchFoodPhotos, fetchCinema, fetchHolidays, fetchBeachForecast, fetchCityData, fetchJellyfish, fetchParking, fetchTelofan, fetchTraffic, fetchBeaches, fetchBuses, fetchEventsFeed, fetchHebrewDate, fetchNewsFeed, fetchPlaces, fetchRail, fetchRainTiles, fetchShabbat, fetchWeather,
+  fetchAir, fetchAircraft, fetchJobs, fetchHotels, fetchFoodPhotos, fetchCinema, fetchHolidays, fetchBeachForecast, fetchCityData, fetchJellyfish, fetchParking, fetchTelofan, fetchTraffic, fetchBeaches, fetchBuses, fetchEventsFeed, fetchHebrewDate, fetchNewsFeed, fetchPlaces, fetchRail, fetchRainTiles, fetchShabbat, fetchWeather,
 } from "./sources";
 
 const MIN = 60_000;
@@ -38,3 +38,4 @@ export const useHolidays = (lang: "en" | "he") =>
 export const useCinema = () => useQuery({ queryKey: ["cinema"], queryFn: fetchCinema, staleTime: 30 * MIN, retry: 1 });
 export const useFoodPhotos = () => useQuery({ queryKey: ["food-photos"], queryFn: fetchFoodPhotos, staleTime: 12 * 60 * MIN });
 export const useHotels = () => useQuery({ queryKey: ["hotels"], queryFn: fetchHotels, staleTime: 12 * 60 * MIN, retry: 1 });
+export const useJobs = () => useQuery({ queryKey: ["jobs"], queryFn: fetchJobs, staleTime: 60 * MIN, retry: 1 });

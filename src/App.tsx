@@ -18,6 +18,7 @@ import ArticlePage from "./pages/ArticlePage";
 import PlacePage from "./pages/PlacePage";
 import { Hotels, HotelPage } from "./pages/Hotels";
 import { Walks, WalkPage } from "./pages/Walks";
+import Jobs from "./pages/Jobs";
 import { I18nProvider } from "@/lib/i18n";
 import { ThemeProvider } from "@/lib/theme";
 import Category from "./pages/Category";
@@ -61,6 +62,7 @@ const App = () => (
           <Route path="/place/:slug" element={<PlacePage />} />
           <Route path="/hotels" element={<Hotels />} />
           <Route path="/walks" element={<Walks />} />
+          <Route path="/jobs" element={<Jobs />} />
           <Route path="/walks/:slug" element={<WalkPage />} />
           <Route path="/hotel/:id" element={<HotelPage />} />
           <Route path="/nightlife" element={<Category />} />

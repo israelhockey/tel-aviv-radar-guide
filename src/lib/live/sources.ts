@@ -787,3 +787,13 @@ export const fetchHotels = async (): Promise<Hotel[]> => {
   if (!res.ok) throw new Error(`hotels ${res.status}`);
   return (await res.json()).hotels ?? [];
 };
+
+/* ---------------- Jobs (public company job boards, nightly snapshot) ---------------- */
+
+export type Job = { id: string; title: string; company: string; location: string; url: string; posted: string | null; dept: string | null; source: string };
+
+export const fetchJobs = async (): Promise<{ updated: string | null; jobs: Job[] }> => {
+  const res = await fetch("/data/jobs.json", { cache: "no-cache" });
+  if (!res.ok) throw new Error(`jobs ${res.status}`);
+  return res.json();
+};
