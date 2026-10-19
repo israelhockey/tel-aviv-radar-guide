@@ -89,4 +89,28 @@ for (const [key, titles] of Object.entries(DISHES)) {
 const n = Object.values(dishes).reduce((s, l) => s + l.length, 0);
 console.log(`::notice::food photos: ${n} photos for ${Object.keys(dishes).length} dishes; empty: ${Object.entries(dishes).filter(([, l]) => !l.length).map(([k]) => k).join(", ") || "none"}`);
 if (n < 25) process.exit(1);
-await writeFile("public/data/food-photos.json", JSON.stringify({ source: "Wikimedia Commons, via Wikipedia", updated: new Date().toISOString(), dishes }) + "\n");
+// City photos for articles and guides: places in Tel Aviv-Yafo, one lead photo each.
+const CITY = {
+  skyline: "Tel Aviv", jaffa: "Jaffa", oldjaffa: "Old Jaffa", clocktower: "Jaffa Clock Tower", fleamarket: "Jaffa Flea Market",
+  carmel: "Carmel Market", levinsky: "Levinsky Market", rothschild: "Rothschild Boulevard", whitecity: "White City (Tel Aviv)",
+  promenade: "Tel Aviv Promenade", nevetzedek: "Neve Tzedek", florentin: "Florentin, Tel Aviv", port: "Port of Tel Aviv",
+  sarona: "Sarona, Tel Aviv", dizengoff: "Dizengoff Square", dizengoffst: "Dizengoff Street", yarkon: "Yarkon Park",
+  hatachana: "HaTachana", habima: "Habima Square", museum: "Tel Aviv Museum of Art", kerem: "Kerem HaTeimanim",
+  gordon: "Gordon Beach", azrieli: "Azrieli Center", rabin: "Rabin Square", nahalat: "Nahalat Binyamin Street",
+  hilton: "Hilton Beach", charlesclore: "Charles Clore Park", ramataviv: "Ramat Aviv", cinematheque: "Tel Aviv Cinematheque",
+  bauhaus: "Bauhaus Center (Tel Aviv)", ulpan: "Ulpan", sukkah: "Sukkah", hanukkah: "Hanukkah", purim: "Purim", pride: "Tel Aviv Pride",
+  shabbat: "Shabbat", hotel: "Dan Tel Aviv Hotel", lightrail: "Red Line (Tel Aviv Light Rail)",
+};
+const city = {};
+for (const [key, title] of Object.entries(CITY)) {
+  try {
+    const p = await leadPhoto(title);
+    if (p) city[key] = p;
+  } catch (e) {
+    console.log(`::warning::${title}: ${String(e).slice(0, 120)}`);
+  }
+  await sleep(250);
+}
+console.log(`::notice::city photos: ${Object.keys(city).length}/${Object.keys(CITY).length}; missing: ${Object.keys(CITY).filter((k) => !city[k]).join(", ")}`);
+
+await writeFile("public/data/food-photos.json", JSON.stringify({ source: "Wikimedia Commons, via Wikipedia", updated: new Date().toISOString(), dishes, city }) + "\n");
