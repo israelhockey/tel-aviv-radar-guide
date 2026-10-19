@@ -9,6 +9,7 @@ import { openStateAt, type OpenState } from "@/lib/live/openingHours";
 import { placeKindLabel } from "@/lib/live/places";
 import { CRAVINGS, CRAVING_PHOTO, dishOf, matchesCraving, pickPhoto } from "@/lib/live/dishes";
 import type { DishPhoto, Place } from "@/lib/live/sources";
+import { placeSlug } from "@/lib/placeMatch";
 
 type Toggle = "late" | "happy" | "kosher" | "vegan" | "outdoor";
 const TOGGLES: { id: Toggle; key: StringKey }[] = [
@@ -159,14 +160,14 @@ const Food = () => {
             <h2 id="hh-h" className="font-display text-[28px] leading-none">{t("food.happyTitle")}</h2>
             <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto pb-2">
               {happyNow.slice(0, 12).map(({ p, happy, d, dish }) => (
-                <a key={p.id} href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&travelmode=walking`} target="_blank" rel="noopener noreferrer"
+                <Link key={p.id} to={`/place/${placeSlug(p)}`}
                   className="relative shrink-0 w-[240px] h-[160px] rounded-lg overflow-hidden text-white">
                   <Photo photo={pickPhoto(photos.data?.[dish === "beer" ? "beer" : "cocktail"], p.id)} className="absolute inset-0 h-full w-full" />
                   <span className="absolute inset-x-0 bottom-0 p-3 bg-[#d6336c]">
                     <span className="block text-[16px] font-semibold leading-tight truncate" dir="auto">{name(p)}</span>
                     <span className="block text-[12px]">{happy?.until ? `${t("food.hhUntil")} ${happy.until}` : t("food.happy")}, {walkMinutes(d)} {t("now.walk")}</span>
                   </span>
-                </a>
+                </Link>
               ))}
             </div>
           </section>
@@ -196,7 +197,7 @@ const Food = () => {
         <ul className="mt-3 grid gap-x-4 gap-y-6 grid-cols-2 lg:grid-cols-4">
           {shown.slice(0, limit).map(({ p, state, happy, d, dish }) => (
             <li key={p.id}>
-              <a href={`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&travelmode=walking`} target="_blank" rel="noopener noreferrer" className="group block focus-visible:outline-none">
+              <Link to={`/place/${placeSlug(p)}`} className="group block focus-visible:outline-none">
                 <span className="relative block aspect-[4/3] rounded-lg overflow-hidden group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-sea">
                   <Photo photo={pickPhoto(photos.data?.[dish], p.id)} className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-105" />
                   <span className={`absolute top-2 start-2 rounded-md px-2 py-0.5 text-[12px] font-semibold ${state.status === "open" ? "bg-[#2f9e44] text-white" : "bg-white text-[#0f1530]"}`}>{stateLine(state)}</span>
@@ -217,7 +218,7 @@ const Food = () => {
                     {p.outdoor && <span className="rounded bg-secondary px-1.5 py-0.5 text-[11px]">{t("food.outdoor")}</span>}
                   </span>
                 )}
-              </a>
+              </Link>
             </li>
           ))}
         </ul>

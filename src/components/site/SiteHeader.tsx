@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { CalendarDays, Menu, Moon, Newspaper, Radar, Sun, SunMoon, UtensilsCrossed, Waves } from "lucide-react";
+import { BookOpen, CalendarDays, Menu, Moon, Newspaper, Radar, Sun, SunMoon, UtensilsCrossed, Waves } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -13,10 +13,12 @@ export const TABS: { to: string; key: StringKey; icon: typeof Sun; end?: boolean
   { to: "/events", key: "nav.whatson", icon: CalendarDays },
   { to: "/food", key: "nav.foodShort", icon: UtensilsCrossed },
   { to: "/beach", key: "nav.beach", icon: Waves },
+  { to: "/magazine", key: "nav.magazine", icon: BookOpen, desktopOnly: true },
   { to: "/news", key: "nav.news", icon: Newspaper, desktopOnly: true },
 ];
 
 const MORE: { to: string; key: StringKey; mobileOnly?: boolean }[] = [
+  { to: "/magazine", key: "nav.magazine", mobileOnly: true },
   { to: "/news", key: "nav.news", mobileOnly: true },
   { to: "/shabbat", key: "nav.shabbat" },
   { to: "/cinema", key: "nav.cinema" },

@@ -37,3 +37,35 @@ export const distanceMeters = (a: { lat: number; lon: number }, b: { lat: number
 
 // ~80 m per minute walking, adjusted for a city grid.
 export const walkMinutes = (meters: number) => Math.max(1, Math.round((meters * 1.25) / 80));
+
+// Rough centre points of Tel Aviv-Yafo's neighbourhoods, for "in Florentin" style labels.
+export const NEIGHBOURHOODS: { en: string; he: string; lat: number; lon: number }[] = [
+  { en: "Jaffa", he: "יפו", lat: 32.0525, lon: 34.7555 },
+  { en: "Ajami", he: "עג׳מי", lat: 32.0465, lon: 34.7525 },
+  { en: "Florentin", he: "פלורנטין", lat: 32.0565, lon: 34.7695 },
+  { en: "Neve Tzedek", he: "נווה צדק", lat: 32.0612, lon: 34.7655 },
+  { en: "Neve Sha'anan", he: "נווה שאנן", lat: 32.0570, lon: 34.7790 },
+  { en: "Shapira", he: "שפירא", lat: 32.0500, lon: 34.7735 },
+  { en: "Kerem HaTeimanim", he: "כרם התימנים", lat: 32.0685, lon: 34.7675 },
+  { en: "Lev HaIr", he: "לב העיר", lat: 32.0670, lon: 34.7750 },
+  { en: "Montefiore", he: "מונטיפיורי", lat: 32.0685, lon: 34.7835 },
+  { en: "Sarona", he: "שרונה", lat: 32.0715, lon: 34.7870 },
+  { en: "City Centre", he: "מרכז העיר", lat: 32.0780, lon: 34.7750 },
+  { en: "Old North", he: "הצפון הישן", lat: 32.0875, lon: 34.7765 },
+  { en: "New North", he: "הצפון החדש", lat: 32.0935, lon: 34.7865 },
+  { en: "The Port", he: "הנמל", lat: 32.0980, lon: 34.7745 },
+  { en: "Bavli", he: "בבלי", lat: 32.0935, lon: 34.7975 },
+  { en: "Yad Eliyahu", he: "יד אליהו", lat: 32.0595, lon: 34.7950 },
+  { en: "Ramat Aviv", he: "רמת אביב", lat: 32.1120, lon: 34.8000 },
+  { en: "Tel Baruch", he: "תל ברוך", lat: 32.1220, lon: 34.7920 },
+];
+
+export const neighbourhoodOf = (p: { lat: number; lon: number }) => {
+  let best: (typeof NEIGHBOURHOODS)[number] | null = null;
+  let d = Infinity;
+  for (const n of NEIGHBOURHOODS) {
+    const x = distanceMeters(p, n);
+    if (x < d) { d = x; best = n; }
+  }
+  return d < 1600 ? best : null;
+};

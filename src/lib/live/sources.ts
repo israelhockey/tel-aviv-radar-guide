@@ -737,7 +737,7 @@ export type Holiday = { date: string; title: string; yomtov: boolean; subcat: st
 
 export const fetchHolidays = async (lang: "en" | "he"): Promise<Holiday[]> => {
   const start = new Date();
-  const end = new Date(Date.now() + 120 * 86400_000);
+  const end = new Date(Date.now() + 400 * 86400_000);
   const ymd = (d: Date) => d.toISOString().slice(0, 10);
   const u = new URL("https://www.hebcal.com/hebcal");
   for (const [k, v] of Object.entries({ v: "1", cfg: "json", maj: "on", min: "off", mod: "on", nx: "off", ss: "off", mf: "off", c: "off", i: "on", geo: "geoname", geonameid: String(HEBCAL_GEONAME_ID), lg: lang === "he" ? "he" : "s", start: ymd(start), end: ymd(end) })) u.searchParams.set(k, v);
@@ -765,8 +765,12 @@ export const fetchCinema = async (): Promise<{ updated: string | null; cinemas: 
 
 export type DishPhoto = { file: string; src: string; by: string; license: string; page: string; dish?: string };
 
-export const fetchFoodPhotos = async (): Promise<Record<string, DishPhoto[]>> => {
+export type PhotoLibrary = Record<string, DishPhoto[]> & { __city?: Record<string, DishPhoto> };
+
+// Dish photos keyed by dish; city photos (for articles) under __city.
+export const fetchFoodPhotos = async (): Promise<PhotoLibrary> => {
   const res = await fetch("/data/food-photos.json", { cache: "no-cache" });
   if (!res.ok) throw new Error(`photos ${res.status}`);
-  return (await res.json()).dishes ?? {};
+  const j = await res.json();
+  return Object.assign({}, j.dishes ?? {}, { __city: j.city ?? {} }) as PhotoLibrary;
 };

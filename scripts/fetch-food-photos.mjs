@@ -46,18 +46,28 @@ const DISHES = {
 
 const BAD = /map|logo|flag|icon|diagram|stamp|coat|chart|\.svg|drawing|portrait|statue/i;
 
+// Wikipedia asks API users to slow down when busy (HTTP 429): wait and try again.
+const polite = async (u) => {
+  for (let i = 0; i < 5; i++) {
+    const res = await fetch(u, { headers: { "User-Agent": UA } });
+    if (res.status !== 429) return res;
+    await sleep(5000 * (i + 1));
+  }
+  throw new Error(`429 ${u}`);
+};
+
 // Lead photo of an article, with an 800px thumbnail and its credit, from one API call.
 const leadPhoto = async (title) => {
   const u = new URL("https://en.wikipedia.org/w/api.php");
   for (const [k, v] of Object.entries({ action: "query", format: "json", titles: title, redirects: "1", prop: "pageimages", piprop: "name", pilicense: "free" })) u.searchParams.set(k, v);
-  const res = await fetch(u, { headers: { "User-Agent": UA } });
+  const res = await polite(u);
   if (!res.ok) throw new Error(`${res.status} ${title}`);
   const page = Object.values((await res.json()).query?.pages ?? {})[0];
   const name = page?.pageimage;
   if (!name || BAD.test(name) || !/\.jpe?g$/i.test(name)) return null;
   const c = new URL("https://commons.wikimedia.org/w/api.php");
   for (const [k, v] of Object.entries({ action: "query", format: "json", titles: `File:${name}`, prop: "imageinfo", iiprop: "url|extmetadata|size", iiurlwidth: "800" })) c.searchParams.set(k, v);
-  const r2 = await fetch(c, { headers: { "User-Agent": UA } });
+  const r2 = await polite(c);
   if (!r2.ok) return null;
   const ii = Object.values((await r2.json()).query?.pages ?? {})[0]?.imageinfo?.[0];
   if (!ii || ii.width < 500 || ii.width / ii.height < 0.6 || ii.width / ii.height > 2) return null;
@@ -69,7 +79,12 @@ const strip = (s = "") => s.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 let prev = {};
-try { prev = JSON.parse(await readFile("public/data/food-photos.json", "utf8")).dishes ?? {}; } catch { /* first run */ }
+let prevCity = {};
+try {
+  const old = JSON.parse(await readFile("public/data/food-photos.json", "utf8"));
+  prev = old.dishes ?? {};
+  prevCity = old.city ?? {};
+} catch { /* first run */ }
 
 const dishes = {};
 for (const [key, titles] of Object.entries(DISHES)) {
@@ -81,9 +96,9 @@ for (const [key, titles] of Object.entries(DISHES)) {
     } catch (e) {
       console.log(`::warning::${title}: ${String(e).slice(0, 120)}`);
     }
-    await sleep(250);
+    await sleep(700);
   }
-  dishes[key] = out.length ? out : prev[key] ?? [];
+  dishes[key] = out.length >= (prev[key]?.length ?? 0) ? out : prev[key];
 }
 
 const n = Object.values(dishes).reduce((s, l) => s + l.length, 0);
@@ -106,10 +121,12 @@ for (const [key, title] of Object.entries(CITY)) {
   try {
     const p = await leadPhoto(title);
     if (p) city[key] = p;
+    else if (prevCity[key]) city[key] = prevCity[key];
   } catch (e) {
     console.log(`::warning::${title}: ${String(e).slice(0, 120)}`);
+    if (prevCity[key]) city[key] = prevCity[key];
   }
-  await sleep(250);
+  await sleep(700);
 }
 console.log(`::notice::city photos: ${Object.keys(city).length}/${Object.keys(CITY).length}; missing: ${Object.keys(CITY).filter((k) => !city[k]).join(", ")}`);
 

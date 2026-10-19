@@ -156,3 +156,17 @@ export const openStateAt = (raw: string | undefined, now: Date = new Date()): Op
   const next = today.filter((r) => r.start > minutes).sort((a, b) => a.start - b.start)[0];
   return { status: "closed", opensAt: next ? fmt(next.start) : undefined };
 };
+
+// The week as a table, Sunday first: "08:00–22:00", "Closed", or null when not known.
+export const weekTable = (raw: string | undefined): (string | null)[] | null => {
+  const parsed = parseOpeningHours(raw);
+  if (parsed === "always") return Array(7).fill("24h");
+  if (!parsed) return null;
+  const anyDay = parsed.some((d) => d && d !== UNKNOWN);
+  return parsed.map((d) => {
+    if (d === UNKNOWN) return null;
+    if (!d) return anyDay ? "Closed" : null;
+    if (!d.length) return "Closed";
+    return d.map((r) => `${fmt(r.start)}–${r.openEnd ? "late" : fmt(r.end)}`).join(", ");
+  });
+};
