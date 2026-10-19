@@ -52,8 +52,15 @@ for (const c of COMPANIES) {
 
 // Keep Tel Aviv first; Israel-wide roles (often remote or hybrid near Tel Aviv) after.
 jobs.sort((a, b) => Number(TLV_STRICT.test(b.location)) - Number(TLV_STRICT.test(a.location)) || String(b.posted ?? "").localeCompare(String(a.posted ?? "")));
+// Board names are lower-case slugs; show the company's real name.
+const NAMES = {
+  gongio: "Gong", wizinc: "Wiz", wiz: "Wiz", catonetworks: "Cato Networks", orcasecurity: "Orca Security", transmitsecurity: "Transmit Security",
+  jfrog: "JFrog", bigid: "BigID", appsflyer: "AppsFlyer", similarweb: "Similarweb", connecteam: "Connecteam", riskified: "Riskified",
+  axonius: "Axonius", yotpo: "Yotpo", melio: "Melio", forter: "Forter", armis: "Armis", payoneer: "Payoneer", taboola: "Taboola",
+  via: "Via", torq: "Torq", obligo: "Obligo", nanit: "Nanit", datarails: "Datarails", apiiro: "Apiiro", duda: "Duda",
+};
 const company = (s) => s.replace(/(^|[\s-])\w/g, (m) => m.toUpperCase());
-for (const j of jobs) if (j.company === j.company.toLowerCase()) j.company = company(j.company);
+for (const j of jobs) j.company = NAMES[j.company.toLowerCase()] ?? (j.company === j.company.toLowerCase() ? company(j.company) : j.company);
 
 console.log(`::notice::jobs: ${jobs.length} from ${report.length} companies (${report.join(", ")})`);
 if (jobs.length < 20) {

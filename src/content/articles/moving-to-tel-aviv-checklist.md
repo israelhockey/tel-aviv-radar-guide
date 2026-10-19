@@ -2,7 +2,7 @@
 title: Moving to Tel Aviv: your first month checklist
 dek: The practical stuff, in the order you'll need it. Rav-Kav, health care, arnona, banking and finding your people.
 category: newcomers
-cover: city:skyline
+cover: city:azrieli
 date: 2026-10-19
 tags: aliyah, newcomers, moving, practical
 featured: true

@@ -16,7 +16,7 @@ Founded in the 1880s, before Tel Aviv itself, Neve Tzedek is the city's most cha
 - **HaTachana**: the restored Ottoman-era railway station, now shops and restaurants, at the neighbourhood's edge.
 - **Sunset at Charles Clore Park**, a few minutes away by the sea.
 
-[[photo: city:hatachana | HaTachana, the old station]]
+[[photo: city:nevetzedek | HaTachana, the old station]]
 
 ## Where to eat
 

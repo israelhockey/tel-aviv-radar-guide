@@ -8,7 +8,7 @@ export const WALKS: Walk[] = [
     title: "The White City: a Bauhaus walk",
     titleHe: "העיר הלבנה: סיור באוהאוס",
     dek: "The streets that made Tel Aviv a UNESCO World Heritage site, from Dizengoff Square to Independence Hall.",
-    cover: "city:rothschild",
+    cover: "city:whitecity",
     color: "#1971c2",
     stops: [
       { name: "Dizengoff Square", nameHe: "כיכר דיזנגוף", lat: 32.0779, lon: 34.774, text: "The heart of the 1930s city, designed as a round plaza ringed by curved Bauhaus buildings." },

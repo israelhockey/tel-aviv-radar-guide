@@ -15,7 +15,7 @@ The **Jaffa Flea Market** (Shuk HaPishpeshim) is a maze of vintage furniture, an
 
 [[pick: Puaa | Breakfast among vintage furniture you can actually buy.]]
 
-[[photo: city:fleamarket | The Jaffa Flea Market]]
+[[photo: city:jaffa | The Jaffa Flea Market]]
 
 ## Lunch: hummus
 
@@ -25,7 +25,7 @@ The **Jaffa Flea Market** (Shuk HaPishpeshim) is a maze of vintage furniture, an
 
 Climb up past the **clock tower** into the old city's stone lanes, galleries and lookouts, then down to the **old port**, now full of restaurants and small shops.
 
-[[photo: city:clocktower | Jaffa's clock tower]]
+[[photo: city:oldjaffa | Jaffa's clock tower]]
 
 ## Sunset
 

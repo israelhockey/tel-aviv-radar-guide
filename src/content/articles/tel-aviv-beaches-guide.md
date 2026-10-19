@@ -2,7 +2,7 @@
 title: The Tel Aviv beaches guide
 dek: Every city beach from Tel Baruch to Jaffa, who each one suits, and how to check today's conditions.
 category: outdoors
-cover: city:gordon
+cover: city:hilton
 date: 2026-10-19
 tags: beaches, sea, outdoors, summer
 featured: true

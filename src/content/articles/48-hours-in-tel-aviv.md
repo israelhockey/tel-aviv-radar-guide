@@ -25,7 +25,7 @@ Two days is enough to fall for Tel Aviv. This plan mixes the classics with the t
 
 **Morning: the White City.** Coffee on Rothschild Boulevard, then walk among the Bauhaus buildings that earned Tel Aviv its UNESCO listing.
 
-[[photo: city:rothschild | Rothschild Boulevard]]
+[[photo: city:whitecity | Rothschild Boulevard]]
 
 **Midday: Neve Tzedek.** The city's oldest neighbourhood, with galleries, boutiques and quiet lanes. HaTachana, the restored old train station, is a few minutes away.
 

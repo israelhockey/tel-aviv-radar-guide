@@ -15,7 +15,7 @@ Florentin is Tel Aviv's grittiest, liveliest corner: old workshops and furniture
 - **Levinsky Market**: spices, dried fruit, pickles and Balkan delis, on the neighbourhood's edge.
 - **Cafés** fill with freelancers working from laptops.
 
-[[photo: city:levinsky | Levinsky Market]]
+[[photo: city:carmel | Levinsky Market]]
 
 ## By night
 
