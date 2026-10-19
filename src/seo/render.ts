@@ -5,7 +5,7 @@
 // write a real HTML file for every route, with its own title, description, share image,
 // structured data and readable text. When the app starts it replaces that text with the live page.
 
-import { ARTICLES, CATEGORY_LABEL, type Article } from "@/lib/articles";
+import { ARTICLES, CATEGORY_LABEL, translationOf, type Article } from "@/lib/articles";
 import { WALKS } from "@/content/walks";
 import { describePlace } from "@/lib/describePlace";
 import { placeKindLabel } from "@/lib/live/places";
@@ -37,6 +37,8 @@ export type Page = {
   priority?: number;
   changefreq?: "hourly" | "daily" | "weekly" | "monthly";
   lastmod?: string;
+  lang?: "en" | "he";
+  alternates?: { lang: "en" | "he"; path: string }[];
 };
 
 // ---------- helpers ----------
@@ -114,6 +116,8 @@ const blockHtml = (d: Data, raw: string): string => {
         .slice(0, Number(q.limit ?? 8));
       return list.length ? `<section><h4>${esc(q.title ?? "More places on the map")}</h4><ul>${list.map(placeLine).join("")}</ul></section>` : "";
     }
+    case "stay": return `<p><a href="/hotels">Hotels in ${esc(first.trim())}</a>${text ? ` · ${inline(text)}` : ""}</p>`;
+    case "tours": return `<p><strong>${esc(text || "Guided tours")}</strong></p>`;
     case "events": return `<p><a href="/events">See what's on in Tel Aviv</a></p>`;
     case "tip": return `<aside><p><strong>Tip:</strong> ${inline(rest.trim())}</p></aside>`;
     case "photo": {
@@ -214,9 +218,12 @@ const sectionPages = (d: Data): Page[] => {
 const articlePage = (d: Data, a: Article): Page => {
   const ph = photoFor(d, a.cover, a.slug);
   const cat = CATEGORY_LABEL[a.category]?.en ?? "Magazine";
-  const related = ARTICLES.filter((x) => x.slug !== a.slug && x.category === a.category).slice(0, 4);
+  const related = ARTICLES.filter((x) => x.slug !== a.slug && x.category === a.category && x.lang === a.lang).slice(0, 4);
+  const other = translationOf(a, a.lang === "he" ? "en" : "he");
   return {
     path: `/magazine/${a.slug}`,
+    lang: a.lang,
+    alternates: other ? [{ lang: a.lang, path: `/magazine/${a.slug}` }, { lang: other.lang, path: `/magazine/${other.slug}` }] : undefined,
     title: `${a.title} · ${SITE_NAME}`,
     description: clip(a.dek || plain(a.body)),
     image: ph?.src, type: "article", priority: 0.8, changefreq: "weekly", lastmod: a.updated ?? a.date,
@@ -229,7 +236,7 @@ const articlePage = (d: Data, a: Article): Page => {
       },
       crumbs([["Magazine", "/magazine"], [cat, `/magazine?cat=${a.category}`], [a.title, `/magazine/${a.slug}`]]),
     ],
-    body: frame(`<article><p><a href="/magazine">${esc(cat)}</a></p><h1>${esc(a.title)}</h1><p><strong>${esc(a.dek)}</strong></p>${ph ? `<img src="${esc(ph.src)}" alt="" />` : ""}${markdownHtml(d, a.body)}</article>${related.length ? `<h2>More ${esc(cat.toLowerCase())}</h2><ul>${related.map((r) => `<li><a href="/magazine/${r.slug}">${esc(r.title)}</a></li>`).join("")}</ul>` : ""}`),
+    body: frame(`<article><p><a href="/magazine">${esc(cat)}</a></p><h1>${esc(a.title)}</h1><p><strong>${esc(a.dek)}</strong></p>${ph ? `<img src="${esc(ph.src)}" alt="" />` : ""}${markdownHtml(d, a.body)}</article>${related.length ? `<h2>${a.lang === "he" ? "עוד במגזין" : `More ${esc(cat.toLowerCase())}`}</h2><ul>${related.map((r) => `<li><a href="/magazine/${r.slug}">${esc(r.title)}</a></li>`).join("")}</ul>` : ""}`),
   };
 };
 

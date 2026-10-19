@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n } from "@/lib/i18n";
-import { ARTICLES, CATEGORY_LABEL, type Article, type ArticleCategory } from "@/lib/articles";
+import { CATEGORY_LABEL, type Article, type ArticleCategory, articlesFor } from "@/lib/articles";
 import { usePhoto } from "@/components/article/Blocks";
 
 const Cover = ({ a, className = "" }: { a: Article; className?: string }) => {
@@ -36,9 +36,10 @@ const Magazine = () => {
     document.title = lang === "he" ? "מגזין · Discover Tel Aviv" : "Magazine · Discover Tel Aviv";
   }, [lang]);
 
-  const cats = (Object.keys(CATEGORY_LABEL) as ArticleCategory[]).filter((c) => ARTICLES.some((a) => a.category === c));
-  const list = ARTICLES.filter((a) => cat === "all" || a.category === cat);
-  const [lead, ...rest] = cat === "all" ? [ARTICLES.find((a) => a.featured) ?? ARTICLES[0], ...ARTICLES.filter((a) => a !== (ARTICLES.find((x) => x.featured) ?? ARTICLES[0]))] : list;
+  const ALL = articlesFor(lang);
+  const cats = (Object.keys(CATEGORY_LABEL) as ArticleCategory[]).filter((c) => ALL.some((a) => a.category === c));
+  const list = ALL.filter((a) => cat === "all" || a.category === cat);
+  const [lead, ...rest] = cat === "all" ? [ALL.find((a) => a.featured) ?? ALL[0], ...ALL.filter((a) => a !== (ALL.find((x) => x.featured) ?? ALL[0]))] : list;
 
   const chip = (active: boolean) =>
     `h-9 rounded-md px-3.5 text-[14px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea ${active ? "bg-foreground text-background border-foreground" : "border-border hover:bg-secondary"}`;

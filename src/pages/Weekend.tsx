@@ -7,7 +7,7 @@ import { inRange } from "@/lib/live/when";
 import { fmtClock, fmtWeekday } from "@/lib/live/format";
 import { isEveningOut } from "@/lib/live/sources";
 import { PosterCard } from "@/components/radar/PosterCard";
-import { ARTICLES } from "@/lib/articles";
+import { articlesFor } from "@/lib/articles";
 import { ArticleCard } from "./Magazine";
 
 // The weekend in one page: what we'd pick, the beach, Shabbat and the Friday markets.
@@ -40,7 +40,7 @@ const Weekend = () => {
     { key: "wk.family", list: byCat(["family"]) },
     { key: "wk.culture", list: byCat(["art", "talk", "festival"]) },
   ];
-  const reads = ARTICLES.filter((a) => ["food", "drink", "neighbourhoods"].includes(a.category)).slice(0, 3);
+  const reads = articlesFor(lang).filter((a) => ["food", "drink", "neighbourhoods"].includes(a.category)).slice(0, 3);
 
   return (
     <SiteLayout>

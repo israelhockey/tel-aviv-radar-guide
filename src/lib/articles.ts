@@ -19,6 +19,7 @@ export type Article = {
   lang: "en" | "he";
   body: string;
   readMinutes: number;
+  pair?: string;       // slug of the same article in the other language
 };
 
 const files = import.meta.glob("/src/content/articles/*.md", { query: "?raw", import: "default", eager: true }) as Record<string, string>;
@@ -49,6 +50,7 @@ const parse = (path: string, raw: string): Article => {
     lang: meta.lang === "he" ? "he" : "en",
     body,
     readMinutes: Math.max(2, Math.round(words / 220)),
+    pair: meta.pair || undefined,
   };
 };
 
@@ -57,6 +59,13 @@ export const ARTICLES: Article[] = Object.entries(files)
   .sort((a, b) => (b.updated ?? b.date).localeCompare(a.updated ?? a.date));
 
 export const articleBySlug = (slug: string) => ARTICLES.find((a) => a.slug === slug);
+
+/** The same article in another language, if we have it. */
+export const translationOf = (a: Article, lang: "en" | "he") =>
+  a.lang === lang ? a : ARTICLES.find((x) => x.lang === lang && (x.pair === a.slug || a.pair === x.slug));
+
+/** What to list for a reader: their language, plus articles not yet translated. */
+export const articlesFor = (lang: "en" | "he") => ARTICLES.filter((a) => a.lang === lang || !translationOf(a, lang));
 
 export const CATEGORY_LABEL: Record<ArticleCategory, { en: string; he: string; color: string }> = {
   food: { en: "Food", he: "אוכל", color: "#e8590c" },

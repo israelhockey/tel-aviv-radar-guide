@@ -3,7 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { Share2 } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n } from "@/lib/i18n";
-import { ARTICLES, articleBySlug, CATEGORY_LABEL } from "@/lib/articles";
+import { articleBySlug, CATEGORY_LABEL, articlesFor, translationOf } from "@/lib/articles";
 import { Markdown } from "@/components/article/Markdown";
 import { Credit, usePhoto } from "@/components/article/Blocks";
 import { ArticleCard } from "./Magazine";
@@ -34,7 +34,8 @@ const ArticlePage = () => {
   }
 
   const cat = CATEGORY_LABEL[a.category];
-  const related = ARTICLES.filter((x) => x.slug !== a.slug && (x.category === a.category || x.tags.some((tg) => a.tags.includes(tg)))).slice(0, 3);
+  const other = translationOf(a, lang === "he" ? "he" : "en");
+  const related = articlesFor(a.lang).filter((x) => x.slug !== a.slug && x.slug !== a.pair && (x.category === a.category || x.tags.some((tg) => a.tags.includes(tg)))).slice(0, 3);
   const share = () => {
     const url = window.location.href;
     if (navigator.share) navigator.share({ title: a.title, url }).catch(() => undefined);
@@ -43,10 +44,13 @@ const ArticlePage = () => {
 
   return (
     <SiteLayout>
-      <article>
+      <article dir={a.lang === "he" ? "rtl" : "ltr"}>
         <header className="container-page pt-8 sm:pt-12 max-w-3xl">
           <Link to="/magazine" className="inline-block rounded-md px-2 py-0.5 text-[13px] font-semibold text-white" style={{ background: cat.color }}>{lang === "he" ? cat.he : cat.en}</Link>
           <h1 className="mt-3 font-display text-[40px] sm:text-[60px] leading-[1.02]" dir="auto">{a.title}</h1>
+          {other && other.slug !== a.slug && (
+            <Link to={`/magazine/${other.slug}`} className="mt-3 inline-block rounded-md bg-[#ffc233] text-[#1f1400] px-3 py-1.5 text-[14px] font-semibold">{other.lang === "he" ? "לקריאה בעברית" : "Read in English"}</Link>
+          )}
           {a.dek && <p className="mt-3 text-[20px] leading-relaxed text-muted-foreground" dir="auto">{a.dek}</p>}
           <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-[14px] text-muted-foreground">
             <span>{a.author}</span>

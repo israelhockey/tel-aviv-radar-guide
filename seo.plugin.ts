@@ -45,7 +45,7 @@ export const seoPages = (): Plugin => {
           now,
         }) as {
           path: string; title: string; description: string; image?: string; type?: string; jsonld: object[]; body: string;
-          priority?: number; changefreq?: string; lastmod?: string;
+          priority?: number; changefreq?: string; lastmod?: string; lang?: string; alternates?: { lang: string; path: string }[];
         }[];
         const site = SITE_URL ?? "";
         const template = fs.readFileSync(path.join(outDir, "index.html"), "utf8");
@@ -67,9 +67,11 @@ export const seoPages = (): Plugin => {
             `<meta property="og:image" content="${esc(image)}" />`,
             `<meta name="twitter:card" content="summary_large_image" />`,
             `<meta name="twitter:image" content="${esc(image)}" />`,
+            ...(p.alternates ?? []).map((a) => `<link rel="alternate" hreflang="${a.lang}" href="${esc(`${site}${a.path}`)}" />`),
+            ...(p.alternates?.length ? [`<link rel="alternate" hreflang="x-default" href="${esc(`${site}${(p.alternates.find((a) => a.lang === "en") ?? p.alternates[0]).path}`)}" />`] : []),
             ...p.jsonld.map((j) => `<script type="application/ld+json">${JSON.stringify(j).replace(/</g, "\\u003c")}</script>`),
           ].join("\n    ");
-          const html = template
+          const html = (p.lang === "he" ? template.replace('<html lang="en">', '<html lang="he" dir="rtl">') : template)
             .replace(/<title>[\s\S]*?<\/title>/, "")
             .replace(/<meta (name|property)="(description|og:[a-z_]+|twitter:[a-z]+)"[^>]*>\s*/g, "")
             .replace("</head>", `    ${head}\n  </head>`)

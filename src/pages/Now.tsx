@@ -12,7 +12,7 @@ import { OpenNearby } from "@/components/radar/OpenNearby";
 import { useI18n } from "@/lib/i18n";
 import { useNewsFeed } from "@/lib/live/hooks";
 import { NewsCard } from "@/components/radar/NewsCard";
-import { ARTICLES } from "@/lib/articles";
+import { articlesFor } from "@/lib/articles";
 import { ArticleCard } from "./Magazine";
 import { fmtClock } from "@/lib/live/format";
 
@@ -102,7 +102,7 @@ const Now = () => {
             <Link to="/magazine" className="text-[14px] text-sea hover:underline underline-offset-4">{t("now.allGuides")}</Link>
           </div>
           <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {ARTICLES.filter((a) => a.featured).slice(0, 4).map((a) => <ArticleCard key={a.slug} a={a} />)}
+            {articlesFor(lang).filter((a) => a.featured).slice(0, 4).map((a) => <ArticleCard key={a.slug} a={a} />)}
           </div>
         </section>
 

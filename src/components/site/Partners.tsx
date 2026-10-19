@@ -61,3 +61,21 @@ export const Essentials = ({ className = "" }: { className?: string }) => {
     </section>
   );
 };
+
+/** "Hotels in Neve Tzedek": inside guides, where to stay in the area being described. */
+export const StayCard = ({ area, text }: { area: string; text?: string }) => {
+  const { t } = useI18n();
+  return (
+    <div className="mt-6 rounded-xl border-2 border-[#1971c2] p-4 sm:flex sm:items-center sm:justify-between gap-4">
+      <div>
+        <p className="text-[13px] font-semibold text-[#1971c2]">{t("aff.stayIn")}</p>
+        <p className="text-[20px] font-display leading-tight">{area}</p>
+        {text && <p className="mt-1 text-[14px] text-muted-foreground">{text}</p>}
+      </div>
+      <div className="mt-3 sm:mt-0 flex shrink-0 gap-2">
+        <BookButton name={area} />
+        <Link to="/hotels" className="inline-flex items-center h-11 rounded-lg border border-border px-4 text-[14px] font-medium hover:bg-secondary">{t("aff.map")}</Link>
+      </div>
+    </div>
+  );
+};

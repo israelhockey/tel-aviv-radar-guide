@@ -99,6 +99,8 @@ const STRINGS = {
   "aff.toursBody": { en: "Guided walks, food tours, day trips to Jerusalem and the Dead Sea, and museum tickets.", he: "סיורים מודרכים, סיורי אוכל, טיולי יום לירושלים ולים המלח, וכרטיסים למוזיאונים." },
   "aff.toursCta": { en: "See tours", he: "לסיורים" },
   "aff.essentials": { en: "Before you fly", he: "לפני הטיסה" },
+  "aff.stayIn": { en: "Where to stay", he: "איפה לישון" },
+  "aff.map": { en: "Hotels on the map", he: "מלונות על המפה" },
   "nav.about": { en: "About", he: "אודות" },
   "ev.tickets": { en: "Tickets and details", he: "כרטיסים ופרטים" },
   "ev.free": { en: "Free entry", he: "כניסה חופשית" },
