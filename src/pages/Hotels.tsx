@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { eventSlug } from "@/lib/areas";
 import { Globe, Navigation, Star, Waves } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n, type StringKey } from "@/lib/i18n";
@@ -151,7 +152,7 @@ export const HotelPage = () => {
             <>
               <h2 className="mt-10 font-display text-[26px]">{t("hot.eventsNear")}</h2>
               <ul className="mt-3 divide-y divide-border">
-                {tonight.map((e) => <li key={e.id}><a href={e.url} target="_blank" rel="noopener noreferrer" className="block py-2.5 hover:text-[#d6336c]" dir="auto">{e.title}{e.venue ? `, ${e.venue}` : ""}</a></li>)}
+                {tonight.map((e) => <li key={e.id}><Link to={`/event/${eventSlug(e)}`} className="block py-2.5 hover:text-[#d6336c]" dir="auto">{e.title}{e.venue ? `, ${e.venue}` : ""}</Link></li>)}
               </ul>
             </>
           )}

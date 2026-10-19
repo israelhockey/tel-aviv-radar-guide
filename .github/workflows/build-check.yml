@@ -3,7 +3,7 @@ name: Build check
 on:
   push:
     branches: [main]
-    paths: ["src/**", "index.html", "package.json", "vite.config.ts", "tailwind.config.ts", ".github/workflows/build-check.yml"]
+    paths: ["src/**", "index.html", "package.json", "vite.config.ts", "seo.plugin.ts", "tailwind.config.ts", ".github/workflows/build-check.yml"]
   workflow_dispatch:
 
 jobs:
@@ -18,3 +18,12 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npx tsc --noEmit -p tsconfig.app.json || echo "::warning::type errors (non-blocking)"
       - run: npm run build
+      - name: Check the search-engine pages
+        run: |
+          n=$(find dist -name index.html | wc -l)
+          echo "::notice::SEO pages: $n, sitemap urls: $(grep -c '<loc>' dist/sitemap.xml || echo 0)"
+          f=dist/magazine/48-hours-in-tel-aviv/index.html
+          test -f "$f" || { echo "::error::no prerendered article"; exit 1; }
+          echo "::notice::$(grep -o '<title>[^<]*' $f) | $(grep -o '<link rel="canonical"[^>]*' $f)"
+          echo "::notice::place sample: $(ls dist/place | head -1) $(grep -o '<title>[^<]*' dist/place/$(ls dist/place | head -1)/index.html)"
+          echo "::notice::area pages: $(find dist/area -name index.html | wc -l), event pages: $(ls dist/event 2>/dev/null | wc -l), size: $(du -sh dist | cut -f1)"

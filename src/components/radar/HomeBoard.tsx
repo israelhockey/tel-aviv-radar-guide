@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { eventSlug } from "@/lib/areas";
 import { Bus, Car, Radar, SquareParking } from "lucide-react";
 import { useI18n, type StringKey } from "@/lib/i18n";
 import {
@@ -19,7 +20,7 @@ const MiniPoster = ({ e }: { e: FeedEvent }) => {
   const { lang } = useI18n();
   const [broken, setBroken] = useState(false);
   return (
-    <a href={e.url} target="_blank" rel="noopener noreferrer" className="group relative block aspect-[3/4] rounded-md overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+    <Link to={`/event/${eventSlug(e)}`} className="group relative block aspect-[3/4] rounded-md overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
       {e.image && !broken ? (
         <img src={e.image} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
       ) : (
@@ -29,7 +30,7 @@ const MiniPoster = ({ e }: { e: FeedEvent }) => {
         {!e.allDay && <span className="block text-[13px] font-semibold tabular text-white">{fmtClock(e.start, lang)}</span>}
         <span className="block text-[13px] leading-tight text-white line-clamp-2" dir="auto">{e.title}</span>
       </span>
-    </a>
+    </Link>
   );
 };
 

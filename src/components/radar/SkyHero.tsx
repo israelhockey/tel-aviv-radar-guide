@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { eventSlug } from "@/lib/areas";
 import { useI18n } from "@/lib/i18n";
 import { useBeachForecast, useEventsFeed, useHebrewDate, useShabbat, useWeather } from "@/lib/live/hooks";
 import { fmtToday, weatherWord } from "@/lib/live/format";
@@ -249,7 +250,7 @@ export const SkyHero = () => {
             {startingThen.length > 0 && (
               <ul className="mt-3 space-y-1 max-w-xl">
                 {startingThen.map((e) => (
-                  <li key={e.id}><a href={e.url} target="_blank" rel="noopener noreferrer" className="inline-block rounded-md bg-[#0f1530]/80 px-2.5 py-1 text-[14px] hover:bg-[#0f1530]" dir="auto">{e.title}{e.venue ? `, ${e.venue}` : ""}</a></li>
+                  <li key={e.id}><Link to={`/event/${eventSlug(e)}`} className="inline-block rounded-md bg-[#0f1530]/80 px-2.5 py-1 text-[14px] hover:bg-[#0f1530]" dir="auto">{e.title}{e.venue ? `, ${e.venue}` : ""}</Link></li>
                 ))}
               </ul>
             )}

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { eventSlug } from "@/lib/areas";
 import { useI18n } from "@/lib/i18n";
 import { useEventsFeed, useFoodPhotos, useHolidays, usePlaces } from "@/lib/live/hooks";
 import { openStateAt } from "@/lib/live/openingHours";
@@ -152,14 +153,14 @@ export const EventsBlock = (q: Record<string, string>) => {
     <ul className="mt-6 divide-y divide-border rounded-xl border border-border">
       {list.map((e) => (
         <li key={e.id}>
-          <a href={e.url} target="_blank" rel="noopener noreferrer" className="flex gap-3 p-3 hover:bg-secondary/60">
+          <Link to={`/event/${eventSlug(e)}`} className="flex gap-3 p-3 hover:bg-secondary/60">
             {e.image ? <img src={e.image} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-12 rounded object-cover shrink-0" /> : <span className="h-16 w-12 rounded bg-[#d6336c] shrink-0" />}
             <span className="min-w-0">
               <span className="block text-[13px] text-muted-foreground tabular">{fmtDayTime(e.start, lang)}</span>
               <span className="block text-[16px] font-semibold leading-snug" dir="auto">{e.title}</span>
               {e.venue && <span className="block text-[13px] text-muted-foreground truncate" dir="auto">{e.venue}</span>}
             </span>
-          </a>
+          </Link>
         </li>
       ))}
     </ul>

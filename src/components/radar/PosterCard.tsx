@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { eventSlug } from "@/lib/areas";
 import { useState } from "react";
 import { useI18n, type StringKey } from "@/lib/i18n";
 import { fmtClock } from "@/lib/live/format";
@@ -16,10 +18,8 @@ export const PosterCard = ({ e, showDay = false, className = "" }: { e: FeedEven
   const [broken, setBroken] = useState(false);
   const cat = CAT_BG[e.category] ?? CAT_BG.other;
   return (
-    <a
-      href={e.url}
-      target="_blank"
-      rel="noopener noreferrer"
+    <Link
+      to={`/event/${eventSlug(e)}`}
       className={`group block rounded-[var(--radius)] overflow-hidden bg-card shadow-[var(--shadow-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea ${className}`}
     >
       <div className={`relative aspect-[4/5] overflow-hidden ${e.image && !broken ? "bg-muted" : cat}`}>
@@ -56,6 +56,6 @@ export const PosterCard = ({ e, showDay = false, className = "" }: { e: FeedEven
           ) : null}
         </p>
       </div>
-    </a>
+    </Link>
   );
 };

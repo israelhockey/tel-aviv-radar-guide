@@ -14,6 +14,7 @@ import { isEveningOut } from "@/lib/live/sources";
 import { describePlace } from "@/lib/describePlace";
 import { findPlaces, placeIdFromSlug, placeSlug } from "@/lib/placeMatch";
 import { ARTICLES } from "@/lib/articles";
+import { eventSlug, hoodSlug } from "@/lib/areas";
 import { MiniMap } from "@/components/radar/MiniMap";
 import { Credit } from "@/components/article/Blocks";
 
@@ -88,7 +89,7 @@ const PlacePage = () => {
         ) : <div className="h-[200px] sm:h-[260px] bg-[#ffc233]" />}
         <div className="container-page relative -mt-20 sm:-mt-24 pb-2">
           <div className="inline-block max-w-full rounded-lg bg-white dark:bg-card px-5 py-4 sm:px-7 sm:py-5 shadow-[var(--shadow-card)]">
-            <p className="text-[14px] text-muted-foreground">{placeKindLabel(p.kind, lang)}{hood ? `, ${lang === "he" ? hood.he : hood.en}` : ""}</p>
+            <p className="text-[14px] text-muted-foreground">{placeKindLabel(p.kind, lang)}{hood && <>, <Link to={`/area/${hoodSlug(hood)}`} className="underline underline-offset-2 hover:text-foreground">{lang === "he" ? hood.he : hood.en}</Link></>}</p>
             <h1 className="font-display text-[36px] sm:text-[56px] leading-[1] text-foreground" dir="auto">{name}</h1>
             <span className={`mt-2 inline-block rounded-md px-2.5 py-1 text-[13px] font-semibold ${state.status === "open" ? "bg-[#2f9e44] text-white" : "bg-secondary"}`}>{badge}</span>
           </div>
@@ -183,7 +184,7 @@ const PlacePage = () => {
               <h2 className="text-[16px] font-semibold">{t("place.tonightNear")}</h2>
               <ul className="mt-2 space-y-2">
                 {data.tonight.map((e) => (
-                  <li key={e.id}><a href={e.url} target="_blank" rel="noopener noreferrer" className="block text-[14px] hover:text-[#d6336c]"><span className="tabular font-semibold">{fmtClock(e.start, lang)}</span> <span dir="auto">{e.title}</span></a></li>
+                  <li key={e.id}><Link to={`/event/${eventSlug(e)}`} className="block text-[14px] hover:text-[#d6336c]"><span className="tabular font-semibold">{fmtClock(e.start, lang)}</span> <span dir="auto">{e.title}</span></Link></li>
                 ))}
               </ul>
             </section>

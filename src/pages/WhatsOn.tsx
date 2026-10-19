@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { eventSlug } from "@/lib/areas";
 import { TonightHero } from "@/components/radar/TonightHero";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n, type StringKey } from "@/lib/i18n";
@@ -23,10 +24,8 @@ export const EventRow = ({ e, showDay = false }: { e: FeedEvent; showDay?: boole
   const { t, lang } = useI18n();
   return (
     <li>
-      <a
-        href={e.url}
-        target="_blank"
-        rel="noopener noreferrer"
+      <Link
+        to={`/event/${eventSlug(e)}`}
         className="group grid grid-cols-[3.5rem,1fr] gap-3 py-3 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"
       >
         <span className="text-[14px] tabular text-muted-foreground pt-0.5">
@@ -45,13 +44,13 @@ export const EventRow = ({ e, showDay = false }: { e: FeedEvent; showDay?: boole
             ) : null}
           </span>
         </span>
-      </a>
+      </Link>
     </li>
   );
 };
 
 // Google Calendar link for an event (opens a prefilled "new event").
-const gcal = (e: FeedEvent) => {
+export const gcal = (e: FeedEvent) => {
   const z = (iso: string) => new Date(iso).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
   const end = e.end ?? new Date(new Date(e.start).getTime() + 2 * 3600_000).toISOString();
   const u = new URL("https://calendar.google.com/calendar/render");

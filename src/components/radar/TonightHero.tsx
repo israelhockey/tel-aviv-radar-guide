@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { eventSlug } from "@/lib/areas";
 import { ArrowRight, Map as MapIcon } from "lucide-react";
 import { useI18n, type StringKey } from "@/lib/i18n";
 import { useEventsFeed, useHebrewDate } from "@/lib/live/hooks";
@@ -14,10 +15,8 @@ const Tile = ({ e }: { e: FeedEvent }) => {
   const [broken, setBroken] = useState(false);
   const cat = CAT_BG[e.category] ?? CAT_BG.other;
   return (
-    <a
-      href={e.url}
-      target="_blank"
-      rel="noopener noreferrer"
+    <Link
+      to={`/event/${eventSlug(e)}`}
       tabIndex={-1}
       className={`relative shrink-0 w-[112px] sm:w-[150px] aspect-[4/5] rounded-xl overflow-hidden shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)] ${e.image && !broken ? "bg-neutral-800" : cat}`}
     >
@@ -27,7 +26,7 @@ const Tile = ({ e }: { e: FeedEvent }) => {
         <span className="absolute inset-0 p-2.5 flex items-end font-display text-[15px] sm:text-[18px] leading-tight text-white" dir="auto">{e.title}</span>
       )}
       {!e.allDay && <span className="absolute top-1.5 start-1.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white tabular">{fmtClock(e.start, lang)}</span>}
-    </a>
+    </Link>
   );
 };
 
