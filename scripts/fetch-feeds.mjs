@@ -238,6 +238,92 @@ const weeklyEvents = () => {
   return out;
 };
 
+
+/* ---------- community and venue listings: the small local events ---------- */
+
+const MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+const OTHER_CITY = /ramat[\s-]?gan|רמת[\s-]?גן|givatayim|גבעתיים|herzliya|הרצליה|holon|חולון|bat[\s-]?yam|בת[\s-]?ים|petah|פתח[\s-]?תקווה|jerusalem|ירושלים|haifa|חיפה|ra'?anana|רעננה|netanya|נתניה|rishon|ראשון|kfar saba|כפר סבא|bnei brak|בני ברק|hod hasharon|הוד השרון|rehovot|רחובות|modiin|מודיעין|ashdod|אשדוד|be'?er sheva|באר שבע/i;
+
+// allevents.in gathers public events from Facebook, Eventbrite and venue sites: lots of small local ones.
+const ALLEVENTS_PAGES = ["all", "all?page=2", "all?page=3", "all?page=4", "music", "comedy", "parties", "art", "workshops", "food-drinks", "sports", "kids"];
+const fetchAllevents = async () => {
+  const out = new Map();
+  for (const path of ALLEVENTS_PAGES) {
+    let html;
+    try { html = await get(`https://allevents.in/tel%20aviv/${path}`); } catch { continue; }
+    for (const card of html.split(/<li class="event-card/).slice(1)) {
+      const eid = /data-eid="(\d+)"/.exec(card)?.[1];
+      const link = /data-link="([^"]+)"/.exec(card)?.[1];
+      const title = decode(/<h3>([\s\S]*?)<\/h3>/.exec(card)?.[1] ?? "");
+      const when = decode(/class="date"[^>]*>([\s\S]*?)<\/div>/.exec(card)?.[1] ?? "");
+      const where = decode(/class="location[^"]*"[^>]*>([\s\S]*?)<\/div>/.exec(card)?.[1] ?? "");
+      const price = decode(/class="price"[\s\S]*?<span>([\s\S]*?)<\/span>/.exec(card)?.[1] ?? "");
+      const img = /data-src="([^"]+)"/.exec(card)?.[1] ?? null;
+      const m = /(\d{1,2}) (\w{3}),? (\d{4})(?: - (\d{1,2}):(\d{2}) (AM|PM))?/i.exec(when);
+      if (!eid || !link || !title || !m || out.has(eid)) continue;
+      if (OTHER_CITY.test(where) && !TLV_RE.test(where)) continue;
+      const mon = MONTHS[m[2].toLowerCase()];
+      if (mon == null) continue;
+      let h = m[4] ? Number(m[4]) % 12 : 0;
+      if (m[6]?.toUpperCase() === "PM") h += 12;
+      const allDay = !m[4];
+      const start = israelIso(Date.UTC(Number(m[3]), mon, Number(m[1]), allDay ? 9 : h, m[5] ? Number(m[5]) : 0));
+      const ils = /(\d[\d,.]*)/.exec(price)?.[1];
+      out.set(eid, {
+        id: `allevents:${eid}`, title, start, end: null, allDay,
+        venue: where || null, address: where ? `${where}, תל אביב-יפו` : null, lat: null, lon: null,
+        priceFrom: ils ? Number(ils.replace(/,/g, "")) : null,
+        free: /free|חינם/i.test(price), category: cityCategory(title, path), url: link, image: img, source: "allevents.in",
+      });
+    }
+    await sleep(800);
+  }
+  return [...out.values()];
+};
+
+// Luma: community, tech and social events, mostly in English.
+const fetchLuma = async () => {
+  const html = await get("https://luma.com/tel-aviv");
+  const m = /<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/.exec(html);
+  if (!m) return [];
+  const list = JSON.parse(m[1])?.props?.pageProps?.initialData?.data?.events ?? [];
+  return list.filter((x) => x?.event?.location_type !== "online").map((x) => {
+    const e = x.event;
+    const geo = e.geo_address_info ?? {};
+    const exact = geo.mode && geo.mode !== "obfuscated";
+    return {
+      id: `luma:${e.api_id}`, title: e.name, start: e.start_at, end: e.end_at ?? null,
+      venue: exact ? (geo.address ?? geo.full_address ?? null) : (geo.sublocality ?? null),
+      address: exact ? geo.full_address ?? null : null,
+      lat: exact ? e.coordinate?.latitude ?? null : null, lon: exact ? e.coordinate?.longitude ?? null : null,
+      priceFrom: x.ticket_info?.price?.cents ? x.ticket_info.price.cents / 100 : null,
+      free: !!x.ticket_info?.is_free, category: "meetup", url: `https://luma.com/${e.url}`,
+      image: e.cover_url ?? null, source: "Luma",
+    };
+  }).filter((e) => e.title && e.start);
+};
+
+// Levontin 7, the beloved small live-music club.
+const fetchLevontin = async () => {
+  const html = await get("https://levontin7.com/");
+  const out = new Map();
+  for (const item of html.split(/<div class="[^"]*fat-event-item /).slice(1)) {
+    const id = /data-event-id="(\d+)"/.exec(item)?.[1];
+    const a = /<a href="(https:\/\/levontin7\.com\/events\/[^"]+)"[^>]*data-s="(\d+)"(?: data-e="(\d+)")?[^>]*>\s*([^<]*?)\s*<\/a>/.exec(item.replace(/<a href="[^"]+"[^>]*>\s*<\/a>/, ""));
+    if (!id || !a || out.has(id)) continue;
+    const slug = decodeURIComponent(a[1].replace(/\/$/, "").split("/").pop() ?? "").replace(/-\d+$/, "").replace(/-/g, " ");
+    const text = decode(a[4]);
+    const title = text && !/…|&hellip;/.test(a[4]) ? text : slug.replace(/\b[a-z]/g, (c) => c.toUpperCase());
+    out.set(id, {
+      id: `levontin:${id}`, title, // data-s/data-e are local wall-clock times written as Unix seconds.
+      start: israelIso(Number(a[2]) * 1000), end: a[3] ? israelIso(Number(a[3]) * 1000) : null,
+      venue: "לבונטין 7", address: "לבונטין 7, תל אביב-יפו", lat: 32.0627, lon: 34.7743,
+      priceFrom: null, free: false, category: "music", url: a[1], image: /<img[^>]+src="([^"]+)"/.exec(item)?.[1] ?? null, source: "Levontin 7",
+    });
+  }
+  return [...out.values()];
+};
+
 // The same show often appears on several ticket sites: one entry per title + start time.
 const normTitle = (t) => t.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
 
@@ -283,6 +369,25 @@ const fetchEvents = async () => {
     report.push(`city of Tel Aviv: ${city.length} events (${city.filter((e) => e.category === "community").length} community classes)`);
   } catch (e) {
     report.push(`city of Tel Aviv: FAILED ${e}`);
+  }
+
+  // Smaller listings: add only what the ticket sites don't already have.
+  for (const [name, fn] of [["allevents.in", fetchAllevents], ["Luma", fetchLuma], ["Levontin 7", fetchLevontin]]) {
+    try {
+      const list = await fn();
+      const seen = new Set([...all.values()].map((e) => `${normTitle(e.title)}|${new Date(e.start).toISOString().slice(0, 13)}`));
+      let kept = 0;
+      for (const ev of list) {
+        const k = `${normTitle(ev.title)}|${new Date(ev.start).toISOString().slice(0, 13)}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        all.set(ev.id, ev);
+        kept++;
+      }
+      report.push(`${name}: ${list.length} found, ${kept} new`);
+    } catch (e) {
+      report.push(`${name}: FAILED ${e}`);
+    }
   }
 
   for (const ev of weeklyEvents()) all.set(ev.id, ev);
