@@ -5,7 +5,7 @@ import { useI18n } from "@/lib/i18n";
 import { useEventsFeed, useFoodPhotos, useHolidays, usePlaces } from "@/lib/live/hooks";
 import { openStateAt } from "@/lib/live/openingHours";
 import { dishOf, pickPhoto, CRAVINGS, matchesCraving } from "@/lib/live/dishes";
-import { distanceMeters, TLV_CENTER } from "@/lib/live/geo";
+import { distanceMeters, neighbourhoodOf, TLV_CENTER } from "@/lib/live/geo";
 import { inRange } from "@/lib/live/when";
 import { fmtDayTime } from "@/lib/live/format";
 import { isEveningOut, type DishPhoto, type Place } from "@/lib/live/sources";
@@ -115,6 +115,7 @@ export const PlaceListBlock = (q: Record<string, string>) => {
     .filter((p) => (q.open === "now" ? openStateAt(p.hours).status === "open" : true))
     .filter((p) => (q.late ? openStateAt(p.hours, lateTonight()).status === "open" : true))
     .filter((p) => (q.outdoor ? p.outdoor : true))
+    .filter((p) => (q.area ? q.area.split(",").some((a) => neighbourhoodOf(p)?.en.toLowerCase() === a.trim().toLowerCase()) : true))
     .sort((a, b) => distanceMeters(TLV_CENTER, a) - distanceMeters(TLV_CENTER, b))
     .slice(0, Number(q.limit ?? 8));
   if (!places.data) return <div className="mt-6 h-40 rounded-lg bg-secondary animate-pulse" />;

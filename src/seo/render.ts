@@ -112,6 +112,7 @@ const blockHtml = (d: Data, raw: string): string => {
         .filter((p) => (q.kosher ? p.kosher === "yes" || p.kosher === "only" : true))
         .filter((p) => (q.vegan ? p.vegan === "yes" || p.vegan === "only" : true))
         .filter((p) => (q.outdoor ? p.outdoor : true))
+        .filter((p) => (q.area ? q.area.split(",").some((a) => neighbourhoodOf(p)?.en.toLowerCase() === a.trim().toLowerCase()) : true))
         .sort((a, b) => distanceMeters(TLV_CENTER, a) - distanceMeters(TLV_CENTER, b))
         .slice(0, Number(q.limit ?? 8));
       return list.length ? `<section><h4>${esc(q.title ?? "More places on the map")}</h4><ul>${list.map(placeLine).join("")}</ul></section>` : "";
@@ -216,6 +217,19 @@ const sectionPages = (d: Data): Page[] => {
   ];
 };
 
+// "## FAQ" (or "## Frequently asked questions") with "### Question" + answer → FAQPage rich result.
+const faqOf = (body: string) => {
+  const m = /^##\s+(FAQ|Frequently asked questions|שאלות נפוצות)\s*$/im.exec(body);
+  if (!m) return null;
+  const rest = body.slice(m.index + m[0].length).split(/^##\s/m)[0];
+  const items = [...rest.matchAll(/^###\s+(.+)\n+([\s\S]*?)(?=^###\s|$(?![\s\S]))/gm)]
+    .map(([, q, a]) => ({ q: q.trim(), a: plain(a) })).filter((x) => x.q && x.a);
+  return items.length ? {
+    "@context": "https://schema.org", "@type": "FAQPage",
+    mainEntity: items.map((x) => ({ "@type": "Question", name: x.q, acceptedAnswer: { "@type": "Answer", text: x.a } })),
+  } : null;
+};
+
 const articlePage = (d: Data, a: Article): Page => {
   const ph = photoFor(d, a.cover, a.slug);
   const cat = CATEGORY_LABEL[a.category]?.en ?? "Magazine";
@@ -236,6 +250,7 @@ const articlePage = (d: Data, a: Article): Page => {
         mainEntityOfPage: abs(`/magazine/${a.slug}`), inLanguage: a.lang, keywords: a.tags.join(", "),
       },
       crumbs([["Magazine", "/magazine"], [cat, `/magazine?cat=${a.category}`], [a.title, `/magazine/${a.slug}`]]),
+      ...(faqOf(a.body) ? [faqOf(a.body)!] : []),
     ],
     body: frame(`<article><p><a href="/magazine">${esc(cat)}</a></p><h1>${esc(a.title)}</h1><p><strong>${esc(a.dek)}</strong></p>${ph ? `<img src="${esc(ph.src)}" alt="" />` : ""}${markdownHtml(d, a.body)}</article>${related.length ? `<h2>${a.lang === "he" ? "עוד במגזין" : `More ${esc(cat.toLowerCase())}`}</h2><ul>${related.map((r) => `<li><a href="/magazine/${r.slug}">${esc(r.title)}</a></li>`).join("")}</ul>` : ""}`),
   };

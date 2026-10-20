@@ -48,6 +48,11 @@ const probe = async (url) => {
   try {
     const res = await fetch(url, { headers: { "User-Agent": UA, "Accept-Language": "he,en;q=0.8" }, redirect: "follow", signal: AbortSignal.timeout(20000) });
     const body = await res.text();
+    if (process.env.PROBE_SAVE) {
+      const fs = await import("node:fs");
+      fs.mkdirSync("pages", { recursive: true });
+      fs.writeFileSync(`pages/${url.replace(/^https?:\/\//, "").replace(/[^a-zA-Z0-9.-]+/g, "_").slice(0, 120)}.html`, body);
+    }
     const ld = [...body.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
     const ldEvents = ld.reduce((n, s) => n + count(s, /"@type"\s*:\s*"(Event|MusicEvent|TheaterEvent|ExhibitionEvent|SocialEvent|ComedyEvent|Festival|ScreeningEvent|DanceEvent|EducationEvent)"/g), 0);
     return {

@@ -11,6 +11,10 @@ on:
         description: "Characters of each response to keep"
         required: false
         default: "5000"
+      save:
+        description: "Save full page bodies (1 = yes)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -28,14 +32,17 @@ jobs:
         env:
           PROBE_URLS: ${{ inputs.urls }}
           PROBE_HEAD: ${{ inputs.head }}
+          PROBE_SAVE: ${{ inputs.save }}
       - name: Save report to the diagnostics branch
         run: |
           cp probe-results.json /tmp/probe-results.json
+          mkdir -p pages && cp -r pages /tmp/pages
           git config user.name "tlv-radar-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout --orphan diagnostics
           git rm -rfq .
           cp /tmp/probe-results.json probe-results.json
-          git add probe-results.json
+          cp -r /tmp/pages pages
+          git add probe-results.json pages
           git commit -qm "Probe results ${{ github.run_id }}"
           git push -f origin diagnostics
