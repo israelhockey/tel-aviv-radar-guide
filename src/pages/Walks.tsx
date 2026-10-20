@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Footprints, Navigation } from "lucide-react";
+import { Navigation } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n } from "@/lib/i18n";
 import { WALKS, type Walk } from "@/content/walks";
@@ -8,20 +8,21 @@ import { distanceMeters } from "@/lib/live/geo";
 import { MiniMap } from "@/components/radar/MiniMap";
 import { Credit, usePhoto } from "@/components/article/Blocks";
 import { Disclosure, ToursCard } from "@/components/site/Partners";
+import { BandHero, PhotoHero, TILTS } from "@/components/postcard/ui";
 
 const lengthOf = (w: Walk) => w.stops.slice(1).reduce((s, x, i) => s + distanceMeters(w.stops[i], x), 0) * 1.25; // streets aren't straight
 
-const WalkCard = ({ w }: { w: Walk }) => {
+const WalkCard = ({ w, tilt = "" }: { w: Walk; tilt?: string }) => {
   const { t, lang } = useI18n();
   const p = usePhoto(w.cover);
   const km = lengthOf(w) / 1000;
   return (
-    <Link to={`/walks/${w.slug}`} className="group block">
-      <span className="relative block overflow-hidden rounded-lg">
+    <Link to={`/walks/${w.slug}`} className={`group postcard block text-[#0b1a33] dark:text-foreground ${tilt}`}>
+      <span className="relative block overflow-hidden">
         {p ? <img src={p.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover transition-transform duration-500 group-hover:scale-[1.03]" /> : <span className="block w-full aspect-[4/3]" style={{ background: w.color }} />}
         <span className="absolute bottom-3 start-3 rounded-md px-2 py-0.5 text-[12px] font-semibold text-white" style={{ background: w.color }}>{km.toFixed(1)} km, {Math.round((km / 4.5) * 60)} {t("live.minutes")}</span>
       </span>
-      <span className="mt-3 block font-display text-[24px] leading-tight group-hover:text-[#ff5a4e]">{lang === "he" ? w.titleHe : w.title}</span>
+      <span className="mt-3 block font-display text-[24px] leading-tight">{lang === "he" ? w.titleHe : w.title}</span>
       <span className="mt-1 block text-[14px] text-muted-foreground">{w.dek}</span>
     </Link>
   );
@@ -34,11 +35,10 @@ export const Walks = () => {
   }, [lang]);
   return (
     <SiteLayout>
-      <div className="container-page pt-8 sm:pt-12">
-        <h1 className="font-display text-[48px] sm:text-[72px] leading-[0.95]">{t("walk.title")}</h1>
-        <p className="mt-2 text-[17px] text-muted-foreground max-w-xl">{t("walk.body")}</p>
-        <div className="mt-8 grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-          {WALKS.map((w) => <WalkCard key={w.slug} w={w} />)}
+      <BandHero title={t("walk.title")} dek={t("walk.body")} color="#ff5a4e" />
+      <div className="container-page">
+        <div className="mt-12 grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+          {WALKS.map((w, i) => <WalkCard key={w.slug} w={w} tilt={TILTS[i % TILTS.length]} />)}
         </div>
         <ToursCard query="Tel Aviv" className="mt-12" />
         <Disclosure className="mt-2" />
@@ -65,22 +65,22 @@ export const WalkPage = () => {
 
   return (
     <SiteLayout>
-      <header className="container-page pt-8 sm:pt-12 max-w-4xl">
-        <Link to="/walks" className="inline-block rounded-md px-2 py-0.5 text-[13px] font-semibold text-white" style={{ background: w.color }}>{t("walk.title")}</Link>
-        <h1 className="mt-3 font-display text-[40px] sm:text-[60px] leading-[1.02]">{lang === "he" ? w.titleHe : w.title}</h1>
-        <p className="mt-3 text-[20px] text-muted-foreground">{w.dek}</p>
-        <div className="mt-5 flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-2 text-[15px]"><Footprints className="h-4 w-4" aria-hidden />{km.toFixed(1)} km, {t("walk.about")} {Math.round((km / 4.5) * 60)} {t("live.minutes")} {t("walk.walking")}, {w.stops.length} {t("walk.stops")}</span>
-          <a href={gmaps} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 h-10 rounded-lg bg-foreground text-background px-4 text-[14px] font-semibold"><Navigation className="h-4 w-4" aria-hidden />{t("walk.start")}</a>
-        </div>
-      </header>
-      <div className="container-page mt-8 grid gap-8 lg:grid-cols-[1fr,460px]">
-        <ol className="space-y-6 order-2 lg:order-1">
+      <PhotoHero
+        photo={p?.src}
+        bandColor={w.color}
+        kicker={<Link to="/walks" className="underline underline-offset-4">{t("walk.title")}</Link>}
+        title={lang === "he" ? w.titleHe : w.title}
+        stamp={<div className="flex flex-col gap-1"><span className="text-[12px] font-bold">{t("walk.walking")}</span><span className="font-poster text-[54px]">{km.toFixed(1)} km</span><span className="text-[13px]">{t("walk.about")} {Math.round((km / 4.5) * 60)} {t("live.minutes")}, {w.stops.length} {t("walk.stops")}</span></div>}
+        band={<div className="flex flex-wrap items-center gap-4"><p className="text-[19px] max-w-2xl">{w.dek}</p><a href={gmaps} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 h-12 rounded-md bg-white text-[#0b1a33] px-5 text-[15px] font-extrabold"><Navigation className="h-4 w-4" aria-hidden />{t("walk.start")}</a></div>}
+      />
+      <div className="container-page mt-10 grid gap-8 lg:grid-cols-[1fr,460px]">
+        <ol className="order-2 lg:order-1">
           {w.stops.map((s, i) => (
-            <li key={s.name} className="flex gap-4">
-              <span className="h-9 w-9 shrink-0 rounded-full text-white font-semibold flex items-center justify-center" style={{ background: w.color }}>{i + 1}</span>
+            <li key={s.name} className="relative flex gap-5 pb-8 last:pb-0">
+              {i < w.stops.length - 1 && <span className="absolute start-[15px] top-8 bottom-0 w-[6px] -translate-x-1/2 rtl:translate-x-1/2" style={{ background: w.color }} aria-hidden />}
+              <span className="relative h-8 w-8 shrink-0 rounded-full border-[6px] bg-background font-extrabold text-[13px] flex items-center justify-center" style={{ borderColor: w.color }}>{i + 1}</span>
               <span>
-                <span className="block text-[20px] font-semibold">{lang === "he" ? s.nameHe : s.name}</span>
+                <span className="block font-display text-[24px] leading-tight">{lang === "he" ? s.nameHe : s.name}</span>
                 <span className="block mt-1 text-[16px] leading-relaxed text-muted-foreground">{s.text}</span>
               </span>
             </li>

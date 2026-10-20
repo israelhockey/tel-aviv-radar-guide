@@ -51,19 +51,19 @@ const Guide = () => {
 
   return (
     <SiteLayout>
-      <section className="relative isolate overflow-hidden text-white" style={{ background: "linear-gradient(135deg, #2f9e44 0%, #0b7285 50%, #0057ff 100%)" }}>
-        <div className="container-page py-8 sm:py-12">
-          <h1 className="font-display text-[42px] sm:text-[64px] leading-[0.95]">{L({ en: "Tel Aviv, explained", he: "תל אביב, בקצרה" })}</h1>
-          <p className="mt-2 text-[17px] text-white/90 max-w-xl">{L({ en: "The neighbourhoods, how the week works, and the things locals know. For visitors, newcomers and everyone in between.", he: "השכונות, איך עובד השבוע, והדברים שהמקומיים יודעים. למבקרים, לחדשים בעיר ולכל מי שביניהם." })}</p>
+      <section className="bg-[#ff5a4e] text-white">
+        <div className="container-page pt-12 pb-10 sm:pt-16 sm:pb-12">
+          <h1 className="font-display text-[52px] sm:text-[96px] leading-[0.88]">{L({ en: "Tel Aviv, explained", he: "תל אביב, בקצרה" })}</h1>
+          <p className="mt-4 text-[19px] sm:text-[22px] text-white/95 max-w-2xl">{L({ en: "The neighbourhoods, how the week works, and the things locals know. For visitors, newcomers and everyone in between.", he: "השכונות, איך עובד השבוע, והדברים שהמקומיים יודעים. למבקרים, לחדשים בעיר ולכל מי שביניהם." })}</p>
         </div>
       </section>
 
       <div className="container-page">
-        <h2 className="mt-8 font-display text-[26px] leading-none">{L({ en: "Neighbourhoods", he: "שכונות" })}</h2>
-        <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-12 border-b-[3px] border-foreground pb-2"><h2 className="font-display text-[30px] sm:text-[40px] leading-none">{L({ en: "Neighbourhoods", he: "שכונות" })}</h2></div>
+        <ul className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {HOODS.map((h) => (
-            <li key={h.name.en} className="rounded-[var(--radius)] bg-card shadow-[var(--shadow-card)] overflow-hidden">
-              <div className="h-2" style={{ background: h.color }} />
+            <li key={h.name.en} className="postcard overflow-hidden even:rotate-1 odd:-rotate-1">
+              <div className="h-3" style={{ background: h.color }} />
               <div className="p-4">
                 <h3 className="font-display text-[20px] leading-tight">{L(h.name)}</h3>
                 <p className="mt-1.5 text-[14px] text-muted-foreground leading-relaxed">{L(h.body)}</p>
@@ -74,10 +74,10 @@ const Guide = () => {
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[1fr,340px]">
           <section>
-            <h2 className="font-display text-[26px] leading-none">{L({ en: "Good to know", he: "כדאי לדעת" })}</h2>
+            <div className="border-b-[3px] border-foreground pb-2"><h2 className="font-display text-[30px] sm:text-[40px] leading-none">{L({ en: "Good to know", he: "כדאי לדעת" })}</h2></div>
             <ul className="mt-3 grid gap-3 sm:grid-cols-2">
               {ESSENTIALS.map((e) => (
-                <li key={e.title.en} className="rounded-[var(--radius)] bg-card shadow-[var(--shadow-card)] p-4">
+                <li key={e.title.en} className="rounded-[10px] border-2 border-foreground p-4">
                   <h3 className="text-[16px] font-medium">{L(e.title)}</h3>
                   <p className="mt-1.5 text-[14px] text-muted-foreground leading-relaxed">{L(e.body)}</p>
                 </li>
@@ -91,7 +91,7 @@ const Guide = () => {
           </section>
 
           <aside className="space-y-8">
-            <section className="rounded-[var(--radius)] bg-card shadow-[var(--shadow-card)] p-4">
+            <section className="stamp p-4 rotate-1">
               <h2 className="text-[17px] font-medium">{L({ en: "Emergency numbers", he: "מספרי חירום" })}</h2>
               <ul className="mt-2 space-y-2">
                 {NUMBERS.map(([n, label]) => (

@@ -60,25 +60,25 @@ const Shabbat = () => {
 
   return (
     <SiteLayout>
-      <section className="relative isolate overflow-hidden text-white" style={{ background: "radial-gradient(120% 90% at 80% 10%, #f59f00 0%, #c2255c 28%, #3b1d6e 60%, #10102a 100%)" }}>
-        <div className="container-page py-8 sm:py-12">
+      <section className="bg-[#ffcb05] text-[#0b1a33]">
+        <div className="container-page pt-12 pb-10 sm:pt-16 sm:pb-12">
           <p className="text-[13px] uppercase tracking-wider opacity-85">{t("nav.shabbat")}</p>
-          <h1 className="mt-2 font-display text-[40px] sm:text-[64px] leading-[0.95]">
+          <h1 className="mt-2 font-display text-[48px] sm:text-[96px] leading-[0.88]">
             {isShabbat ? t("shab.now") : hoursTo != null && hoursTo < 48 ? `${t("shab.in")} ${hoursTo} ${t("shab.hours")}` : t("shab.this")}
           </h1>
           {(shabbat.data?.holiday || shabbat.data?.parasha) && <p className="mt-2 text-[17px] opacity-90" dir="auto">{shabbat.data.holiday ?? shabbat.data.parasha}</p>}
-          <div className="mt-6 flex flex-wrap gap-6">
+          <div className="mt-8 flex flex-wrap gap-10">
             {shabbat.data?.candles && (
               <div>
                 <p className="text-[13px] opacity-80">{t("shabbat.candles")}</p>
-                <p className="font-display text-[44px] leading-none tabular">{fmtClock(shabbat.data.candles, lang)}</p>
+                <p className="font-poster text-[64px] sm:text-[80px]">{fmtClock(shabbat.data.candles, lang)}</p>
                 <p className="text-[13px] opacity-80">{fmtWeekday(shabbat.data.candles, lang)}</p>
               </div>
             )}
             {shabbat.data?.havdalah && (
               <div>
                 <p className="text-[13px] opacity-80">{t("shabbat.ends")}</p>
-                <p className="font-display text-[44px] leading-none tabular">{fmtClock(shabbat.data.havdalah, lang)}</p>
+                <p className="font-poster text-[64px] sm:text-[80px]">{fmtClock(shabbat.data.havdalah, lang)}</p>
                 <p className="text-[13px] opacity-80">{fmtWeekday(shabbat.data.havdalah, lang)}</p>
               </div>
             )}
@@ -88,19 +88,19 @@ const Shabbat = () => {
 
       <div className="container-page">
         <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          <Link to="/food" className="rounded-[var(--radius)] bg-card shadow-[var(--shadow-card)] p-4 hover:bg-secondary/50">
+          <Link to="/food" className="rounded-[10px] p-5 text-[#0b1a33] transition-transform hover:-translate-y-1 bg-[#ffd9d4]">
             <UtensilsCrossed className="h-5 w-5 text-cat-food" aria-hidden />
-            <p className="mt-2 font-display text-[30px] leading-none tabular">{places.data ? openSat : "…"}</p>
+            <p className="mt-2 font-poster text-[56px]">{places.data ? openSat : "…"}</p>
             <p className="mt-1 text-[14px]">{t("shab.foodOpen")}</p>
           </Link>
-          <a href="#culture" className="rounded-[var(--radius)] bg-card shadow-[var(--shadow-card)] p-4 hover:bg-secondary/50">
+          <a href="#culture" className="rounded-[10px] p-5 text-[#0b1a33] transition-transform hover:-translate-y-1 bg-[#d6e4ff]">
             <Landmark className="h-5 w-5 text-cat-art" aria-hidden />
-            <p className="mt-2 font-display text-[30px] leading-none tabular">{city.data ? cultureSat.length : "…"}</p>
+            <p className="mt-2 font-poster text-[56px]">{city.data ? cultureSat.length : "…"}</p>
             <p className="mt-1 text-[14px]">{t("shab.cultureOpen")}</p>
           </a>
-          <a href="#shuttles" className="rounded-[var(--radius)] bg-card shadow-[var(--shadow-card)] p-4 hover:bg-secondary/50">
+          <a href="#shuttles" className="rounded-[10px] p-5 text-[#0b1a33] transition-transform hover:-translate-y-1 bg-[#d3f9d8]">
             <Bus className="h-5 w-5 text-sea" aria-hidden />
-            <p className="mt-2 font-display text-[30px] leading-none tabular">{city.data ? lines.length : "…"}</p>
+            <p className="mt-2 font-poster text-[56px]">{city.data ? lines.length : "…"}</p>
             <p className="mt-1 text-[14px]">{t("shab.freeLines")}</p>
           </a>
         </div>
@@ -109,7 +109,7 @@ const Shabbat = () => {
           <div className="space-y-10 min-w-0">
             {/* Getting around */}
             <section id="shuttles" aria-labelledby="sh-h">
-              <h2 id="sh-h" className="font-display text-[26px] leading-none">{t("shab.around")}</h2>
+              <div className="border-b-[3px] border-foreground pb-2"><h2 id="sh-h" className="font-display text-[30px] sm:text-[40px] leading-none">{t("shab.around")}</h2></div>
               <p className="mt-2 text-[15px] text-muted-foreground max-w-2xl">{t("shab.naimBody")}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link to="/live?layers=shabbat" className="inline-flex h-10 items-center gap-2 rounded-full bg-foreground text-background px-4 text-[14px] font-medium">
@@ -133,7 +133,7 @@ const Shabbat = () => {
 
             {/* Culture open on Saturday */}
             <section id="culture" aria-labelledby="cu-h">
-              <h2 id="cu-h" className="font-display text-[26px] leading-none">{t("shab.culture")}</h2>
+              <div className="border-b-[3px] border-foreground pb-2"><h2 id="cu-h" className="font-display text-[30px] sm:text-[40px] leading-none">{t("shab.culture")}</h2></div>
               <ul className="mt-3 grid gap-2 sm:grid-cols-2">
                 {cultureSat.slice(0, 40).map((c) => (
                   <li key={`${c.name}-${c.at.join()}`}>
@@ -148,7 +148,7 @@ const Shabbat = () => {
           </div>
 
           <aside className="space-y-8">
-            <section aria-labelledby="shop-h" className="rounded-[var(--radius)] bg-card shadow-[var(--shadow-card)] p-4">
+            <section aria-labelledby="shop-h" className="stamp p-4 -rotate-1">
               <h2 id="shop-h" className="text-[17px] font-medium flex items-center gap-2"><ShoppingBag className="h-4 w-4" aria-hidden />{t("shab.shopping")}</h2>
               <ul className="mt-2 space-y-1.5 text-[14px]">
                 {shopping.map((s) => (

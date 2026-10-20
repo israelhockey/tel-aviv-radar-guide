@@ -40,13 +40,13 @@ const Jobs = () => {
 
   return (
     <SiteLayout>
-      <section className="bg-[#5f3dc4] text-white">
-        <div className="container-page py-10 sm:py-14">
-          <h1 className="font-display text-[44px] sm:text-[68px] leading-[0.95]">{t("jobs.title")}</h1>
-          <p className="mt-2 text-[17px] text-white/90">{data ? `${data.jobs.length} ${t("jobs.open")} ${companies} ${t("jobs.companies")}` : "…"}</p>
-          <label className="mt-5 flex max-w-lg items-center gap-2 h-12 rounded-lg bg-white text-[hsl(230_35%_10%)] px-4">
+      <section className="bg-[#0057ff] text-white">
+        <div className="container-page pt-12 pb-10 sm:pt-16 sm:pb-12">
+          <h1 className="font-display text-[52px] sm:text-[96px] leading-[0.88]">{t("jobs.title")}</h1>
+          <p className="mt-4 text-[19px] sm:text-[22px] text-white/95">{data ? `${data.jobs.length} ${t("jobs.open")} ${companies} ${t("jobs.companies")}` : "…"}</p>
+          <label className="mt-6 flex max-w-xl items-center gap-2 h-14 rounded-md bg-white text-[#0b1a33] px-4 focus-within:ring-4 focus-within:ring-[#ffcb05]">
             <Search className="h-4 w-4 text-muted-foreground" aria-hidden />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("jobs.search")} className="flex-1 bg-transparent outline-none text-[15px]" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("jobs.search")} className="flex-1 bg-transparent outline-none text-[17px]" />
           </label>
         </div>
       </section>
@@ -63,7 +63,7 @@ const Jobs = () => {
             <li key={j.id}>
               <a href={j.url} target="_blank" rel="noopener noreferrer" className="group grid sm:grid-cols-[1fr,auto] gap-1 sm:gap-6 py-4 px-1 hover:bg-secondary/50">
                 <span className="min-w-0">
-                  <span className="block text-[17px] font-semibold group-hover:text-[#5f3dc4]">{j.title}</span>
+                  <span className="block font-display text-[19px] leading-snug group-hover:text-accent">{j.title}</span>
                   <span className="block text-[14px] text-muted-foreground">{[j.company, j.dept, j.location].filter(Boolean).join(", ")}</span>
                 </span>
                 <span className="text-[13px] text-muted-foreground sm:text-end tabular">{j.posted ? relTime(j.posted, lang) : ""}</span>
@@ -71,12 +71,12 @@ const Jobs = () => {
             </li>
           ))}
         </ul>
-        <div className="mt-10 rounded-lg bg-[#0b1a33] text-white p-6 sm:flex sm:items-center sm:justify-between gap-6">
+        <div className="mt-10 rounded-[10px] bg-[#ffcb05] text-[#0b1a33] p-6 -rotate-1 sm:flex sm:items-center sm:justify-between gap-6">
           <div>
             <p className="font-display text-[24px] leading-tight">{t("jobs.postTitle")}</p>
-            <p className="mt-1 text-[14px] text-white/80">{t("jobs.postBody")}</p>
+            <p className="mt-1 text-[14px]">{t("jobs.postBody")}</p>
           </div>
-          <Link to="/submit?kind=job" className="mt-4 sm:mt-0 shrink-0 inline-flex h-11 items-center rounded-lg bg-[#ffcb05] text-[#0b1a33] px-5 text-[14px] font-semibold">{t("jobs.post")}</Link>
+          <Link to="/submit?kind=job" className="mt-4 sm:mt-0 shrink-0 inline-flex h-11 items-center rounded-lg bg-[#0b1a33] text-white px-5 text-[14px] font-semibold">{t("jobs.post")}</Link>
         </div>
         <p className="mt-4 text-[12px] text-muted-foreground">{t("jobs.source")}</p>
       </div>

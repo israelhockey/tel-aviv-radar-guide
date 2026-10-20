@@ -57,9 +57,9 @@ const Search = () => {
   return (
     <SiteLayout>
       <section className="bg-[#0057ff] text-white">
-        <div className="container-page py-10 sm:py-14">
-          <h1 className="font-display text-[40px] sm:text-[64px] leading-[0.95]">{L("Search Tel Aviv", "חיפוש בתל אביב")}</h1>
-          <form onSubmit={submit} role="search" className="mt-5 flex max-w-2xl gap-2">
+        <div className="container-page pt-12 pb-10 sm:pt-16 sm:pb-12">
+          <h1 className="font-display text-[52px] sm:text-[96px] leading-[0.88]">{L("Search Tel Aviv", "חיפוש בתל אביב")}</h1>
+          <form onSubmit={submit} role="search" className="mt-6 flex max-w-2xl gap-2">
             <label htmlFor="s-q" className="sr-only">{L("Search", "חיפוש")}</label>
             <input id="s-q" autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={L("A place, a show, a neighbourhood, a craving", "מקום, הופעה, שכונה, חשק")} className="min-w-0 flex-1 h-14 rounded-md px-4 text-[17px] text-[#0b1a33] outline-none focus-visible:ring-4 focus-visible:ring-[#ffcb05]" />
             <button type="submit" className="h-14 rounded-md bg-[#ffcb05] px-5 text-[#0b1a33] font-extrabold inline-flex items-center gap-2"><SearchIcon className="h-5 w-5" aria-hidden />{L("Search", "חיפוש")}</button>
