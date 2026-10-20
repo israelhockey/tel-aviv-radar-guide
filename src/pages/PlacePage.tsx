@@ -15,6 +15,7 @@ import { describePlace } from "@/lib/describePlace";
 import { findPlaces, placeIdFromSlug, placeSlug } from "@/lib/placeMatch";
 import { ARTICLES } from "@/lib/articles";
 import { eventSlug, hoodSlug } from "@/lib/areas";
+import { SectionHead } from "@/components/postcard/ui";
 import { MiniMap } from "@/components/radar/MiniMap";
 import { Credit } from "@/components/article/Blocks";
 
@@ -83,15 +84,15 @@ const PlacePage = () => {
 
   return (
     <SiteLayout>
-      <section className="relative bg-[#0b1a33]">
+      <section className="relative">
         {photo && !broken ? (
-          <img src={photo.src} alt="" referrerPolicy="no-referrer" onError={() => setBroken(true)} className="w-full h-[260px] sm:h-[380px] object-cover" />
-        ) : <div className="h-[200px] sm:h-[260px] bg-[#ffcb05]" />}
-        <div className="container-page relative -mt-20 sm:-mt-24 pb-2">
-          <div className="inline-block max-w-full rounded-lg bg-white dark:bg-card px-5 py-4 sm:px-7 sm:py-5 shadow-[var(--shadow-card)]">
+          <img src={photo.src} alt="" referrerPolicy="no-referrer" onError={() => setBroken(true)} className="w-full h-[300px] sm:h-[440px] object-cover" />
+        ) : <div className="h-[220px] sm:h-[300px] bg-[#0057ff]" />}
+        <div className="container-page relative -mt-24 sm:-mt-32 pb-2">
+          <div className="relative inline-block max-w-full bg-card px-6 py-5 sm:px-9 sm:py-7 shadow-[var(--shadow-card)]">
             <p className="text-[14px] text-muted-foreground">{placeKindLabel(p.kind, lang)}{hood && <>, <Link to={`/area/${hoodSlug(hood)}`} className="underline underline-offset-2 hover:text-foreground">{lang === "he" ? hood.he : hood.en}</Link></>}</p>
-            <h1 className="font-display text-[36px] sm:text-[56px] leading-[1] text-foreground" dir="auto">{name}</h1>
-            <span className={`mt-2 inline-block rounded-md px-2.5 py-1 text-[13px] font-semibold ${state.status === "open" ? "bg-[#2f9e44] text-white" : "bg-secondary"}`}>{badge}</span>
+            <h1 className="mt-1 font-display text-[40px] sm:text-[72px] leading-[0.95] text-foreground pe-2" dir="auto">{name}</h1>
+            <span className={`mt-4 inline-block rotate-[-3deg] border-2 border-dashed px-3 py-1.5 text-[15px] font-extrabold ${state.status === "open" ? "border-[#2b8a3e] text-[#2b8a3e] bg-[#d3f9d8]" : "border-foreground bg-[#fff4c2] text-[#0b1a33]"}`}>{badge}</span>
           </div>
         </div>
         {photo && <p className="container-page pb-2 text-end"><Credit p={photo} /></p>}
@@ -111,13 +112,13 @@ const PlacePage = () => {
           </div>
 
           {data.guides.length > 0 && (
-            <div className="mt-6 rounded-lg bg-[#ffcb05] text-[#0b1a33] p-4">
+            <div className="mt-6 rounded-[10px] bg-[#ffcb05] text-[#0b1a33] p-5 -rotate-1">
               <p className="text-[14px] font-semibold">{t("place.inGuides")}</p>
               <ul className="mt-1 space-y-1">{data.guides.map((g) => <li key={g.slug}><Link to={`/magazine/${g.slug}`} className="text-[16px] font-medium underline underline-offset-4">{g.title}</Link></li>)}</ul>
             </div>
           )}
 
-          <h2 className="mt-10 font-display text-[26px]">{t("live.hours")}</h2>
+          <div className="mt-12"><SectionHead title={t("live.hours")} /></div>
           {week ? (
             <table className="mt-3 w-full max-w-md text-[15px]">
               <tbody>
@@ -133,7 +134,7 @@ const PlacePage = () => {
 
           {data.similar.length > 0 && (
             <>
-              <h2 className="mt-10 font-display text-[26px]">{t("place.similar")}</h2>
+              <div className="mt-12"><SectionHead title={t("place.similar")} /></div>
               <ul className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {data.similar.map((x) => {
                   const ph = pickPhoto(photos.data?.[dishOf(x)], x.id);

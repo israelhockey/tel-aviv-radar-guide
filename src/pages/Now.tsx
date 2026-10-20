@@ -4,26 +4,9 @@ import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n } from "@/lib/i18n";
 import { useNewsFeed } from "@/lib/live/hooks";
 import { NewsCard } from "@/components/radar/NewsCard";
-import { articlesFor, CATEGORY_LABEL, type Article } from "@/lib/articles";
-import { usePhoto } from "@/components/article/Blocks";
-import { ArticleCard } from "./Magazine";
+import { articlesFor, type Article } from "@/lib/articles";
+import { ArticleCard, ArticleRow } from "./Magazine";
 import { Hungry, LiveStrip, NeighbourhoodPostcards, NumbersBand, PostcardHero, TonightTickets } from "@/components/home/Postcard";
-
-// A small list row for the magazine front: thumbnail, category, title.
-const ArticleRow = ({ a }: { a: Article }) => {
-  const { lang } = useI18n();
-  const p = usePhoto(a.cover, a.slug);
-  const cat = CATEGORY_LABEL[a.category];
-  return (
-    <Link to={`/magazine/${a.slug}`} className="group flex gap-4 py-4 border-t border-border first:border-t-0">
-      {p ? <img src={p.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-20 w-24 shrink-0 rounded-md object-cover" /> : <span className="h-20 w-24 shrink-0 rounded-md" style={{ background: cat.color }} />}
-      <span className="min-w-0">
-        <span className="block text-[12px] font-bold uppercase tracking-wider" style={{ color: cat.color }}>{lang === "he" ? cat.he : cat.en}</span>
-        <span className="mt-0.5 block font-display text-[19px] leading-tight group-hover:text-accent" dir="auto">{a.title}</span>
-      </span>
-    </Link>
-  );
-};
 
 const Shelf = ({ title, to, list }: { title: string; to: string; list: Article[] }) => {
   const { t } = useI18n();

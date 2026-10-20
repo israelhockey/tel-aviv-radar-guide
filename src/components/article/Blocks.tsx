@@ -62,7 +62,7 @@ export const HolidayBlock = ({ name }: { name: string }) => {
 };
 
 /** An editor's pick: our write-up beside the live listing from the map. */
-export const PickBlock = ({ name, text }: { name: string; text: string }) => {
+export const PickBlock = ({ name, text, n }: { name: string; text: string; n?: number }) => {
   const { t, lang } = useI18n();
   const places = usePlaces();
   const photos = useFoodPhotos();
@@ -70,25 +70,31 @@ export const PickBlock = ({ name, text }: { name: string; text: string }) => {
   const p = hits[0];
   const photo = p ? pickPhoto(photos.data?.[dishOf(p)], p.id) : undefined;
   const state = p ? openLine(p, t) : null;
+  const bg = ["#fff4c2", "#ffd9d4", "#d6e4ff", "#d3f9d8", "#f3d9fa", "#ffe8cc"][((n ?? 1) - 1) % 6];
   return (
-    <section className="mt-8 grid gap-4 sm:grid-cols-[220px,1fr] items-start">
+    <section className="mt-8 flex flex-col sm:flex-row overflow-hidden rounded-[10px] text-[#0b1a33]" style={{ background: bg }}>
       {photo ? (
-        <img src={photo.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover rounded-lg" />
-      ) : <span className="hidden sm:block w-full aspect-[4/3] rounded-lg bg-[#ffcb05]" />}
-      <div>
-        <h3 className="text-[24px] font-semibold leading-tight" dir="auto">
-          {p ? <Link to={`/place/${placeSlug(p)}`} className="hover:text-[#ff5a4e]">{name}</Link> : name}
-        </h3>
-        {p && (
-          <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
-            <span className={`font-semibold ${state?.open ? "text-[#2f9e44]" : ""}`}>{state?.text}</span>
-            <span>{placeKindLabel(p.kind, lang)}</span>
-            {p.street && <span dir="auto">{p.street}{p.number ? ` ${p.number}` : ""}</span>}
-            {hits.length > 1 && <span>+{hits.length - 1} {t("art.branches")}</span>}
-          </p>
-        )}
-        <p className="mt-2 text-[17px] leading-relaxed">{text}</p>
-        {p && <Link to={`/place/${placeSlug(p)}`} className="mt-2 inline-block text-[14px] font-semibold text-sea hover:underline underline-offset-4">{t("art.seePlace")}</Link>}
+        <img src={photo.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full sm:w-[220px] aspect-[16/9] sm:aspect-auto object-cover shrink-0" />
+      ) : <span className="hidden sm:block w-[220px] shrink-0 bg-[#ffcb05]" />}
+      <div className="flex-1 p-5 sm:border-s-[3px] border-t-[3px] sm:border-t-0 border-dashed border-[#0b1a33]">
+        <div className="flex items-start gap-3">
+          {n != null && <span className="font-poster text-[44px] leading-none">{String(n).padStart(2, "0")}</span>}
+          <div className="min-w-0">
+            <h3 className="font-display text-[26px] leading-tight" dir="auto">
+              {p ? <Link to={`/place/${placeSlug(p)}`} className="hover:underline underline-offset-4">{name}</Link> : name}
+            </h3>
+            {p && (
+              <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[13px] font-semibold">
+                <span className={state?.open ? "text-[#2b8a3e]" : "opacity-75"}>{state?.text}</span>
+                <span className="opacity-75">{placeKindLabel(p.kind, lang)}</span>
+                {p.street && <span className="opacity-75" dir="auto">{p.street}{p.number ? ` ${p.number}` : ""}</span>}
+                {hits.length > 1 && <span className="opacity-75">+{hits.length - 1} {t("art.branches")}</span>}
+              </p>
+            )}
+          </div>
+        </div>
+        <p className="mt-3 text-[17px] leading-relaxed">{text}</p>
+        {p && <Link to={`/place/${placeSlug(p)}`} className="mt-3 inline-block text-[14px] font-bold underline underline-offset-4">{t("art.seePlace")}</Link>}
       </div>
     </section>
   );

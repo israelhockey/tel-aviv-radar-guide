@@ -1,8 +1,9 @@
 import { useEffect, useMemo } from "react";
-import { Accessibility, Coffee, Dog, Lightbulb, MapPin, ShowerHead, Sun, CircleDot, Waves, Wind, Baby, Sailboat, Car } from "lucide-react";
+import { Accessibility, Coffee, Dog, Lightbulb, MapPin, ShowerHead, Sun, CircleDot, Baby, Sailboat, Car } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n, type StringKey } from "@/lib/i18n";
-import { useBeachForecast, useBeaches, useCityData, useJellyfish, useWeather } from "@/lib/live/hooks";
+import { useBeachForecast, useBeaches, useCityData, useFoodPhotos, useJellyfish, useWeather } from "@/lib/live/hooks";
+import { PhotoHero, SectionHead, Stub } from "@/components/postcard/ui";
 import { BEACHES, distanceMeters } from "@/lib/live/geo";
 import { seaState, type BeachHour, type CityBeach, type JellyStatus } from "@/lib/live/sources";
 
@@ -10,7 +11,7 @@ const verdictKey = (s: number): StringKey =>
   s >= 8 ? "beach.v5" : s >= 6.5 ? "beach.v4" : s >= 4.5 ? "beach.v3" : s >= 2.5 ? "beach.v2" : "beach.v1";
 
 const scoreColor = (s: number) =>
-  s >= 8 ? "#12b886" : s >= 6.5 ? "#40c057" : s >= 4.5 ? "#fab005" : s >= 2.5 ? "#fd7e14" : "#fa5252";
+  s >= 8 ? "#0057ff" : s >= 6.5 ? "#4dabf7" : s >= 4.5 ? "#ffcb05" : s >= 2.5 ? "#ff922b" : "#ff5a4e";
 
 // The longest run of daylight hours close to the day's best.
 const bestWindow = (hours: BeachHour[]) => {
@@ -42,22 +43,6 @@ const JELLY_STYLE: Record<JellyStatus, string> = {
   unknown: "bg-secondary text-muted-foreground",
 };
 
-const ScoreRing = ({ score }: { score: number }) => {
-  const r = 52, c = 2 * Math.PI * r;
-  return (
-    <div className="relative h-[132px] w-[132px] shrink-0">
-      <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90" aria-hidden>
-        <circle cx="60" cy="60" r={r} fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="10" />
-        <circle cx="60" cy="60" r={r} fill="none" stroke="#fff" strokeWidth="10" strokeLinecap="round" strokeDasharray={`${(score / 10) * c} ${c}`} />
-      </svg>
-      <span className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-display text-[44px] leading-none tabular">{score.toFixed(1)}</span>
-        <span className="text-[12px] opacity-80">/ 10</span>
-      </span>
-    </div>
-  );
-};
-
 const Facility = ({ on, icon: Icon, label }: { on: boolean | null | undefined; icon: typeof Sun; label: string }) =>
   on ? (
     <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-0.5 text-[12px]" title={label}>
@@ -72,6 +57,7 @@ const Beach = () => {
   const weather = useWeather();
   const city = useCityData();
   const jelly = useJellyfish();
+  const photos = useFoodPhotos();
 
   useEffect(() => {
     document.title = lang === "he" ? "חופים · Discover Tel Aviv" : "Beaches · Discover Tel Aviv";
@@ -108,44 +94,47 @@ const Beach = () => {
 
   return (
     <SiteLayout>
-      {/* Hero: today's beach verdict on a sea gradient */}
-      <section className="relative isolate overflow-hidden text-white" style={{ background: "linear-gradient(160deg, #0b7285 0%, #1098ad 35%, #15aabf 60%, #e8b77d 100%)" }}>
-        <svg className="absolute bottom-0 inset-x-0 -z-10 w-full h-24 opacity-30" viewBox="0 0 1440 120" preserveAspectRatio="none" aria-hidden>
-          <path d="M0,64 C240,112 480,16 720,48 C960,80 1200,112 1440,64 L1440,120 L0,120 Z" fill="#fff" className="motion-safe:animate-[pulse_6s_ease-in-out_infinite]" />
-        </svg>
-        <div className="container-page py-8 sm:py-12">
-          <p className="text-[13px] uppercase tracking-wider opacity-85">{t("beach.title")}</p>
-          <div className="mt-3 flex flex-wrap items-center gap-6">
-            {forecast.data ? <ScoreRing score={headline} /> : <div className="h-[132px] w-[132px] rounded-full bg-white/15 animate-pulse" />}
-            <div className="min-w-0">
-              <h1 className="font-display text-[38px] sm:text-[56px] leading-[0.95]">{forecast.data ? t(verdictKey(headline)) : "…"}</h1>
-              {win?.from && <p className="mt-2 text-[17px] opacity-95">{t("beach.best")} <span className="font-semibold tabular">{win.from}–{win.to}</span></p>}
-              {!win?.from && forecast.data && <p className="mt-2 text-[17px] opacity-95">{t("beach.notToday")}</p>}
-            </div>
+      <PhotoHero
+        photo={photos.data?.__city?.hilton?.src}
+        alt={lang === "he" ? "חוף הילטון" : "Hilton Beach, Tel Aviv"}
+        kicker={t("beach.title")}
+        title={forecast.data ? t(verdictKey(headline)) : "…"}
+        stamp={forecast.data ? (
+          <div className="flex flex-col gap-1">
+            <span className="text-[12px] font-bold">{lang === "he" ? "ציון החוף היום" : "Beach score today"}</span>
+            <span className="font-poster text-[60px] sm:text-[68px]">{headline.toFixed(1)}</span>
+            <span className="text-[13px]">{win?.from ? `${t("beach.best")} ${win.from}–${win.to}` : t("beach.notToday")}</span>
           </div>
-          {nowHour && (
-            <div className="mt-6 flex flex-wrap gap-2 text-[14px]">
-              <span className="rounded-full bg-white/15 backdrop-blur px-3 py-1.5"><Sun className="inline h-4 w-4 me-1 -mt-0.5" aria-hidden />{Math.round(nowHour.feels)}° {t("now.feels")}</span>
-              {nowHour.sea != null && <span className="rounded-full bg-white/15 backdrop-blur px-3 py-1.5"><Waves className="inline h-4 w-4 me-1 -mt-0.5" aria-hidden />{t("now.sea")} {Math.round(nowHour.sea)}°</span>}
-              {nowHour.wave != null && <span className="rounded-full bg-white/15 backdrop-blur px-3 py-1.5">{nowHour.wave.toFixed(1)} m{st ? ` · ${t(`sea.${st}` as const)}` : ""}</span>}
-              <span className="rounded-full bg-white/15 backdrop-blur px-3 py-1.5"><Wind className="inline h-4 w-4 me-1 -mt-0.5" aria-hidden />{Math.round(nowHour.wind)} km/h</span>
-              {weather.data && <span className="rounded-full bg-white/15 backdrop-blur px-3 py-1.5">UV {Math.round(weather.data.uvMax)}</span>}
-              {weather.data && <span className="rounded-full bg-white/15 backdrop-blur px-3 py-1.5">{t("now.sunset")} {weather.data.sunset.slice(11, 16)}</span>}
-            </div>
-          )}
-        </div>
-      </section>
+        ) : undefined}
+        band={nowHour && (
+          <div className="flex flex-wrap gap-x-8 gap-y-4">
+            {[
+              [`${Math.round(nowHour.feels)}°`, t("now.feels")],
+              nowHour.sea != null ? [`${Math.round(nowHour.sea)}°`, t("now.sea")] : null,
+              nowHour.wave != null ? [`${nowHour.wave.toFixed(1)} m`, st ? t(`sea.${st}` as const) : ""] : null,
+              [`${Math.round(nowHour.wind)}`, "km/h"],
+              weather.data ? [`${Math.round(weather.data.uvMax)}`, "UV"] : null,
+              weather.data ? [weather.data.sunset.slice(11, 16), t("now.sunset")] : null,
+            ].filter(Boolean).map((x) => (
+              <div key={x![1] + x![0]} className="flex flex-col">
+                <span className="font-poster text-[44px] sm:text-[52px]">{x![0]}</span>
+                <span className="text-[14px] font-semibold opacity-90">{x![1]}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      />
 
       <div className="container-page">
         {/* Today hour by hour */}
         {today.length > 0 && (
-          <section className="mt-8" aria-labelledby="hours-h">
-            <h2 id="hours-h" className="font-display text-[24px] leading-none">{t("beach.hours")}</h2>
-            <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex items-end gap-1.5 overflow-x-auto pb-2">
+          <section className="mt-12" aria-labelledby="hours-h">
+            <SectionHead id="hours-h" title={t("beach.hours")} />
+            <div className="mt-5 -mx-4 px-4 sm:mx-0 sm:px-0 flex items-end gap-1.5 overflow-x-auto pb-2">
               {today.filter((h) => h.isDay).map((h) => (
                 <div key={h.time} className="flex flex-col items-center gap-1 shrink-0 w-10">
                   <span className="text-[11px] tabular text-muted-foreground">{h.score.toFixed(0)}</span>
-                  <span className="w-7 rounded-md" style={{ height: `${12 + h.score * 9}px`, background: scoreColor(h.score), opacity: h.time.slice(0, 13) < nowKey ? 0.35 : 1 }} />
+                  <span className="w-8 rounded-[4px]" style={{ height: `${16 + h.score * 12}px`, background: scoreColor(h.score), opacity: h.time.slice(0, 13) < nowKey ? 0.35 : 1 }} />
                   <span className="text-[11px] tabular">{h.time.slice(11, 13)}</span>
                   <span className="text-[10px] text-muted-foreground tabular">{Math.round(h.feels)}°</span>
                 </div>
@@ -156,44 +145,41 @@ const Beach = () => {
 
         {/* Next days */}
         {days.length > 1 && (
-          <section className="mt-8" aria-labelledby="days-h">
-            <h2 id="days-h" className="font-display text-[24px] leading-none">{t("beach.days")}</h2>
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <section className="mt-12" aria-labelledby="days-h">
+            <SectionHead id="days-h" title={t("beach.days")} />
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
               {days.map(([ymd, hours], i) => {
                 const w = bestWindow(hours);
                 const s = w?.top ?? 0;
                 const noon = hours.find((h) => h.time.endsWith("13:00")) ?? hours[12];
                 return (
-                  <div key={ymd} className="rounded-[var(--radius)] bg-card shadow-[var(--shadow-card)] p-3.5">
-                    <p className="text-[13px] text-muted-foreground">{dayName(ymd, i)}</p>
-                    <p className="mt-1 flex items-baseline gap-2">
-                      <span className="font-display text-[30px] leading-none tabular" style={{ color: scoreColor(s) }}>{s.toFixed(1)}</span>
-                      <span className="text-[13px]">{t(verdictKey(s))}</span>
-                    </p>
-                    <div className="mt-2 h-1.5 rounded-full bg-secondary overflow-hidden"><div className="h-full rounded-full" style={{ width: `${s * 10}%`, background: scoreColor(s) }} /></div>
-                    <p className="mt-2 text-[12px] text-muted-foreground tabular">
+                  <Stub key={ymd} i={i} className="p-4 border-t-[3px] border-dashed border-[#0b1a33]">
+                    <p className="text-[14px] font-bold">{dayName(ymd, i)}</p>
+                    <p className="mt-1 font-poster text-[56px]">{s.toFixed(1)}</p>
+                    <p className="text-[14px] font-semibold">{t(verdictKey(s))}</p>
+                    <p className="mt-2 text-[13px] tabular">
                       {w?.from ? `${w.from}–${w.to}` : "—"}{noon ? ` · ${Math.round(noon.feels)}°` : ""}{noon?.wave != null ? ` · ${noon.wave.toFixed(1)} m` : ""}
                     </p>
-                  </div>
+                  </Stub>
                 );
               })}
             </div>
           </section>
         )}
 
-        <div className="mt-10 grid gap-10 lg:grid-cols-[1fr,340px]">
+        <div className="mt-14 grid gap-10 lg:grid-cols-[1fr,340px]">
           {/* Beaches with their facilities */}
           <section aria-labelledby="list-h" className="min-w-0">
-            <h2 id="list-h" className="font-display text-[24px] leading-none">{t("beach.list")}</h2>
+            <SectionHead id="list-h" title={t("beach.list")} />
             {city.isError && <p className="mt-3 text-[14px] text-muted-foreground">{t("common.error")}</p>}
-            <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+            <ul className="mt-6 grid gap-4 sm:grid-cols-2">
               {beaches.map((b) => {
                 const s = nearestSea(b);
                 const state = seaState(s?.waveHeight ?? null);
                 return (
-                  <li key={b.name} className="rounded-[var(--radius)] bg-card shadow-[var(--shadow-card)] p-4">
+                  <li key={b.name} className="rounded-[10px] border-2 border-foreground p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <h3 className="text-[16px] font-medium leading-snug" dir="auto">{b.name}</h3>
+                      <h3 className="font-display text-[20px] leading-tight" dir="auto">{b.name}</h3>
                       {s?.waveHeight != null && (
                         <span className="shrink-0 text-[12px] tabular text-muted-foreground">{s.waveHeight.toFixed(1)} m{state ? ` · ${t(`sea.${state}` as const)}` : ""}</span>
                       )}
@@ -221,7 +207,7 @@ const Beach = () => {
           <aside className="space-y-8">
             {/* Jellyfish */}
             <section aria-labelledby="jelly-h">
-              <h2 id="jelly-h" className="font-display text-[24px] leading-none">{t("beach.jelly")}</h2>
+              <SectionHead id="jelly-h" title={t("beach.jelly")} />
               {jelly.isError && <p className="mt-3 text-[14px] text-muted-foreground">{t("common.error")}</p>}
               <ul className="mt-3 space-y-2">
                 {jellyTlv.map((r) => (
@@ -242,7 +228,7 @@ const Beach = () => {
             </section>
 
             {/* Flags and lifeguards */}
-            <section aria-labelledby="safety-h" className="rounded-[var(--radius)] bg-card shadow-[var(--shadow-card)] p-4">
+            <section aria-labelledby="safety-h" className="stamp p-4 -rotate-1">
               <h2 id="safety-h" className="text-[17px] font-medium">{t("beach.safety")}</h2>
               <ul className="mt-3 space-y-2 text-[14px]">
                 <li className="flex items-center gap-2.5"><span className="h-4 w-6 rounded-sm border border-border bg-white" aria-hidden />{t("flag.white")}</li>

@@ -11,6 +11,7 @@ import { placeKindLabel } from "@/lib/live/places";
 import { CRAVINGS, CRAVING_PHOTO, dishOf, matchesCraving, pickPhoto } from "@/lib/live/dishes";
 import type { DishPhoto, Place } from "@/lib/live/sources";
 import { placeSlug } from "@/lib/placeMatch";
+import { SectionHead, TILTS } from "@/components/postcard/ui";
 
 type Toggle = "late" | "happy" | "kosher" | "vegan" | "outdoor";
 const TOGGLES: { id: Toggle; key: StringKey }[] = [
@@ -107,14 +108,14 @@ const Food = () => {
   return (
     <SiteLayout>
       {/* A table full of food: six dishes in a tight grid, the headline on a citrus block */}
-      <section className="relative bg-[#0b1a33]">
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-[3px] h-[300px] sm:h-[380px]">
+      <section className="relative bg-[#0057ff]">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-[3px] h-[300px] sm:h-[400px]">
           {heroPhotos.map((ph, i) => <Photo key={i} photo={ph} className={`h-full w-full ${i > 2 ? "hidden sm:block" : ""}`} />)}
         </div>
-        <div className="container-page relative -mt-24 sm:-mt-28 pb-2">
-          <div className="inline-block max-w-full rounded-lg bg-[#ffcb05] text-[#0b1a33] px-5 py-4 sm:px-7 sm:py-5">
-            <h1 className="font-display text-[38px] sm:text-[60px] leading-[0.95]">{t("food.hungry")}</h1>
-            <p className="mt-1 text-[16px] sm:text-[18px]">
+        <div className="container-page relative -mt-28 sm:-mt-36">
+          <div className="inline-block max-w-full bg-[#ffcb05] text-[#0b1a33] px-6 py-5 sm:px-9 sm:py-7 -rotate-2 shadow-[0_1px_0_#0b1a33]">
+            <h1 className="font-display text-[52px] sm:text-[96px] leading-[0.88]">{t("food.hungry")}</h1>
+            <p className="mt-2 text-[17px] sm:text-[20px] font-semibold">
               {places.data ? <><span className="font-semibold tabular">{openRows.length}</span> {t("food.openNow")}</> : "…"}
               {happyNow.length > 0 && <>, <span className="font-semibold tabular">{happyNow.length}</span> {t("food.happyNow")}</>}
             </p>
@@ -122,33 +123,35 @@ const Food = () => {
         </div>
       </section>
 
-      <div className="container-page">
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          <label className="flex-1 min-w-[220px] max-w-lg flex items-center gap-2 h-11 rounded-lg border border-border bg-card px-3.5 focus-within:ring-2 focus-within:ring-sea">
-            <Search className="h-4 w-4 text-muted-foreground" aria-hidden />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("food.search")} className="flex-1 bg-transparent outline-none text-[15px]" dir="auto" />
+      <div className="bg-[#0057ff] pt-8 pb-8">
+        <div className="container-page flex flex-wrap items-center gap-2">
+          <label className="flex-1 min-w-[220px] max-w-xl flex items-center gap-2 h-14 rounded-md bg-white text-[#0b1a33] px-4 focus-within:ring-4 focus-within:ring-[#ffcb05]">
+            <Search className="h-5 w-5 opacity-60" aria-hidden />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("food.search")} className="flex-1 bg-transparent outline-none text-[17px]" dir="auto" />
           </label>
-          <button onClick={locate} className={`inline-flex items-center gap-2 h-11 rounded-lg px-4 text-[14px] font-medium ${origin.exact ? "bg-foreground text-background" : "border border-border hover:bg-secondary"}`}>
+          <button onClick={locate} className={`inline-flex items-center gap-2 h-14 rounded-md px-5 text-[16px] font-extrabold ${origin.exact ? "bg-white text-[#0b1a33]" : "bg-[#ffcb05] text-[#0b1a33]"}`}>
             <LocateFixed className="h-4 w-4" aria-hidden />
             {origin.exact ? t("food.nearYou") : t("now.useLocation")}
           </button>
         </div>
+      </div>
 
+      <div className="container-page">
         {/* Cravings: pick with your stomach */}
-        <section className="mt-7" aria-labelledby="crave-h">
-          <h2 id="crave-h" className="font-display text-[28px] leading-none">{t("food.craving")}</h2>
-          <div className="mt-3 -mx-4 px-4 scroll-px-4 sm:mx-0 sm:px-0 sm:scroll-px-0 flex gap-3 overflow-x-auto pb-2 snap-x [scrollbar-width:none]">
+        <section className="mt-12" aria-labelledby="crave-h">
+          <SectionHead id="crave-h" title={t("food.craving")} />
+          <div className="mt-6 -mx-4 px-4 scroll-px-4 sm:mx-0 sm:px-0 sm:scroll-px-0 flex gap-5 overflow-x-auto pt-2 pb-4 snap-x [scrollbar-width:none]">
             {CRAVINGS.map((c) => {
               const active = craving === c.id;
               const n = openRows.filter((r) => matchesCraving(r.p, c)).length;
               return (
                 <button key={c.id} onClick={() => setCraving(active ? null : c.id)} aria-pressed={active}
-                  className={`group snap-start shrink-0 w-[132px] sm:w-[156px] text-start focus-visible:outline-none`}>
-                  <span className={`relative block aspect-square rounded-lg overflow-hidden ${active ? "outline outline-[3px] outline-offset-2 outline-[#ff5a4e]" : "group-hover:outline group-hover:outline-2 group-hover:outline-offset-2 group-hover:outline-foreground/40"} group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-sea`}>
+                  className={`group postcard snap-start shrink-0 w-[150px] sm:w-[172px] text-start focus-visible:outline-none ${active ? "bg-[#ffcb05] !rotate-0" : TILTS[CRAVINGS.indexOf(c) % TILTS.length]}`}>
+                  <span className={`relative block aspect-square overflow-hidden ${active ? "outline outline-[3px] outline-offset-2 outline-[#ff5a4e]" : "group-hover:outline group-hover:outline-2 group-hover:outline-offset-2 group-hover:outline-foreground/40"} group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-sea`}>
                     <Photo photo={pickPhoto(photos.data?.[CRAVING_PHOTO[c.id]], c.id)} className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-105" />
                     {places.data && <span className="absolute top-2 end-2 rounded-md bg-white text-[#0b1a33] px-1.5 py-0.5 text-[12px] font-semibold tabular">{n}</span>}
                   </span>
-                  <span className={`mt-1.5 block text-[15px] font-medium ${active ? "text-[#ff5a4e]" : ""}`}>{lang === "he" ? c.he : c.en}</span>
+                  <span className="mt-2 block font-display text-[18px] leading-tight text-[#0b1a33] dark:text-foreground">{lang === "he" ? c.he : c.en}</span>
                 </button>
               );
             })}
@@ -157,9 +160,9 @@ const Food = () => {
 
         {/* Happy hour right now */}
         {happyNow.length > 0 && !craving && !needle && toggles.size === 0 && (
-          <section className="mt-8" aria-labelledby="hh-h">
-            <h2 id="hh-h" className="font-display text-[28px] leading-none">{t("food.happyTitle")}</h2>
-            <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto pb-2">
+          <section className="mt-12" aria-labelledby="hh-h">
+            <SectionHead id="hh-h" title={t("food.happyTitle")} />
+            <div className="mt-5 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto pb-2">
               {happyNow.slice(0, 12).map(({ p, happy, d, dish }) => (
                 <Link key={p.id} to={`/place/${placeSlug(p)}`}
                   className="relative shrink-0 w-[240px] h-[160px] rounded-lg overflow-hidden text-white">
@@ -199,13 +202,13 @@ const Food = () => {
           {shown.slice(0, limit).map(({ p, state, happy, d, dish }) => (
             <li key={p.id}>
               <Link to={`/place/${placeSlug(p)}`} className="group block focus-visible:outline-none">
-                <span className="relative block aspect-[4/3] rounded-lg overflow-hidden group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-sea">
+                <span className="relative block aspect-[4/3] rounded-[10px] overflow-hidden group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-sea">
                   <Photo photo={pickPhoto(photos.data?.[dish], p.id)} className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-105" />
                   <span className={`absolute top-2 start-2 rounded-md px-2 py-0.5 text-[12px] font-semibold ${state.status === "open" ? "bg-[#2f9e44] text-white" : "bg-white text-[#0b1a33]"}`}>{stateLine(state)}</span>
                   {happy?.status === "open" && <span className="absolute bottom-2 start-2 rounded-md bg-[#ff5a4e] text-white px-2 py-0.5 text-[12px] font-semibold">{t("food.happy")}</span>}
                 </span>
                 <span className="mt-2 flex items-baseline justify-between gap-2">
-                  <span className="text-[16px] font-semibold leading-snug truncate group-hover:text-[#ff5a4e]" dir="auto">{name(p)}</span>
+                  <span className="font-display text-[18px] leading-snug truncate group-hover:text-accent" dir="auto">{name(p)}</span>
                   <span className="hidden sm:inline shrink-0 text-[12px] tabular text-muted-foreground">{walkMinutes(d)} {t("now.walk")}</span>
                 </span>
                 <span className="block text-[13px] text-muted-foreground truncate" dir="auto">

@@ -33,14 +33,14 @@ const inline = (text: string, key = "i"): ReactNode[] => {
 const params = (s: string) =>
   Object.fromEntries(s.split(";").map((kv) => kv.split("=").map((x) => x.trim())).filter((kv) => kv[0]).map(([k, v]) => [k, v ?? "1"]));
 
-const block = (line: string, key: string): ReactNode => {
+const block = (line: string, key: string, pick: () => number): ReactNode => {
   const m = /^\[\[(\w+):\s*([\s\S]*)\]\]$/.exec(line.trim());
   if (!m) return null;
   const [, kind, rest] = m;
   const [first, ...more] = rest.split("|");
   const text = more.join("|").trim();
   switch (kind) {
-    case "pick": return <PickBlock key={key} name={first.trim()} text={text} />;
+    case "pick": return <PickBlock key={key} name={first.trim()} text={text} n={pick()} />;
     case "list": return <PlaceListBlock key={key} {...params(rest)} />;
     case "events": return <EventsBlock key={key} {...params(rest)} />;
     case "tip": return <TipBlock key={key}>{inline(rest.trim(), key)}</TipBlock>;
@@ -57,6 +57,7 @@ export const Markdown = ({ source }: { source: string }) => {
   const out: ReactNode[] = [];
   let i = 0;
   let k = 0;
+  let picks = 0;
   while (i < lines.length) {
     const line = lines[i];
     const key = `b${k++}`;
@@ -65,7 +66,7 @@ export const Markdown = ({ source }: { source: string }) => {
       // A block may span lines until its closing ]]
       let buf = line;
       while (!buf.trim().endsWith("]]") && i + 1 < lines.length) buf += "\n" + lines[++i];
-      out.push(block(buf, key));
+      out.push(block(buf, key, () => ++picks));
       i++;
       continue;
     }
