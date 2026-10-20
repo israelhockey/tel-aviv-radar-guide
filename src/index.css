@@ -1,40 +1,50 @@
-@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&family=Secular+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,300..900&family=Big+Shoulders+Display:wght@700;900&family=Manrope:wght@400;600;700;800&family=Rubik:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* TLV Radar — Mediterranean daylight: white surfaces, navy ink,
-   municipal sea blue for the city, signal orange reserved for "live / now". */
+/* Discover Tel Aviv. Three looks, one system:
+   - Postcard (default): white paper, navy ink, Tel Aviv blue, sun yellow, coral. Archivo.
+   - After Dark (data-zone="night"): the going-out pages. Black-violet, neon pink. Big Shoulders + Manrope.
+   - City Lines (data-zone="lines"): transport pages. Line colours, hard 2px rules. Rubik. */
 
 @layer base {
   /* Day: Mediterranean daylight. Cool white, navy ink, municipal sea blue. */
   :root {
-    --background: 210 33% 98%;
-    --foreground: 217 50% 12%;
+    --background: 0 0% 100%;
+    --foreground: 218 65% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 217 50% 12%;
+    --card-foreground: 218 65% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 217 50% 12%;
-    --primary: 217 50% 12%;
+    --popover-foreground: 218 65% 12%;
+    --primary: 218 65% 12%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 210 30% 94%;
-    --secondary-foreground: 217 50% 12%;
-    --muted: 210 30% 94%;
-    --muted-foreground: 215 16% 42%;
-    --accent: 12 100% 62%;              /* sunset coral: live / now */
+    --secondary: 220 40% 95%;
+    --secondary-foreground: 218 65% 12%;
+    --muted: 220 40% 95%;
+    --muted-foreground: 218 18% 40%;
+    --accent: 4 100% 65%;              /* sunset coral: live / now */
     --accent-foreground: 0 0% 100%;
-    --sea: 214 90% 46%;
+    --sea: 220 100% 50%;
     --sea-foreground: 0 0% 100%;
     --surf: 186 72% 34%;
     --sand: 40 45% 86%;                 /* Bauhaus limestone */
-    --gold: 40 90% 58%;                 /* street lights */
+    --gold: 48 100% 51%;                /* sun yellow */
     --destructive: 0 75% 52%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 25% 88%;
-    --input: 214 25% 88%;
-    --ring: 214 90% 46%;
-    --radius: 0.875rem;
+    --border: 222 25% 87%;
+    --input: 222 25% 87%;
+    --ring: 220 100% 50%;
+    --radius: 0.625rem;
+    --font-body: 'Archivo', 'Rubik', system-ui, sans-serif;
+    --font-display: 'Archivo', 'Rubik', system-ui, sans-serif;
+    --display-weight: 900;
+    --display-stretch: 112%;
+    --display-case: none;
+    --display-tracking: -0.015em;
+    --poster-font: 'Archivo', 'Rubik', system-ui, sans-serif;
+    --poster-stretch: 75%;
 
     /* One colour per kind of thing, used for dots, chips and poster fallbacks. */
     --cat-music: 258 75% 60%;
@@ -61,7 +71,7 @@
     --cat-cafe: 24 95% 52%;
 
     --hero-sky: linear-gradient(180deg, hsl(205 80% 92%) 0%, hsl(210 33% 98%) 100%);
-    --shadow-card: 0 1px 2px hsl(217 50% 12% / 0.06), 0 4px 16px -6px hsl(217 50% 12% / 0.10);
+    --shadow-card: 0 1px 0 hsl(218 65% 12%), 0 0 0 1px hsl(222 25% 87%);
     --shadow-pop: 0 18px 40px -12px hsl(217 50% 12% / 0.25);
   }
 
@@ -73,9 +83,9 @@
 
   /* Night: deep navy, glowing sea blue, amber street light. */
   .dark {
-    --background: 216 57% 8%;
-    --foreground: 213 40% 94%;
-    --card: 216 48% 12%;
+    --background: 218 65% 10%;
+    --foreground: 220 40% 96%;
+    --card: 218 55% 15%;
     --card-foreground: 213 40% 94%;
     --popover: 216 48% 12%;
     --popover-foreground: 213 40% 94%;
@@ -87,8 +97,8 @@
     --muted-foreground: 214 22% 68%;
     --accent: 14 100% 64%;
     --accent-foreground: 216 57% 8%;
-    --sea: 212 100% 66%;
-    --sea-foreground: 216 57% 8%;
+    --sea: 216 100% 68%;
+    --sea-foreground: 218 65% 10%;
     --surf: 182 60% 52%;
     --sand: 40 25% 30%;
     --gold: 40 95% 62%;
@@ -108,16 +118,22 @@
     --cat-sport: 200 80% 60%;
     --cat-other: 215 20% 65%;
     --hero-sky: linear-gradient(180deg, hsl(216 57% 6%) 0%, hsl(216 57% 8%) 100%);
-    --shadow-card: 0 1px 0 hsl(213 40% 94% / 0.04) inset, 0 8px 24px -10px hsl(0 0% 0% / 0.6);
+    --shadow-card: 0 1px 0 hsl(220 40% 96% / 0.5), 0 0 0 1px hsl(216 35% 22%);
     --shadow-pop: 0 18px 40px -12px hsl(0 0% 0% / 0.7);
   }
 }
 
 @layer base {
   * { @apply border-border; }
-  html { font-family: 'Rubik', system-ui, sans-serif; }
+  html { font-family: var(--font-body); }
   body { transition: background-color 600ms ease, color 600ms ease; }
-  .font-display { font-family: 'Secular One', 'Rubik', system-ui, sans-serif; font-weight: 400; letter-spacing: -0.01em; }
+  .font-display {
+    font-family: var(--font-display); font-weight: var(--display-weight); font-stretch: var(--display-stretch);
+    text-transform: var(--display-case); letter-spacing: var(--display-tracking);
+  }
+  /* Big condensed numbers: times, scores, temperatures. */
+  .font-poster { font-family: var(--poster-font); font-weight: 900; font-stretch: var(--poster-stretch); line-height: 0.9; font-variant-numeric: tabular-nums; }
+  [data-zone] { font-family: var(--font-body); }
   body {
     @apply bg-background text-foreground antialiased;
     
@@ -159,7 +175,75 @@
 .radar-scrub::-moz-range-track { height: 2rem; background: transparent; }
 .radar-scrub::-webkit-slider-thumb {
   -webkit-appearance: none; appearance: none; margin-top: 0.375rem;
-  width: 1.25rem; height: 1.25rem; border-radius: 9999px; background: #fff; border: 3px solid #0f1530;
+  width: 1.25rem; height: 1.25rem; border-radius: 9999px; background: #fff; border: 3px solid #0b1a33;
 }
-.radar-scrub::-moz-range-thumb { width: 1.25rem; height: 1.25rem; border-radius: 9999px; background: #fff; border: 3px solid #0f1530; }
+.radar-scrub::-moz-range-thumb { width: 1.25rem; height: 1.25rem; border-radius: 9999px; background: #fff; border: 3px solid #0b1a33; }
 .radar-scrub:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 4px; }
+
+
+/* ---------- After Dark: the going-out pages ---------- */
+[data-zone="night"], .dark [data-zone="night"] {
+  --background: 265 38% 5%;
+  --foreground: 255 100% 97%;
+  --card: 268 40% 9%;
+  --card-foreground: 255 100% 97%;
+  --popover: 268 40% 9%;
+  --popover-foreground: 255 100% 97%;
+  --primary: 255 100% 97%;
+  --primary-foreground: 265 38% 5%;
+  --secondary: 266 34% 13%;
+  --secondary-foreground: 255 100% 97%;
+  --muted: 266 34% 13%;
+  --muted-foreground: 253 100% 83%;
+  --accent: 331 100% 59%;
+  --accent-foreground: 265 38% 5%;
+  --sea: 331 100% 59%;
+  --sea-foreground: 265 38% 5%;
+  --surf: 252 100% 68%;
+  --gold: 331 100% 59%;
+  --border: 262 30% 19%;
+  --input: 262 30% 19%;
+  --ring: 331 100% 59%;
+  --radius: 0.25rem;
+  --font-body: 'Manrope', 'Rubik', system-ui, sans-serif;
+  --font-display: 'Big Shoulders Display', 'Rubik', system-ui, sans-serif;
+  --display-weight: 900;
+  --display-stretch: 100%;
+  --display-case: uppercase;
+  --display-tracking: 0;
+  --poster-font: 'Big Shoulders Display', 'Rubik', system-ui, sans-serif;
+  --poster-stretch: 100%;
+  --shadow-card: none;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  color-scheme: dark;
+}
+.night-outline { color: transparent; -webkit-text-stroke: 3px hsl(331 100% 59%); }
+@keyframes night-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.night-marquee { animation: night-marquee 40s linear infinite; will-change: transform; }
+@media (prefers-reduced-motion: reduce) { .night-marquee { animation: none; } }
+
+/* ---------- City Lines: transport pages ---------- */
+[data-zone="lines"] {
+  --sea: 207 100% 40%;
+  --accent: 349 100% 45%;
+  --radius: 0.25rem;
+  --font-body: 'Rubik', system-ui, sans-serif;
+  --font-display: 'Rubik', system-ui, sans-serif;
+  --display-weight: 900;
+  --display-stretch: 100%;
+  --display-tracking: -0.03em;
+  --poster-font: 'Rubik', system-ui, sans-serif;
+  --poster-stretch: 100%;
+}
+:root:not(.dark) [data-zone="lines"] { --foreground: 210 33% 9%; --border: 210 33% 9%; }
+.line-bullet { display: inline-flex; align-items: center; justify-content: center; min-width: 1.75rem; height: 1.75rem; padding: 0 0.4rem; border-radius: 4px; color: #fff; font-weight: 800; font-size: 0.875rem; }
+
+/* ---------- Postcard details ---------- */
+.ticket-edge { border-inline-start: 3px dashed hsl(var(--foreground)); }
+.postcard { background: hsl(var(--card)); padding: 0.75rem 0.75rem 1.1rem; box-shadow: var(--shadow-card); transition: transform 200ms ease; }
+.postcard:hover { transform: rotate(0deg) translateY(-4px) !important; }
+.stamp { border: 2px dashed hsl(var(--foreground)); background: hsl(var(--card)); }
+[data-zone="night"] .site-footer { background: hsl(268 40% 7%); border-top: 2px solid hsl(331 100% 59%); }
+[data-zone="night"] .site-footer .text-\[\#ffcb05\] { color: hsl(331 100% 59%); }
+[data-zone="lines"] .site-footer { background: #101820; }

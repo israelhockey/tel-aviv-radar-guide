@@ -182,7 +182,8 @@ const sectionPages = (d: Data): Page[] => {
     description: "Everything Tel Aviv in one place: every event tonight and this weekend, the best food and bars, beach conditions, Shabbat times, traffic, parking and a live city map. Free.",
     priority: 1, changefreq: "hourly",
     jsonld: [
-      { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: SITE_URL, inLanguage: ["en", "he"] },
+      { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: SITE_URL, inLanguage: ["en", "he"],
+        potentialAction: { "@type": "SearchAction", target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/search?q={search_term_string}` }, "query-input": "required name=search_term_string" } },
       { "@context": "https://schema.org", ...ORG },
     ],
     body: frame(`<h1>Discover Tel Aviv</h1><p>Tel Aviv right now: what's on tonight, where to eat, the beach, the news and a live map of the city.</p><h2>Coming up</h2>${evList}<h2>From the magazine</h2>${mag}`),

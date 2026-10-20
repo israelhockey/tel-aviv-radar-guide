@@ -69,9 +69,9 @@ export const articlesFor = (lang: "en" | "he") => ARTICLES.filter((a) => a.lang 
 
 export const CATEGORY_LABEL: Record<ArticleCategory, { en: string; he: string; color: string }> = {
   food: { en: "Food", he: "אוכל", color: "#e8590c" },
-  drink: { en: "Drinks", he: "שתייה", color: "#d6336c" },
+  drink: { en: "Drinks", he: "שתייה", color: "#ff5a4e" },
   nightlife: { en: "Nightlife", he: "חיי לילה", color: "#7048e8" },
-  culture: { en: "Culture", he: "תרבות", color: "#1971c2" },
+  culture: { en: "Culture", he: "תרבות", color: "#0057ff" },
   outdoors: { en: "Outdoors", he: "בחוץ", color: "#0c8599" },
   neighbourhoods: { en: "Neighbourhoods", he: "שכונות", color: "#2f9e44" },
   holidays: { en: "Holidays", he: "חגים", color: "#f08c00" },

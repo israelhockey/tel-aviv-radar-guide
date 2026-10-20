@@ -7,7 +7,7 @@ export default {
   theme: {
     container: { center: true, padding: "1.5rem", screens: { "2xl": "1280px" } },
     extend: {
-      fontFamily: { sans: ['Rubik', 'system-ui', 'sans-serif'], display: ['"Secular One"', 'Rubik', 'system-ui', 'sans-serif'] },
+      fontFamily: { sans: ['var(--font-body)'], display: ['var(--font-display)'] },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

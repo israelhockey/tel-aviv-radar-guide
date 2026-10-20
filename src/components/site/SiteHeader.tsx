@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { BookOpen, CalendarDays, Menu, Moon, Newspaper, Radar, Sun, SunMoon, UtensilsCrossed, Waves } from "lucide-react";
+import { BedDouble, BookOpen, CalendarDays, MapPinned, Menu, Moon, Radar, Search, Sun, SunMoon, UtensilsCrossed, Waves } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -9,19 +9,20 @@ import { Logo } from "./Logo";
 
 export const TABS: { to: string; key: StringKey; icon: typeof Sun; end?: boolean; desktopOnly?: boolean }[] = [
   { to: "/", key: "nav.now", icon: Sun, end: true },
-  { to: "/live", key: "nav.live", icon: Radar },
   { to: "/events", key: "nav.whatson", icon: CalendarDays },
   { to: "/food", key: "nav.foodShort", icon: UtensilsCrossed },
   { to: "/beach", key: "nav.beach", icon: Waves },
   { to: "/magazine", key: "nav.magazine", icon: BookOpen, desktopOnly: true },
-  { to: "/news", key: "nav.news", icon: Newspaper, desktopOnly: true },
+  { to: "/area", key: "nav.areas", icon: MapPinned, desktopOnly: true },
+  { to: "/hotels", key: "nav.hotels", icon: BedDouble, desktopOnly: true },
+  { to: "/live", key: "nav.live", icon: Radar },
 ];
 
 const MORE: { to: string; key: StringKey; mobileOnly?: boolean }[] = [
   { to: "/magazine", key: "nav.magazine", mobileOnly: true },
-  { to: "/news", key: "nav.news", mobileOnly: true },
-  { to: "/area", key: "nav.areas" },
-  { to: "/hotels", key: "nav.hotels" },
+  { to: "/area", key: "nav.areas", mobileOnly: true },
+  { to: "/hotels", key: "nav.hotels", mobileOnly: true },
+  { to: "/news", key: "nav.news" },
   { to: "/walks", key: "nav.walks" },
   { to: "/jobs", key: "nav.jobs" },
   { to: "/shabbat", key: "nav.shabbat" },
@@ -39,7 +40,7 @@ export const LanguageToggle = () => {
   return (
     <button
       onClick={() => setLang(lang === "he" ? "en" : "he")}
-      className="h-9 rounded-full border border-border px-3 text-[13px] font-medium hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"
+      className="h-9 rounded-md bg-sea text-sea-foreground px-3.5 text-[14px] font-bold hover:opacity-90 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground [[data-zone=night]_&]:rounded-full"
       lang={lang === "he" ? "en" : "he"}
     >
       {t("lang.switch")}
@@ -61,7 +62,7 @@ export const ThemeToggle = () => {
       onClick={() => setChoice(next)}
       aria-label={label}
       title={label}
-      className="h-9 w-9 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"
+      className="h-9 w-9 rounded-md border border-border flex items-center justify-center hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"
     >
       <Icon className="h-4 w-4" aria-hidden />
     </button>
@@ -71,39 +72,39 @@ export const ThemeToggle = () => {
 export const SiteHeader = () => {
   const { t } = useI18n();
   return (
-    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border">
-      <div className="container-page flex h-14 items-center justify-between gap-6">
+    <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border [[data-zone=lines]_&]:border-b-2">
+      <div className="container-page flex h-16 items-center justify-between gap-4">
         <Logo />
-        <nav className="hidden md:flex items-center gap-1 text-[15px]" aria-label="Main">
-          {TABS.map((tab) => (
+        <nav className="hidden lg:flex items-center gap-0.5 text-[15px] font-semibold" aria-label="Main">
+          {TABS.filter((tab) => tab.to !== "/").map((tab) => (
             <NavLink
               key={tab.to}
               to={tab.to}
               end={tab.end}
               className={({ isActive }) =>
-                `inline-flex items-center gap-2 rounded-full px-4 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea ${
-                  isActive ? "bg-foreground text-background font-medium" : "text-foreground/75 hover:text-foreground hover:bg-secondary"
+                `relative px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea rounded-md ${
+                  isActive ? "text-foreground after:absolute after:inset-x-3 after:-bottom-[13px] after:h-[3px] after:bg-accent" : "text-foreground/80 hover:text-foreground"
                 }`
               }
             >
-              <tab.icon className="h-4 w-4" aria-hidden />
               {t(tab.key)}
             </NavLink>
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <Link to="/search" aria-label={t("nav.search")} className="h-9 w-9 rounded-md border border-border flex items-center justify-center hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"><Search className="h-4 w-4" aria-hidden /></Link>
           <ThemeToggle />
           <LanguageToggle />
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label={t("nav.more")}
-              className="h-9 w-9 rounded-full border border-border flex items-center justify-center hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"
+              className="h-9 w-9 rounded-md border border-border flex items-center justify-center hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"
             >
               <Menu className="h-4 w-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[200px]">
               {MORE.map((m) => (
-                <DropdownMenuItem key={m.to} asChild className={m.mobileOnly ? "md:hidden" : undefined}>
+                <DropdownMenuItem key={m.to} asChild className={m.mobileOnly ? "lg:hidden" : undefined}>
                   <Link to={m.to}>{t(m.key)}</Link>
                 </DropdownMenuItem>
               ))}
@@ -121,7 +122,7 @@ export const BottomTabs = () => {
   return (
     <nav
       aria-label="Main"
-      className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
+      className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-border bg-background/95 backdrop-blur pb-[env(safe-area-inset-bottom)]"
     >
       <div className="grid grid-cols-5">
         {TABS.filter((tab) => !tab.desktopOnly).map((tab) => (

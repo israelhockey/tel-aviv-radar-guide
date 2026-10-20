@@ -19,7 +19,7 @@ const KINDS: { id: Kind; key: StringKey }[] = [
   { id: "all", key: "food.all" }, { id: "hotel", key: "hot.hotels" }, { id: "hostel", key: "hot.hostels" },
   { id: "guest_house", key: "hot.guest" }, { id: "apartment", key: "hot.apartments" },
 ];
-const KIND_BG: Record<string, string> = { hotel: "#1971c2", hostel: "#d6336c", guest_house: "#2f9e44", apartment: "#7048e8", motel: "#868e96" };
+const KIND_BG: Record<string, string> = { hotel: "#0057ff", hostel: "#ff5a4e", guest_house: "#2f9e44", apartment: "#7048e8", motel: "#868e96" };
 
 const beachOf = (h: { lat: number; lon: number }) => {
   let best = BEACHES[0];
@@ -51,14 +51,14 @@ export const Hotels = () => {
 
   return (
     <SiteLayout>
-      <section className="relative bg-[#0f1530] text-white">
+      <section className="relative bg-[#0b1a33] text-white">
         {hero && <img src={hero.src} alt="" referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full object-cover opacity-60" />}
         <div className="container-page relative py-14 sm:py-20">
-          <div className="inline-block rounded-lg bg-[#1971c2] px-5 py-4 sm:px-7 sm:py-5">
+          <div className="inline-block rounded-lg bg-[#0057ff] px-5 py-4 sm:px-7 sm:py-5">
             <h1 className="font-display text-[40px] sm:text-[64px] leading-[0.95]">{t("hot.title")}</h1>
             <p className="mt-1 text-[16px] sm:text-[18px]">{hotels.data ? `${hotels.data.length} ${t("hot.count")}` : "…"}</p>
           </div>
-          <div className="mt-4"><BookButton name="" className="bg-white !text-[#1971c2]" /></div>
+          <div className="mt-4"><BookButton name="" className="bg-white !text-[#0057ff]" /></div>
         </div>
       </section>
       <div className="container-page">
@@ -73,9 +73,9 @@ export const Hotels = () => {
           {list.slice(0, 90).map(({ h, beach, m, hood }) => (
             <li key={h.id}>
               <Link to={`/hotel/${h.id}`} className="group flex gap-4 rounded-xl border border-border p-4 hover:border-foreground/40">
-                <span className="h-14 w-14 shrink-0 rounded-lg text-white flex items-center justify-center font-display text-[24px]" style={{ background: KIND_BG[h.kind] ?? "#1971c2" }}>{((lang === "en" && h.nameEn) || h.name).trim().charAt(0)}</span>
+                <span className="h-14 w-14 shrink-0 rounded-lg text-white flex items-center justify-center font-display text-[24px]" style={{ background: KIND_BG[h.kind] ?? "#0057ff" }}>{((lang === "en" && h.nameEn) || h.name).trim().charAt(0)}</span>
                 <span className="min-w-0">
-                  <span className="block text-[17px] font-semibold leading-snug group-hover:text-[#1971c2]" dir="auto">{(lang === "en" && h.nameEn) || h.name}</span>
+                  <span className="block text-[17px] font-semibold leading-snug group-hover:text-[#0057ff]" dir="auto">{(lang === "en" && h.nameEn) || h.name}</span>
                   <span className="block text-[13px] text-muted-foreground">{kindLabel(h.kind, t)}{hood ? `, ${lang === "he" ? hood.he : hood.en}` : ""}</span>
                   <span className="mt-1 flex items-center gap-3 text-[13px]">
                     {h.stars ? <span className="inline-flex items-center gap-0.5 text-[#f08c00]">{Array.from({ length: Math.min(5, Math.round(h.stars)) }, (_, i) => <Star key={i} className="h-3.5 w-3.5 fill-current" aria-hidden />)}<span className="sr-only">{h.stars} stars</span></span> : null}
@@ -120,7 +120,7 @@ export const HotelPage = () => {
 
   return (
     <SiteLayout>
-      <section className="relative bg-[#0f1530]">
+      <section className="relative bg-[#0b1a33]">
         {hero && <img src={hero.src} alt="" referrerPolicy="no-referrer" className="w-full h-[220px] sm:h-[300px] object-cover opacity-70" />}
         <div className="container-page relative -mt-16 pb-2">
           <div className="inline-block max-w-full rounded-lg bg-white dark:bg-card px-5 py-4 sm:px-7 shadow-[var(--shadow-card)]">
@@ -140,7 +140,7 @@ export const HotelPage = () => {
           </div>
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
             <div className="rounded-lg bg-[#0c8599] text-white p-4"><p className="font-display text-[32px] leading-none tabular">{walkMinutes(m)}</p><p className="mt-1 text-[13px]">{t("now.walk")} {t("hot.toBeach")} {lang === "he" ? beach.he : beach.en}</p></div>
-            <div className="rounded-lg bg-[#ffc233] text-[#1f1400] p-4"><p className="font-display text-[32px] leading-none tabular">{nearFood.length}</p><p className="mt-1 text-[13px]">{t("hot.foodNear")}</p></div>
+            <div className="rounded-lg bg-[#ffcb05] text-[#0b1a33] p-4"><p className="font-display text-[32px] leading-none tabular">{nearFood.length}</p><p className="mt-1 text-[13px]">{t("hot.foodNear")}</p></div>
             {h.rooms ? <div className="rounded-lg bg-secondary p-4"><p className="font-display text-[32px] leading-none tabular">{h.rooms}</p><p className="mt-1 text-[13px]">{t("hot.rooms")}</p></div> : null}
           </div>
           {openFood.length > 0 && (
@@ -148,7 +148,7 @@ export const HotelPage = () => {
               <h2 className="mt-10 font-display text-[26px]">{t("hot.openNear")}</h2>
               <ul className="mt-3 divide-y divide-border">
                 {openFood.map((p) => (
-                  <li key={p.id}><Link to={`/place/${placeSlug(p)}`} className="flex justify-between gap-3 py-2.5 hover:text-[#d6336c]"><span dir="auto">{(lang === "en" && p.nameEn) || p.name}</span><span className="text-[13px] text-muted-foreground tabular">{walkMinutes(distanceMeters(h, p))} {t("now.walk")}</span></Link></li>
+                  <li key={p.id}><Link to={`/place/${placeSlug(p)}`} className="flex justify-between gap-3 py-2.5 hover:text-[#ff5a4e]"><span dir="auto">{(lang === "en" && p.nameEn) || p.name}</span><span className="text-[13px] text-muted-foreground tabular">{walkMinutes(distanceMeters(h, p))} {t("now.walk")}</span></Link></li>
                 ))}
               </ul>
             </>
@@ -157,7 +157,7 @@ export const HotelPage = () => {
             <>
               <h2 className="mt-10 font-display text-[26px]">{t("hot.eventsNear")}</h2>
               <ul className="mt-3 divide-y divide-border">
-                {tonight.map((e) => <li key={e.id}><Link to={`/event/${eventSlug(e)}`} className="block py-2.5 hover:text-[#d6336c]" dir="auto">{e.title}{e.venue ? `, ${e.venue}` : ""}</Link></li>)}
+                {tonight.map((e) => <li key={e.id}><Link to={`/event/${eventSlug(e)}`} className="block py-2.5 hover:text-[#ff5a4e]" dir="auto">{e.title}{e.venue ? `, ${e.venue}` : ""}</Link></li>)}
               </ul>
             </>
           )}

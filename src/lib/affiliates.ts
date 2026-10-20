@@ -55,7 +55,7 @@ export type Essential = { id: string; en: string; he: string; bodyEn: string; bo
 /** Things every visitor needs; shown on the guide, hotels and newcomer pages. */
 export const essentials = (): Essential[] => [
   {
-    id: "esim", en: "A data eSIM", he: "eSIM לגלישה", partner: "Airalo", color: "#1971c2",
+    id: "esim", en: "A data eSIM", he: "eSIM לגלישה", partner: "Airalo", color: "#0057ff",
     bodyEn: "Land with data already working. Israeli eSIMs start at a few dollars and install in a minute.",
     bodyHe: "לנחות עם גלישה שכבר עובדת. eSIM ישראלי מתחיל בכמה דולרים ומותקן בדקה.",
     link: { href: withParams("https://www.airalo.com/israel-esim", { ref: AFFILIATE.airaloRef || undefined }), earning: !!AFFILIATE.airaloRef },

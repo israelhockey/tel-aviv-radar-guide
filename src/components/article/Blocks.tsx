@@ -54,7 +54,7 @@ export const HolidayBlock = ({ name }: { name: string }) => {
   const title = he.data?.[i]?.title ?? h.title;
   const date = new Intl.DateTimeFormat(lang === "he" ? "he-IL" : "en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(new Date(`${h.date.slice(0, 10)}T12:00:00Z`));
   return (
-    <aside className="mt-6 flex items-center gap-4 rounded-xl bg-[#0f1530] text-white px-5 py-4">
+    <aside className="mt-6 flex items-center gap-4 rounded-xl bg-[#0b1a33] text-white px-5 py-4">
       <span className="font-display text-[44px] leading-none tabular">{new Date(`${h.date.slice(0, 10)}T12:00:00Z`).getUTCDate()}</span>
       <span><span className="block text-[17px] font-semibold" dir="auto">{title}</span><span className="block text-[14px] text-white/80">{date}</span></span>
     </aside>
@@ -74,10 +74,10 @@ export const PickBlock = ({ name, text }: { name: string; text: string }) => {
     <section className="mt-8 grid gap-4 sm:grid-cols-[220px,1fr] items-start">
       {photo ? (
         <img src={photo.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover rounded-lg" />
-      ) : <span className="hidden sm:block w-full aspect-[4/3] rounded-lg bg-[#ffc233]" />}
+      ) : <span className="hidden sm:block w-full aspect-[4/3] rounded-lg bg-[#ffcb05]" />}
       <div>
         <h3 className="text-[24px] font-semibold leading-tight" dir="auto">
-          {p ? <Link to={`/place/${placeSlug(p)}`} className="hover:text-[#d6336c]">{name}</Link> : name}
+          {p ? <Link to={`/place/${placeSlug(p)}`} className="hover:text-[#ff5a4e]">{name}</Link> : name}
         </h3>
         {p && (
           <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[13px] text-muted-foreground">
@@ -122,9 +122,9 @@ export const PlaceListBlock = (q: Record<string, string>) => {
           return (
             <li key={p.id}>
               <Link to={`/place/${placeSlug(p)}`} className="group flex gap-3 items-center">
-                {photo ? <img src={photo.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-16 rounded-md object-cover shrink-0" /> : <span className="h-16 w-16 rounded-md bg-[#ffc233] shrink-0" />}
+                {photo ? <img src={photo.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-16 rounded-md object-cover shrink-0" /> : <span className="h-16 w-16 rounded-md bg-[#ffcb05] shrink-0" />}
                 <span className="min-w-0">
-                  <span className="block text-[16px] font-semibold truncate group-hover:text-[#d6336c]" dir="auto">{(lang === "en" && p.nameEn) || p.name}</span>
+                  <span className="block text-[16px] font-semibold truncate group-hover:text-[#ff5a4e]" dir="auto">{(lang === "en" && p.nameEn) || p.name}</span>
                   <span className={`block text-[12px] ${s.open ? "text-[#2f9e44] font-semibold" : "text-muted-foreground"}`}>{s.text}</span>
                   {p.street && <span className="block text-[12px] text-muted-foreground truncate" dir="auto">{p.street}{p.number ? ` ${p.number}` : ""}</span>}
                 </span>
@@ -154,7 +154,7 @@ export const EventsBlock = (q: Record<string, string>) => {
       {list.map((e) => (
         <li key={e.id}>
           <Link to={`/event/${eventSlug(e)}`} className="flex gap-3 p-3 hover:bg-secondary/60">
-            {e.image ? <img src={e.image} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-12 rounded object-cover shrink-0" /> : <span className="h-16 w-12 rounded bg-[#d6336c] shrink-0" />}
+            {e.image ? <img src={e.image} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-16 w-12 rounded object-cover shrink-0" /> : <span className="h-16 w-12 rounded bg-[#ff5a4e] shrink-0" />}
             <span className="min-w-0">
               <span className="block text-[13px] text-muted-foreground tabular">{fmtDayTime(e.start, lang)}</span>
               <span className="block text-[16px] font-semibold leading-snug" dir="auto">{e.title}</span>
@@ -168,7 +168,7 @@ export const EventsBlock = (q: Record<string, string>) => {
 };
 
 export const TipBlock = ({ children }: { children: ReactNode }) => (
-  <aside className="mt-6 rounded-xl bg-[#ffc233] text-[#1f1400] px-5 py-4 text-[16px] leading-relaxed">{children}</aside>
+  <aside className="mt-6 rounded-xl bg-[#ffcb05] text-[#0b1a33] px-5 py-4 text-[16px] leading-relaxed">{children}</aside>
 );
 
 export const PhotoBlock = ({ src, caption }: { src: string; caption?: string }) => {

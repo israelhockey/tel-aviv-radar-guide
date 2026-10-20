@@ -91,6 +91,7 @@ const STRINGS = {
   "art.share": { en: "Share", he: "שיתוף" },
   "art.more": { en: "Read next", he: "עוד לקרוא" },
   "art.notFound": { en: "We couldn't find that article.", he: "לא מצאנו את הכתבה." },
+  "nav.search": { en: "Search", he: "חיפוש" },
   "nav.areas": { en: "Neighbourhoods", he: "שכונות" },
   "aff.note": { en: "Some links are affiliate links: if you book, we may earn a commission at no cost to you.", he: "חלק מהקישורים הם קישורי שותפים: אם תזמינו, ייתכן שנקבל עמלה, בלי עלות עבורכם." },
   "aff.how": { en: "How we make money", he: "איך אנחנו מרוויחים" },

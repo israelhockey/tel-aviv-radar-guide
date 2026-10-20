@@ -21,6 +21,8 @@ import { Walks, WalkPage } from "./pages/Walks";
 import EventPage from "./pages/EventPage";
 import AreaPage from "./pages/Area";
 import About from "./pages/About";
+import Search from "./pages/Search";
+import Nightlife from "./pages/Nightlife";
 import Jobs from "./pages/Jobs";
 import Weekend from "./pages/Weekend";
 import { I18nProvider } from "@/lib/i18n";
@@ -70,13 +72,14 @@ const App = () => (
           <Route path="/walks/:slug" element={<WalkPage />} />
           <Route path="/hotel/:id" element={<HotelPage />} />
           <Route path="/about" element={<About />} />
+          <Route path="/search" element={<Search />} />
           <Route path="/privacy" element={<About />} />
           <Route path="/event/:slug" element={<EventPage />} />
           <Route path="/area" element={<AreaPage />} />
           <Route path="/area/:hood" element={<AreaPage />} />
           <Route path="/area/:hood/:kind" element={<AreaPage />} />
           <Route path="/eat/:craving" element={<AreaPage />} />
-          <Route path="/nightlife" element={<Category />} />
+          <Route path="/nightlife" element={<Nightlife />} />
           <Route path="/business" element={<Category />} />
           <Route path="/weekend" element={<Weekend />} />
           <Route path="/free" element={<WhatsOn key="free" />} />

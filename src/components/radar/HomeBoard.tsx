@@ -85,7 +85,7 @@ export const HomeBoard = () => {
   return (
     <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4 auto-rows-[minmax(150px,auto)]">
       {/* Tonight: the biggest tile, dark so the posters glow */}
-      <section className="col-span-2 lg:row-span-2 rounded-xl bg-[#d6336c] text-white p-4 sm:p-5 flex flex-col">
+      <section className="col-span-2 lg:row-span-2 rounded-xl bg-[#ff5a4e] text-white p-4 sm:p-5 flex flex-col">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="font-display text-[28px] sm:text-[34px] leading-none">{picks.count ? t("now.tonight") : t("board.thisWeek")}</h2>
           <Link to="/events" className="text-[14px] text-white/80 hover:text-white underline-offset-4 hover:underline">{picks.count ? `${picks.count} ${t("hero.thingsTonight")}` : t("now.seeWeek")}</Link>
@@ -114,7 +114,7 @@ export const HomeBoard = () => {
       {story ? (
         <a href={story.url} target="_blank" rel="noopener noreferrer" className="relative overflow-hidden rounded-xl row-span-2 min-h-[300px] bg-cat-news text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-foreground/70">
           {story.image && <img src={story.image} alt="" loading="lazy" referrerPolicy="no-referrer" className="absolute inset-0 h-full w-full object-cover" />}
-          <span className="absolute inset-x-0 bottom-0 p-4 bg-[#0f1530]/90">
+          <span className="absolute inset-x-0 bottom-0 p-4 bg-[#0b1a33]/90">
             <span className="text-[12px] text-white/80">{story.source}, {relTime(story.published, lang)}</span>
             <span className="mt-1 block font-display text-[17px] sm:text-[22px] leading-tight line-clamp-5 sm:line-clamp-4" lang={story.lang} dir={story.lang === "he" ? "rtl" : "ltr"}>{story.title}</span>
           </span>
@@ -122,7 +122,7 @@ export const HomeBoard = () => {
       ) : <div className="row-span-2 rounded-xl bg-secondary animate-pulse" />}
 
       {/* Food: citrus, with dark ink */}
-      <Link to="/food" className="rounded-xl p-4 bg-[#ffc233] text-[#2b1d00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-foreground/70">
+      <Link to="/food" className="rounded-xl p-4 bg-[#ffcb05] text-[#2b1d00] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-foreground/70">
         <p className="text-[14px] opacity-80">{t("food.title")}</p>
         <p className="mt-1 font-display text-[44px] leading-none tabular">{places.data ? food.open : "…"}</p>
         <p className="text-[13px] font-medium">{t("food.openNow")}</p>
@@ -140,7 +140,7 @@ export const HomeBoard = () => {
         <div className="mt-2 grid grid-cols-3 gap-3">
           <div><Bus className="h-4 w-4 text-[#0b63e5]" aria-hidden /><p className="mt-1 font-display text-[30px] leading-none tabular text-[#0b63e5]">{buses.data?.buses.length ?? "…"}</p><p className="text-[12px] text-muted-foreground">{t("now.busesMoving")}</p></div>
           <div><Car className="h-4 w-4 text-[#e8590c]" aria-hidden /><p className="mt-1 font-display text-[30px] leading-none tabular text-[#e8590c]">{jams ?? "…"}</p><p className="text-[12px] text-muted-foreground">{t("go.jams")}</p></div>
-          <div><SquareParking className="h-4 w-4 text-[#1971c2]" aria-hidden /><p className="mt-1 font-display text-[30px] leading-none tabular text-[#1971c2]">{lots ?? "…"}</p><p className="text-[12px] text-muted-foreground">{t("go.lots")}</p></div>
+          <div><SquareParking className="h-4 w-4 text-[#0057ff]" aria-hidden /><p className="mt-1 font-display text-[30px] leading-none tabular text-[#0057ff]">{lots ?? "…"}</p><p className="text-[12px] text-muted-foreground">{t("go.lots")}</p></div>
         </div>
       </Link>
 
@@ -156,11 +156,11 @@ export const HomeBoard = () => {
       </Link>
 
       {/* Shabbat, or the next holiday */}
-      <Link to="/shabbat" className="rounded-xl p-4 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-foreground/70" style={{ background: "#0f1530" }}>
+      <Link to="/shabbat" className="rounded-xl p-4 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-foreground/70" style={{ background: "#0b1a33" }}>
         <p className="text-[14px] text-white/85">{t("shabbat.title")}</p>
         {shabbat.data?.candles ? (
           <>
-            <p className="mt-1 font-display text-[36px] leading-none tabular text-[#ffc233]">{fmtClock(shabbat.data.candles, lang)}</p>
+            <p className="mt-1 font-display text-[36px] leading-none tabular text-[#ffcb05]">{fmtClock(shabbat.data.candles, lang)}</p>
             <p className="text-[12px] text-white/85">{t("shabbat.candles")}, {fmtWeekday(shabbat.data.candles, lang)}</p>
           </>
         ) : <p className="mt-1 font-display text-[36px] leading-none">…</p>}

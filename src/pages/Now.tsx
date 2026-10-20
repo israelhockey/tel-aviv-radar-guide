@@ -1,115 +1,118 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
 import { SiteLayout } from "@/components/site/SiteLayout";
-import { ConditionsStrip } from "@/components/radar/ConditionsStrip";
-import { SkyHero } from "@/components/radar/SkyHero";
-import { HomeBoard } from "@/components/radar/HomeBoard";
-import { BeachList } from "@/components/radar/BeachList";
-import { OpenNearby } from "@/components/radar/OpenNearby";
 import { useI18n } from "@/lib/i18n";
 import { useNewsFeed } from "@/lib/live/hooks";
 import { NewsCard } from "@/components/radar/NewsCard";
-import { articlesFor } from "@/lib/articles";
+import { articlesFor, CATEGORY_LABEL, type Article } from "@/lib/articles";
+import { usePhoto } from "@/components/article/Blocks";
 import { ArticleCard } from "./Magazine";
-import { fmtClock } from "@/lib/live/format";
+import { Hungry, LiveStrip, NeighbourhoodPostcards, NumbersBand, PostcardHero, TonightTickets } from "@/components/home/Postcard";
 
-type Item = Database["public"]["Tables"]["content_items"]["Row"];
-
-const useBriefs = () =>
-  useQuery({
-    queryKey: ["briefs"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("content_items").select("*")
-        .eq("status", "published").in("type", ["news", "business", "opening"])
-        .order("published_at", { ascending: false }).limit(5);
-      if (error) throw error;
-      return data ?? [];
-    },
-    staleTime: 5 * 60_000,
-  });
-
-const ItemRow = ({ item, lead }: { item: Item; lead?: string }) => (
-  <li>
-    <Link to={`/post/${item.slug}`} className="group grid grid-cols-[3.5rem,1fr] gap-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea rounded">
-      <span className="text-[14px] tabular text-muted-foreground pt-0.5">{lead}</span>
+// A small list row for the magazine front: thumbnail, category, title.
+const ArticleRow = ({ a }: { a: Article }) => {
+  const { lang } = useI18n();
+  const p = usePhoto(a.cover, a.slug);
+  const cat = CATEGORY_LABEL[a.category];
+  return (
+    <Link to={`/magazine/${a.slug}`} className="group flex gap-4 py-4 border-t border-border first:border-t-0">
+      {p ? <img src={p.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="h-20 w-24 shrink-0 rounded-md object-cover" /> : <span className="h-20 w-24 shrink-0 rounded-md" style={{ background: cat.color }} />}
       <span className="min-w-0">
-        <span className="block text-[15px] leading-snug group-hover:text-sea">{item.title}</span>
-        {(item.venue || item.neighborhood || item.source_name) && (
-          <span className="block mt-0.5 text-[12px] text-muted-foreground truncate">
-            {[item.venue, item.neighborhood].filter(Boolean).join(", ") || item.source_name}
-          </span>
-        )}
+        <span className="block text-[12px] font-bold uppercase tracking-wider" style={{ color: cat.color }}>{lang === "he" ? cat.he : cat.en}</span>
+        <span className="mt-0.5 block font-display text-[19px] leading-tight group-hover:text-accent" dir="auto">{a.title}</span>
       </span>
     </Link>
-  </li>
-);
+  );
+};
+
+const Shelf = ({ title, to, list }: { title: string; to: string; list: Article[] }) => {
+  const { t } = useI18n();
+  if (!list.length) return null;
+  return (
+    <section className="mt-14">
+      <div className="flex items-baseline justify-between gap-3 border-b-[3px] border-foreground pb-2">
+        <h2 className="font-display text-[28px] sm:text-[34px] leading-none">{title}</h2>
+        <Link to={to} className="text-[15px] font-bold text-sea hover:underline underline-offset-4">{t("now.allGuides")}</Link>
+      </div>
+      <div className="mt-6 grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+        {list.slice(0, 4).map((a) => <ArticleCard key={a.slug} a={a} />)}
+      </div>
+    </section>
+  );
+};
 
 const Now = () => {
   const { t, lang } = useI18n();
-  const briefs = useBriefs();
-  const newsFeed = useNewsFeed();
-  const feedNews = (newsFeed.data?.news ?? []).slice(0, 8);
-  const newsCount = feedNews.length + (briefs.data?.length ?? 0);
+  const news = useNewsFeed();
+  const L = (en: string, he: string) => (lang === "he" ? he : en);
+  const all = articlesFor(lang);
+  const lead = all.find((a) => a.featured) ?? all[0];
+  const side = all.filter((a) => a !== lead).slice(0, 5);
+  const used = new Set([lead, ...side].map((a) => a?.slug));
+  const pick = (cats: string[]) => all.filter((a) => cats.includes(a.category) && !used.has(a.slug));
 
   useEffect(() => {
-    document.title = lang === "he" ? "Discover Tel Aviv · מה קורה בתל אביב עכשיו" : "Discover Tel Aviv · Tel Aviv right now";
+    document.title = lang === "he" ? "Discover Tel Aviv · מה קורה בתל אביב עכשיו" : "Discover Tel Aviv · Events, food, beaches and the city right now";
   }, [lang]);
 
   return (
     <SiteLayout>
-      <SkyHero />
+      <PostcardHero />
+      <LiveStrip />
+      <TonightTickets />
+      <NumbersBand />
+
       <div className="container-page">
-        <div className="mt-2">
-          <ConditionsStrip />
-        </div>
+        {lead && (
+          <section className="pt-16">
+            <div className="flex items-baseline justify-between gap-3 border-b-[3px] border-foreground pb-2">
+              <h2 className="font-display text-[38px] sm:text-[56px] leading-[1]">{L("The latest", "החדשים במגזין")}</h2>
+              <Link to="/magazine" className="text-[17px] font-bold text-sea hover:underline underline-offset-4">{L("The magazine", "למגזין")}</Link>
+            </div>
+            <div className="mt-7 grid gap-8 lg:grid-cols-[1.5fr,1fr]">
+              <ArticleCard a={lead} big />
+              <div>{side.map((a) => <ArticleRow key={a.slug} a={a} />)}</div>
+            </div>
+          </section>
+        )}
+      </div>
 
-        <div className="mt-6">
-          <HomeBoard />
-        </div>
+      <NeighbourhoodPostcards />
 
-        <section aria-labelledby="news-h" className="mt-12">
-          <div className="flex items-baseline justify-between">
-            <h2 id="news-h" className="font-display text-[28px] leading-none">{t("now.news")}</h2>
-            <Link to="/news" className="text-[14px] text-sea hover:underline underline-offset-4">{t("now.allNews")}</Link>
-          </div>
-          {newsCount > 0 ? (
-            <>
-              {feedNews.length > 0 && (
-                <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto snap-x snap-mandatory pb-2 [scrollbar-width:thin]">
-                  {feedNews.map((n) => <NewsCard key={n.id} n={n} className="snap-start shrink-0 w-[78%] sm:w-[280px]" />)}
-                </div>
-              )}
-              {(briefs.data ?? []).length > 0 && (
-                <ul className="mt-1 divide-y divide-border">
-                  {(briefs.data ?? []).map((i) => (
-                    <ItemRow key={i.id} item={i} lead={i.published_at ? fmtClock(i.published_at, lang) : ""} />
-                  ))}
-                </ul>
-              )}
-            </>
-          ) : (
-            !briefs.isLoading && !newsFeed.isLoading && <p className="mt-3 text-[14px] text-muted-foreground">{t("now.newsEmpty")}</p>
-          )}
+      <div className="container-page">
+        <Shelf title={L("Eat & drink: the best of", "אוכל ושתייה: הכי טובים")} to="/magazine" list={pick(["food", "drink"])} />
+        <Shelf title={L("Visiting Tel Aviv", "מבקרים בתל אביב")} to="/magazine" list={pick(["tourists", "outdoors"])} />
+      </div>
+
+      <Hungry />
+
+      <div className="container-page">
+        <Shelf title={L("Living here", "לגור כאן")} to="/magazine" list={pick(["newcomers", "neighbourhoods", "holidays", "family"])} />
+
+        {(news.data?.news ?? []).length > 0 && (
+          <section className="mt-14">
+            <div className="flex items-baseline justify-between gap-3 border-b-[3px] border-foreground pb-2">
+              <h2 className="font-display text-[28px] sm:text-[34px] leading-none">{t("now.news")}</h2>
+              <Link to="/news" className="text-[15px] font-bold text-sea hover:underline underline-offset-4">{t("now.allNews")}</Link>
+            </div>
+            <div className="mt-5 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-4 overflow-x-auto snap-x pb-2 [scrollbar-width:thin]">
+              {(news.data?.news ?? []).slice(0, 10).map((n) => <NewsCard key={n.id} n={n} className="snap-start shrink-0 w-[78%] sm:w-[280px]" />)}
+            </div>
+          </section>
+        )}
+
+        <section className="mt-16 grid gap-4 sm:grid-cols-3">
+          {[
+            { to: "/weekend", bg: "#ff5a4e", fg: "#fff", t: L("This weekend", "סוף השבוע"), s: L("Our picks, the beach outlook and Shabbat times.", "הבחירות שלנו, תחזית חוף וזמני שבת.") },
+            { to: "/hotels", bg: "#0057ff", fg: "#fff", t: L("Where to stay", "איפה לישון"), s: L("Every hotel and hostel on the map, by beach.", "כל המלונות וההוסטלים על המפה.") },
+            { to: "/walks", bg: "#ffcb05", fg: "#0b1a33", t: L("Free walking tours", "סיורים חינם"), s: L("Bauhaus, Jaffa, Florentin and the market.", "באוהאוס, יפו, פלורנטין והשוק.") },
+          ].map((c) => (
+            <Link key={c.to} to={c.to} className="rounded-[10px] p-6 transition-transform hover:-translate-y-1" style={{ background: c.bg, color: c.fg }}>
+              <span className="block font-display text-[30px] leading-tight">{c.t}</span>
+              <span className="mt-1 block text-[15px] opacity-90">{c.s}</span>
+            </Link>
+          ))}
         </section>
-
-        <section aria-labelledby="mag-h" className="mt-12">
-          <div className="flex items-baseline justify-between">
-            <h2 id="mag-h" className="font-display text-[28px] leading-none">{t("mag.title")}</h2>
-            <Link to="/magazine" className="text-[14px] text-sea hover:underline underline-offset-4">{t("now.allGuides")}</Link>
-          </div>
-          <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {articlesFor(lang).filter((a) => a.featured).slice(0, 4).map((a) => <ArticleCard key={a.slug} a={a} />)}
-          </div>
-        </section>
-
-        <div className="mt-12 grid gap-10 lg:grid-cols-[1fr,360px]">
-          <OpenNearby />
-          <BeachList />
-        </div>
       </div>
     </SiteLayout>
   );

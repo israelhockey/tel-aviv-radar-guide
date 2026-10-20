@@ -51,7 +51,7 @@ const CinemaPage = () => {
     `h-9 rounded-full px-4 text-[14px] border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea ${active ? "bg-foreground text-background border-foreground" : "border-border hover:bg-secondary"}`;
 
   return (
-    <SiteLayout>
+    <SiteLayout zone="night">
       <section className="relative isolate overflow-hidden text-white" style={{ background: "linear-gradient(135deg, #1a1033 0%, #5f3dc4 50%, #c2255c 100%)" }}>
         <div className="container-page py-8 sm:py-12">
           <h1 className="font-display text-[42px] sm:text-[64px] leading-[0.95] flex items-center gap-3"><Clapperboard className="h-10 w-10 sm:h-14 sm:w-14" aria-hidden />{t("cin.title")}</h1>

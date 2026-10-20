@@ -21,7 +21,7 @@ const WalkCard = ({ w }: { w: Walk }) => {
         {p ? <img src={p.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover transition-transform duration-500 group-hover:scale-[1.03]" /> : <span className="block w-full aspect-[4/3]" style={{ background: w.color }} />}
         <span className="absolute bottom-3 start-3 rounded-md px-2 py-0.5 text-[12px] font-semibold text-white" style={{ background: w.color }}>{km.toFixed(1)} km, {Math.round((km / 4.5) * 60)} {t("live.minutes")}</span>
       </span>
-      <span className="mt-3 block font-display text-[24px] leading-tight group-hover:text-[#d6336c]">{lang === "he" ? w.titleHe : w.title}</span>
+      <span className="mt-3 block font-display text-[24px] leading-tight group-hover:text-[#ff5a4e]">{lang === "he" ? w.titleHe : w.title}</span>
       <span className="mt-1 block text-[14px] text-muted-foreground">{w.dek}</span>
     </Link>
   );

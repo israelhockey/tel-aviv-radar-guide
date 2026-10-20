@@ -9,7 +9,7 @@ import { useCityData } from "@/lib/live/hooks";
 type T = { en: string; he: string };
 
 const HOODS: { name: T; color: string; body: T }[] = [
-  { name: { en: "Old North", he: "הצפון הישן" }, color: "#1971c2", body: { en: "Leafy Bauhaus streets around Dizengoff, Ben Yehuda and Basel. Cafés, boutiques, the beach a few blocks away.", he: "רחובות באוהאוס ירוקים סביב דיזנגוף, בן יהודה ובזל. בתי קפה, בוטיקים, והים במרחק כמה רחובות." } },
+  { name: { en: "Old North", he: "הצפון הישן" }, color: "#0057ff", body: { en: "Leafy Bauhaus streets around Dizengoff, Ben Yehuda and Basel. Cafés, boutiques, the beach a few blocks away.", he: "רחובות באוהאוס ירוקים סביב דיזנגוף, בן יהודה ובזל. בתי קפה, בוטיקים, והים במרחק כמה רחובות." } },
   { name: { en: "Lev HaIr & the White City", he: "לב העיר והעיר הלבנה" }, color: "#7048e8", body: { en: "Rothschild Boulevard, Sheinkin and the UNESCO-listed White City. Busy days, busier nights.", he: "שדרות רוטשילד, שינקין והעיר הלבנה שהוכרזה על ידי אונסק״ו. ימים עמוסים, לילות עמוסים עוד יותר." } },
   { name: { en: "Neve Tzedek", he: "נווה צדק" }, color: "#c2255c", body: { en: "The city's oldest Jewish neighbourhood: low houses, galleries, Suzanne Dellal and quiet lanes near the sea.", he: "השכונה היהודית הוותיקה בעיר: בתים נמוכים, גלריות, סוזן דלל וסמטאות שקטות ליד הים." } },
   { name: { en: "Florentin", he: "פלורנטין" }, color: "#e8590c", body: { en: "Street art, workshops and the bars that keep south Tel Aviv up late. Levinsky Market is on its edge.", he: "גרפיטי, סדנאות והברים שמשאירים את דרום העיר ער עד מאוחר. שוק לוינסקי בקצה." } },
@@ -43,7 +43,7 @@ const Guide = () => {
   }, [lang]);
 
   const counts: [number | undefined, T, string][] = [
-    [city.data?.toilets?.length, { en: "public toilets", he: "שירותים ציבוריים" }, "#1971c2"],
+    [city.data?.toilets?.length, { en: "public toilets", he: "שירותים ציבוריים" }, "#0057ff"],
     [city.data?.dogParks?.length, { en: "dog parks", he: "גינות כלבים" }, "#2f9e44"],
     [city.data?.shelters?.length, { en: "public shelters", he: "מקלטים ציבוריים" }, "#c92a2a"],
     [city.data?.culture?.length, { en: "museums, galleries and venues", he: "מוזיאונים, גלריות ואולמות" }, "#7048e8"],
@@ -51,7 +51,7 @@ const Guide = () => {
 
   return (
     <SiteLayout>
-      <section className="relative isolate overflow-hidden text-white" style={{ background: "linear-gradient(135deg, #2f9e44 0%, #0b7285 50%, #1971c2 100%)" }}>
+      <section className="relative isolate overflow-hidden text-white" style={{ background: "linear-gradient(135deg, #2f9e44 0%, #0b7285 50%, #0057ff 100%)" }}>
         <div className="container-page py-8 sm:py-12">
           <h1 className="font-display text-[42px] sm:text-[64px] leading-[0.95]">{L({ en: "Tel Aviv, explained", he: "תל אביב, בקצרה" })}</h1>
           <p className="mt-2 text-[17px] text-white/90 max-w-xl">{L({ en: "The neighbourhoods, how the week works, and the things locals know. For visitors, newcomers and everyone in between.", he: "השכונות, איך עובד השבוע, והדברים שהמקומיים יודעים. למבקרים, לחדשים בעיר ולכל מי שביניהם." })}</p>

@@ -21,16 +21,16 @@ export const MiniMap = ({ lat, lon, zoom = 15.5, className = "", line }: { lat: 
         map.resize();
         if (line && line.length > 1) {
           map.addSource("walk", { type: "geojson", data: { type: "Feature", geometry: { type: "LineString", coordinates: line }, properties: {} } });
-          map.addLayer({ id: "walk", type: "line", source: "walk", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#d6336c", "line-width": 5 } });
+          map.addLayer({ id: "walk", type: "line", source: "walk", layout: { "line-cap": "round", "line-join": "round" }, paint: { "line-color": "#ff5a4e", "line-width": 5 } });
           map.addSource("stops", { type: "geojson", data: { type: "FeatureCollection", features: line.map((c, i) => ({ type: "Feature", geometry: { type: "Point", coordinates: c }, properties: { n: String(i + 1) } })) } });
-          map.addLayer({ id: "stops", type: "circle", source: "stops", paint: { "circle-radius": 11, "circle-color": "#d6336c", "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 } });
+          map.addLayer({ id: "stops", type: "circle", source: "stops", paint: { "circle-radius": 11, "circle-color": "#ff5a4e", "circle-stroke-color": "#ffffff", "circle-stroke-width": 2 } });
           map.addLayer({ id: "stops-n", type: "symbol", source: "stops", layout: { "text-field": ["get", "n"], "text-font": ["Noto Sans Regular"], "text-size": 12, "text-allow-overlap": true }, paint: { "text-color": "#ffffff" } });
           const lons = line.map((c) => c[0]), lats = line.map((c) => c[1]);
           map.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]], { padding: 40, duration: 0 });
         } else {
           map.addSource("pin", { type: "geojson", data: { type: "Feature", geometry: { type: "Point", coordinates: [lon, lat] }, properties: {} } });
-          map.addLayer({ id: "pin-halo", type: "circle", source: "pin", paint: { "circle-radius": 18, "circle-color": "#d6336c", "circle-opacity": 0.25 } });
-          map.addLayer({ id: "pin", type: "circle", source: "pin", paint: { "circle-radius": 8, "circle-color": "#d6336c", "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
+          map.addLayer({ id: "pin-halo", type: "circle", source: "pin", paint: { "circle-radius": 18, "circle-color": "#ff5a4e", "circle-opacity": 0.25 } });
+          map.addLayer({ id: "pin", type: "circle", source: "pin", paint: { "circle-radius": 8, "circle-color": "#ff5a4e", "circle-stroke-color": "#ffffff", "circle-stroke-width": 3 } });
         }
       });
     }).catch(() => undefined);

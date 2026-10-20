@@ -71,12 +71,12 @@ const Jobs = () => {
             </li>
           ))}
         </ul>
-        <div className="mt-10 rounded-lg bg-[#0f1530] text-white p-6 sm:flex sm:items-center sm:justify-between gap-6">
+        <div className="mt-10 rounded-lg bg-[#0b1a33] text-white p-6 sm:flex sm:items-center sm:justify-between gap-6">
           <div>
             <p className="font-display text-[24px] leading-tight">{t("jobs.postTitle")}</p>
             <p className="mt-1 text-[14px] text-white/80">{t("jobs.postBody")}</p>
           </div>
-          <Link to="/submit?kind=job" className="mt-4 sm:mt-0 shrink-0 inline-flex h-11 items-center rounded-lg bg-[#ffc233] text-[#1f1400] px-5 text-[14px] font-semibold">{t("jobs.post")}</Link>
+          <Link to="/submit?kind=job" className="mt-4 sm:mt-0 shrink-0 inline-flex h-11 items-center rounded-lg bg-[#ffcb05] text-[#0b1a33] px-5 text-[14px] font-semibold">{t("jobs.post")}</Link>
         </div>
         <p className="mt-4 text-[12px] text-muted-foreground">{t("jobs.source")}</p>
       </div>

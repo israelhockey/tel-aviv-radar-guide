@@ -49,7 +49,7 @@ const ArticlePage = () => {
           <Link to="/magazine" className="inline-block rounded-md px-2 py-0.5 text-[13px] font-semibold text-white" style={{ background: cat.color }}>{lang === "he" ? cat.he : cat.en}</Link>
           <h1 className="mt-3 font-display text-[40px] sm:text-[60px] leading-[1.02]" dir="auto">{a.title}</h1>
           {other && other.slug !== a.slug && (
-            <Link to={`/magazine/${other.slug}`} className="mt-3 inline-block rounded-md bg-[#ffc233] text-[#1f1400] px-3 py-1.5 text-[14px] font-semibold">{other.lang === "he" ? "לקריאה בעברית" : "Read in English"}</Link>
+            <Link to={`/magazine/${other.slug}`} className="mt-3 inline-block rounded-md bg-[#ffcb05] text-[#0b1a33] px-3 py-1.5 text-[14px] font-semibold">{other.lang === "he" ? "לקריאה בעברית" : "Read in English"}</Link>
           )}
           {a.dek && <p className="mt-3 text-[20px] leading-relaxed text-muted-foreground" dir="auto">{a.dek}</p>}
           <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-[14px] text-muted-foreground">

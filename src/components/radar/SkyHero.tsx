@@ -174,12 +174,12 @@ export const SkyHero = () => {
   }, [preview, tlSel, events.data, now]);
 
   const pills: { text: string; to: string; bg: string }[] = [];
-  if (tonight) pills.push({ text: `${tonight} ${t("hero.thingsTonight")}`, to: "/events", bg: "#d6336c" });
+  if (tonight) pills.push({ text: `${tonight} ${t("hero.thingsTonight")}`, to: "/events", bg: "#ff5a4e" });
   if (toSunset > 0 && toSunset < 180) pills.push({ text: `${t("sky.sunsetIn")} ${toSunset < 60 ? `${toSunset} ${t("live.minutes")}` : `${Math.floor(toSunset / 60)}:${String(toSunset % 60).padStart(2, "0")}`}`, to: "/beach", bg: "#f76707" });
   else if (isNight && toSunrise < 300) pills.push({ text: `${t("sky.sunriseIn")} ${Math.floor(toSunrise / 60)}:${String(toSunrise % 60).padStart(2, "0")}`, to: "/beach", bg: "#f59f00" });
   if (beachScore != null) pills.push({ text: `${t("nav.beach")} ${beachScore.toFixed(1)}/10`, to: "/beach", bg: "#0c8599" });
   if (hoursToShabbat != null && hoursToShabbat < 30) pills.push({ text: `${t("shab.in")} ${Math.round(hoursToShabbat)} ${t("shab.hours")}`, to: "/shabbat", bg: "#5f3dc4" });
-  pills.push({ text: t("sky.liveMap"), to: "/live", bg: "#0f1530" });
+  pills.push({ text: t("sky.liveMap"), to: "/live", bg: "#0b1a33" });
 
   const w = weather.data;
 
@@ -228,7 +228,7 @@ export const SkyHero = () => {
             />
           </div>
           {preview != null && (
-            <button onClick={() => setPreview(null)} className="shrink-0 h-8 rounded-md bg-white text-[#0f1530] px-3 text-[13px] font-semibold">{t("sky.now")}</button>
+            <button onClick={() => setPreview(null)} className="shrink-0 h-8 rounded-md bg-white text-[#0b1a33] px-3 text-[13px] font-semibold">{t("sky.now")}</button>
           )}
         </div>
       </div>
@@ -250,7 +250,7 @@ export const SkyHero = () => {
             {startingThen.length > 0 && (
               <ul className="mt-3 space-y-1 max-w-xl">
                 {startingThen.map((e) => (
-                  <li key={e.id}><Link to={`/event/${eventSlug(e)}`} className="inline-block rounded-md bg-[#0f1530]/80 px-2.5 py-1 text-[14px] hover:bg-[#0f1530]" dir="auto">{e.title}{e.venue ? `, ${e.venue}` : ""}</Link></li>
+                  <li key={e.id}><Link to={`/event/${eventSlug(e)}`} className="inline-block rounded-md bg-[#0b1a33]/80 px-2.5 py-1 text-[14px] hover:bg-[#0b1a33]" dir="auto">{e.title}{e.venue ? `, ${e.venue}` : ""}</Link></li>
                 ))}
               </ul>
             )}

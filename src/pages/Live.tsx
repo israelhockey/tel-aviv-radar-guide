@@ -27,7 +27,7 @@ const LAYERS: { id: LayerId; key: StringKey; icon: typeof BusIcon; color: string
   { id: "rail", key: "live.rail", icon: TrainFront, color: "#e03131" },
   { id: "flights", key: "live.flights", icon: Plane, color: "#ff5a1f" },
   { id: "food", key: "live.food", icon: UtensilsCrossed, color: "#e8590c" },
-  { id: "parking", key: "live.parking", icon: SquareParking, color: "#1971c2" },
+  { id: "parking", key: "live.parking", icon: SquareParking, color: "#0057ff" },
   { id: "bikes", key: "live.bikes", icon: Bike, color: "#2f9e44" },
   { id: "beaches", key: "live.beaches", icon: Waves, color: "#0f8a9d" },
   { id: "rain", key: "live.rain", icon: CloudRain, color: "#5c7cfa" },
@@ -703,7 +703,7 @@ const Live = () => {
   const busAge = buses.data?.newest ? minutesAgo(buses.data.newest) : null;
 
   return (
-    <SiteLayout fill>
+    <SiteLayout fill zone="lines">
       {/* MapLibre's stylesheet sets its container to position:relative, so size it via a wrapper. */}
       <div className="absolute inset-0">
         <div ref={containerRef} className="h-full w-full" aria-label={t("nav.live")} role="region" />

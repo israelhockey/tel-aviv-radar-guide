@@ -22,7 +22,7 @@ export const ArticleCard = ({ a, big = false }: { a: Article; big?: boolean }) =
         <Cover a={a} className={`w-full ${big ? "aspect-[16/10]" : "aspect-[4/3]"} transition-transform duration-500 group-hover:scale-[1.03]`} />
         <span className="absolute top-3 start-3 rounded-md px-2 py-0.5 text-[12px] font-semibold text-white" style={{ background: cat.color }}>{lang === "he" ? cat.he : cat.en}</span>
       </span>
-      <span className={`mt-3 block font-display leading-tight group-hover:text-[#d6336c] ${big ? "text-[32px] sm:text-[40px]" : "text-[22px]"}`} dir="auto">{a.title}</span>
+      <span className={`mt-3 block font-display leading-tight group-hover:text-[#ff5a4e] ${big ? "text-[32px] sm:text-[40px]" : "text-[22px]"}`} dir="auto">{a.title}</span>
       {a.dek && <span className={`mt-1 block text-muted-foreground ${big ? "text-[17px]" : "text-[14px]"} line-clamp-2`} dir="auto">{a.dek}</span>}
     </Link>
   );

@@ -83,10 +83,10 @@ const PlacePage = () => {
 
   return (
     <SiteLayout>
-      <section className="relative bg-[#0f1530]">
+      <section className="relative bg-[#0b1a33]">
         {photo && !broken ? (
           <img src={photo.src} alt="" referrerPolicy="no-referrer" onError={() => setBroken(true)} className="w-full h-[260px] sm:h-[380px] object-cover" />
-        ) : <div className="h-[200px] sm:h-[260px] bg-[#ffc233]" />}
+        ) : <div className="h-[200px] sm:h-[260px] bg-[#ffcb05]" />}
         <div className="container-page relative -mt-20 sm:-mt-24 pb-2">
           <div className="inline-block max-w-full rounded-lg bg-white dark:bg-card px-5 py-4 sm:px-7 sm:py-5 shadow-[var(--shadow-card)]">
             <p className="text-[14px] text-muted-foreground">{placeKindLabel(p.kind, lang)}{hood && <>, <Link to={`/area/${hoodSlug(hood)}`} className="underline underline-offset-2 hover:text-foreground">{lang === "he" ? hood.he : hood.en}</Link></>}</p>
@@ -111,7 +111,7 @@ const PlacePage = () => {
           </div>
 
           {data.guides.length > 0 && (
-            <div className="mt-6 rounded-lg bg-[#ffc233] text-[#1f1400] p-4">
+            <div className="mt-6 rounded-lg bg-[#ffcb05] text-[#0b1a33] p-4">
               <p className="text-[14px] font-semibold">{t("place.inGuides")}</p>
               <ul className="mt-1 space-y-1">{data.guides.map((g) => <li key={g.slug}><Link to={`/magazine/${g.slug}`} className="text-[16px] font-medium underline underline-offset-4">{g.title}</Link></li>)}</ul>
             </div>
@@ -141,8 +141,8 @@ const PlacePage = () => {
                   return (
                     <li key={x.id}>
                       <Link to={`/place/${placeSlug(x)}`} className="group block">
-                        {ph ? <img src={ph.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover rounded-lg" /> : <span className="block w-full aspect-[4/3] rounded-lg bg-[#ffc233]" />}
-                        <span className="mt-1.5 block text-[15px] font-semibold truncate group-hover:text-[#d6336c]" dir="auto">{(lang === "en" && x.nameEn) || x.name}</span>
+                        {ph ? <img src={ph.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover rounded-lg" /> : <span className="block w-full aspect-[4/3] rounded-lg bg-[#ffcb05]" />}
+                        <span className="mt-1.5 block text-[15px] font-semibold truncate group-hover:text-[#ff5a4e]" dir="auto">{(lang === "en" && x.nameEn) || x.name}</span>
                         <span className={`block text-[12px] ${s.status === "open" ? "text-[#2f9e44] font-semibold" : "text-muted-foreground"}`}>{s.status === "open" ? t("live.open") : s.status === "closed" ? t("live.closed") : ""} {walkMinutes(distanceMeters(p, x))} {t("now.walk")}</span>
                       </Link>
                     </li>
@@ -163,7 +163,7 @@ const PlacePage = () => {
               <ul className="mt-2 space-y-2 text-[14px]">
                 {data.parks.map((k) => (
                   <li key={k.id} className="flex items-center gap-2">
-                    <SquareParking className="h-4 w-4 text-[#1971c2] shrink-0" aria-hidden />
+                    <SquareParking className="h-4 w-4 text-[#0057ff] shrink-0" aria-hidden />
                     <span className="flex-1 truncate" dir="auto">{k.name}</span>
                     <span className={`text-[12px] font-semibold ${k.status === "free" ? "text-[#2f9e44]" : k.status === "full" ? "text-destructive" : "text-muted-foreground"}`}>{t(`park.${k.status}` as "park.free")}</span>
                   </li>
@@ -184,7 +184,7 @@ const PlacePage = () => {
               <h2 className="text-[16px] font-semibold">{t("place.tonightNear")}</h2>
               <ul className="mt-2 space-y-2">
                 {data.tonight.map((e) => (
-                  <li key={e.id}><Link to={`/event/${eventSlug(e)}`} className="block text-[14px] hover:text-[#d6336c]"><span className="tabular font-semibold">{fmtClock(e.start, lang)}</span> <span dir="auto">{e.title}</span></Link></li>
+                  <li key={e.id}><Link to={`/event/${eventSlug(e)}`} className="block text-[14px] hover:text-[#ff5a4e]"><span className="tabular font-semibold">{fmtClock(e.start, lang)}</span> <span dir="auto">{e.title}</span></Link></li>
                 ))}
               </ul>
             </section>

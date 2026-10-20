@@ -43,16 +43,16 @@ const Weekend = () => {
   const reads = articlesFor(lang).filter((a) => ["food", "drink", "neighbourhoods"].includes(a.category)).slice(0, 3);
 
   return (
-    <SiteLayout>
-      <section className="bg-[#d6336c] text-white">
+    <SiteLayout zone="night">
+      <section className="border-b-2 border-accent">
         <div className="container-page py-10 sm:py-14">
-          <h1 className="font-display text-[48px] sm:text-[80px] leading-[0.92]">{t("wk.title")}</h1>
-          <p className="mt-3 text-[18px] max-w-xl text-white/90">{events.data ? `${picks.length} ${t("wk.things")}` : "…"}</p>
+          <h1 className="font-display text-[80px] sm:text-[150px] leading-[0.82]">{lang === "he" ? <>סוף<br /><span className="night-outline">השבוע</span></> : <>This<br /><span className="night-outline">weekend</span></>}</h1>
+          <p className="mt-4 text-[20px] max-w-xl">{events.data ? `${picks.length} ${t("wk.things")}` : "…"}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            {shabbat.data?.candles && <div className="rounded-lg bg-white/15 px-4 py-3"><p className="text-[13px] text-white/80">{t("shabbat.candles")}</p><p className="font-display text-[28px] leading-none tabular">{fmtClock(shabbat.data.candles, lang)}</p><p className="text-[12px] text-white/80">{fmtWeekday(shabbat.data.candles, lang)}</p></div>}
-            {shabbat.data?.havdalah && <div className="rounded-lg bg-white/15 px-4 py-3"><p className="text-[13px] text-white/80">{t("shabbat.ends")}</p><p className="font-display text-[28px] leading-none tabular">{fmtClock(shabbat.data.havdalah, lang)}</p><p className="text-[12px] text-white/80">{fmtWeekday(shabbat.data.havdalah, lang)}</p></div>}
+            {shabbat.data?.candles && <div className="rounded-[4px] bg-card px-4 py-3"><p className="text-[13px] text-muted-foreground">{t("shabbat.candles")}</p><p className="font-display text-[28px] leading-none tabular">{fmtClock(shabbat.data.candles, lang)}</p><p className="text-[12px] text-muted-foreground">{fmtWeekday(shabbat.data.candles, lang)}</p></div>}
+            {shabbat.data?.havdalah && <div className="rounded-[4px] bg-card px-4 py-3"><p className="text-[13px] text-muted-foreground">{t("shabbat.ends")}</p><p className="font-display text-[28px] leading-none tabular">{fmtClock(shabbat.data.havdalah, lang)}</p><p className="text-[12px] text-muted-foreground">{fmtWeekday(shabbat.data.havdalah, lang)}</p></div>}
             {days.map(([d, s]) => (
-              <Link key={d} to="/beach" className="rounded-lg bg-[#0e7c86] px-4 py-3">
+              <Link key={d} to="/beach" className="rounded-[4px] bg-[#7a5cff] text-white px-4 py-3">
                 <p className="text-[13px] text-white/80">{t("nav.beach")}, {new Intl.DateTimeFormat(lang === "he" ? "he-IL" : "en-GB", { weekday: "long", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`))}</p>
                 <p className="font-display text-[28px] leading-none tabular">{s.toFixed(1)}/10</p>
               </Link>
@@ -65,7 +65,7 @@ const Weekend = () => {
         {sections.map(({ key, list }) => list.length > 0 && (
           <section key={key} className="mt-10">
             <div className="flex items-baseline justify-between">
-              <h2 className="font-display text-[28px] leading-none">{t(key)}</h2>
+              <h2 className="font-display text-[48px] leading-none">{t(key)}</h2>
               <span className="text-[14px] text-muted-foreground tabular">{list.length}</span>
             </div>
             <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto pb-2">
@@ -75,7 +75,7 @@ const Weekend = () => {
         ))}
 
         {markets.length > 0 && (
-          <section className="mt-10 rounded-xl bg-[#ffc233] text-[#1f1400] p-5">
+          <section className="mt-10 rounded-[4px] bg-accent text-accent-foreground p-5">
             <h2 className="font-display text-[26px] leading-none">{t("wk.markets")}</h2>
             <ul className="mt-3 space-y-1.5">{markets.slice(0, 6).map((m) => <li key={m.id} className="text-[15px]"><span className="font-semibold tabular">{fmtWeekday(m.start, lang)} {fmtClock(m.start, lang)}</span> <span dir="auto">{m.title}</span></li>)}</ul>
           </section>
@@ -83,7 +83,7 @@ const Weekend = () => {
 
         {free.length > 0 && (
           <section className="mt-10">
-            <h2 className="font-display text-[28px] leading-none">{t("wk.free")}</h2>
+            <h2 className="font-display text-[48px] leading-none">{t("wk.free")}</h2>
             <div className="mt-3 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-3 overflow-x-auto pb-2">
               {free.slice(0, 10).map((e) => <PosterCard key={e.id} e={e} showDay className="shrink-0 w-[46%] sm:w-[220px]" />)}
             </div>
@@ -91,16 +91,16 @@ const Weekend = () => {
         )}
 
         <section className="mt-12">
-          <h2 className="font-display text-[28px] leading-none">{t("wk.read")}</h2>
+          <h2 className="font-display text-[48px] leading-none">{t("wk.read")}</h2>
           <div className="mt-4 grid gap-6 sm:grid-cols-3">{reads.map((a) => <ArticleCard key={a.slug} a={a} />)}</div>
         </section>
 
-        <div className="mt-12 rounded-lg bg-[#0f1530] text-white p-6 sm:flex sm:items-center sm:justify-between gap-6">
+        <div className="mt-12 rounded-[4px] border-2 border-accent p-6 sm:flex sm:items-center sm:justify-between gap-6">
           <div>
             <p className="font-display text-[24px] leading-tight">{t("wk.letter")}</p>
-            <p className="mt-1 text-[14px] text-white/80">{t("wk.letterBody")}</p>
+            <p className="mt-1 text-[14px] text-muted-foreground">{t("wk.letterBody")}</p>
           </div>
-          <Link to="/newsletter" className="mt-4 sm:mt-0 shrink-0 inline-flex h-11 items-center rounded-lg bg-[#ffc233] text-[#1f1400] px-5 text-[14px] font-semibold">{t("wk.signup")}</Link>
+          <Link to="/newsletter" className="mt-4 sm:mt-0 shrink-0 inline-flex h-11 items-center rounded-lg bg-[#ffcb05] text-[#0b1a33] px-5 text-[14px] font-semibold">{t("wk.signup")}</Link>
         </div>
         <p className="mt-6"><Link to="/events?range=weekend" className="text-sea underline underline-offset-4">{t("wk.all")}</Link></p>
       </div>

@@ -66,7 +66,7 @@ const About = () => {
   }, [c.title]);
   return (
     <SiteLayout>
-      <section className="bg-[#ffc233] text-[#1f1400]">
+      <section className="bg-[#ffcb05] text-[#0b1a33]">
         <div className="container-page py-10 sm:py-14"><h1 className="font-display text-[40px] sm:text-[64px] leading-[0.95]">{c.title}</h1></div>
       </section>
       <div className="container-page max-w-3xl text-[17px] leading-relaxed">

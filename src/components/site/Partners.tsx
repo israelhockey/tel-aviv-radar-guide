@@ -19,7 +19,7 @@ const Out = ({ link, className, children }: { link: PartnerLink; className: stri
 export const BookButton = ({ name, lat, lon, className = "" }: { name: string; lat?: number; lon?: number; className?: string }) => {
   const { t } = useI18n();
   return (
-    <Out link={hotelLink(name, lat, lon)} className={`inline-flex items-center gap-2 h-11 rounded-lg bg-[#1971c2] text-white px-5 text-[14px] font-semibold hover:opacity-90 ${className}`}>
+    <Out link={hotelLink(name, lat, lon)} className={`inline-flex items-center gap-2 h-11 rounded-lg bg-[#0057ff] text-white px-5 text-[14px] font-semibold hover:opacity-90 ${className}`}>
       <BedDouble className="h-4 w-4" aria-hidden />{t("aff.prices")}
     </Out>
   );
@@ -66,9 +66,9 @@ export const Essentials = ({ className = "" }: { className?: string }) => {
 export const StayCard = ({ area, text }: { area: string; text?: string }) => {
   const { t } = useI18n();
   return (
-    <div className="mt-6 rounded-xl border-2 border-[#1971c2] p-4 sm:flex sm:items-center sm:justify-between gap-4">
+    <div className="mt-6 rounded-xl border-2 border-[#0057ff] p-4 sm:flex sm:items-center sm:justify-between gap-4">
       <div>
-        <p className="text-[13px] font-semibold text-[#1971c2]">{t("aff.stayIn")}</p>
+        <p className="text-[13px] font-semibold text-[#0057ff]">{t("aff.stayIn")}</p>
         <p className="text-[20px] font-display leading-tight">{area}</p>
         {text && <p className="mt-1 text-[14px] text-muted-foreground">{text}</p>}
       </div>

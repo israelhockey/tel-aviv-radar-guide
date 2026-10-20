@@ -39,10 +39,10 @@ const EventPage = () => {
     return { same, at, food };
   }, [e, events.data, places.data]);
 
-  if (!events.data) return <SiteLayout><div className="container-page py-16"><div className="h-80 rounded-xl bg-secondary animate-pulse" /></div></SiteLayout>;
+  if (!events.data) return <SiteLayout zone="night"><div className="container-page py-16"><div className="h-80 rounded-xl bg-secondary animate-pulse" /></div></SiteLayout>;
   if (!e || !extra) {
     return (
-      <SiteLayout>
+      <SiteLayout zone="night">
         <div className="container-page py-20">
           <h1 className="font-display text-[36px] leading-tight">{t("ev.gone")}</h1>
           <Link to="/events" className="mt-4 inline-block text-sea underline underline-offset-4">{t("ev.all")}</Link>
@@ -62,7 +62,7 @@ const EventPage = () => {
   const btn = "inline-flex items-center gap-2 h-11 rounded-lg border border-border px-4 text-[14px] font-medium hover:bg-secondary";
 
   return (
-    <SiteLayout>
+    <SiteLayout zone="night">
       <div className="container-page py-8 grid gap-8 lg:grid-cols-[360px,1fr]">
         <div className={`relative aspect-[4/5] rounded-xl overflow-hidden ${e.image && !broken ? "bg-muted" : cat}`}>
           {e.image && !broken
@@ -84,7 +84,7 @@ const EventPage = () => {
           </p>
           {e.summary && <p className="mt-4 text-[17px] leading-relaxed max-w-2xl" dir="auto">{e.summary}</p>}
           <div className="mt-6 flex flex-wrap gap-2">
-            <a href={e.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 h-11 rounded-lg bg-[#d6336c] text-white px-5 text-[15px] font-semibold"><Ticket className="h-4 w-4" aria-hidden />{t("ev.tickets")}</a>
+            <a href={e.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 h-11 rounded-full bg-accent text-accent-foreground px-6 font-extrabold text-[15px] font-semibold"><Ticket className="h-4 w-4" aria-hidden />{t("ev.tickets")}</a>
             <a href={gcal(e)} target="_blank" rel="noopener noreferrer" className={btn}><CalendarPlus className="h-4 w-4" aria-hidden />{t("ev.calendar")}</a>
             {extra.at && <a href={`https://www.google.com/maps/dir/?api=1&destination=${extra.at.lat},${extra.at.lon}`} target="_blank" rel="noopener noreferrer" className={btn}><Navigation className="h-4 w-4" aria-hidden />{t("live.directions")}</a>}
             <button onClick={share} className={btn}><Share2 className="h-4 w-4" aria-hidden />{t("art.share")}</button>
@@ -102,8 +102,8 @@ const EventPage = () => {
                   return (
                     <li key={p.id}>
                       <Link to={`/place/${placeSlug(p)}`} className="group block">
-                        {ph ? <img src={ph.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover rounded-lg" /> : <span className="block w-full aspect-[4/3] rounded-lg bg-[#ffc233]" />}
-                        <span className="mt-1.5 block text-[15px] font-semibold truncate group-hover:text-[#d6336c]" dir="auto">{(lang === "en" && p.nameEn) || p.name}</span>
+                        {ph ? <img src={ph.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover rounded-lg" /> : <span className="block w-full aspect-[4/3] rounded-lg bg-secondary" />}
+                        <span className="mt-1.5 block text-[15px] font-semibold truncate group-hover:text-accent" dir="auto">{(lang === "en" && p.nameEn) || p.name}</span>
                         <span className="block text-[12px] text-muted-foreground">{walkMinutes(distanceMeters(extra.at!, p))} {t("now.walk")}</span>
                       </Link>
                     </li>

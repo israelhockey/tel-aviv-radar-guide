@@ -9,7 +9,7 @@ export const WALKS: Walk[] = [
     titleHe: "העיר הלבנה: סיור באוהאוס",
     dek: "The streets that made Tel Aviv a UNESCO World Heritage site, from Dizengoff Square to Independence Hall.",
     cover: "city:whitecity",
-    color: "#1971c2",
+    color: "#0057ff",
     stops: [
       { name: "Dizengoff Square", nameHe: "כיכר דיזנגוף", lat: 32.0779, lon: 34.774, text: "The heart of the 1930s city, designed as a round plaza ringed by curved Bauhaus buildings." },
       { name: "Bauhaus Center, Dizengoff 77", nameHe: "מרכז הבאוהאוס, דיזנגוף 77", lat: 32.0768, lon: 34.7745, text: "A small shop and gallery about the White City, with maps and books for the rest of the walk." },
@@ -54,7 +54,7 @@ export const WALKS: Walk[] = [
     titleHe: "סיור אוכל בשוק הכרמל",
     dek: "Fresh juice, burekas, hummus and the Yemenite Quarter's hidden lanes.",
     cover: "city:carmel",
-    color: "#d6336c",
+    color: "#ff5a4e",
     stops: [
       { name: "Magen David Square", nameHe: "כיכר מגן דוד", lat: 32.0683, lon: 34.7697, text: "Six streets meet here at the market's entrance. Start with a fresh juice." },
       { name: "Carmel Market", nameHe: "שוק הכרמל", lat: 32.0672, lon: 34.7687, text: "The city's biggest market: fruit, spices, cheese, street food and a lot of noise." },

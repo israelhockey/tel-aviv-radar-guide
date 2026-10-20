@@ -1,23 +1,15 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Bike, Bus, Car, Plane, Search, SquareParking, TrainFront, CreditCard } from "lucide-react";
+import { Bike, Bus, Plane, Search, SquareParking, TrainFront, CreditCard } from "lucide-react";
+import { BoardRow, LineMap } from "@/components/lines/Lines";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n, type StringKey } from "@/lib/i18n";
 import { useBuses, useParking, useTelofan, useTraffic } from "@/lib/live/hooks";
 
-const Tile = ({ to, icon: Icon, n, label, color, sub }: { to: string; icon: typeof Bus; n: string | number | null; label: string; color: string; sub?: string }) => (
-  <Link to={to} className="group rounded-[var(--radius)] p-4 text-white shadow-[var(--shadow-card)] hover:brightness-105" style={{ background: color }}>
-    <Icon className="h-5 w-5 opacity-90" aria-hidden />
-    <p className="mt-3 font-display text-[36px] leading-none tabular">{n ?? "…"}</p>
-    <p className="mt-1 text-[14px] font-medium">{label}</p>
-    {sub && <p className="text-[12px] opacity-85">{sub}</p>}
-  </Link>
-);
-
 const Tip = ({ icon: Icon, title, body }: { icon: typeof Bus; title: StringKey; body: StringKey }) => {
   const { t } = useI18n();
   return (
-    <li className="rounded-[var(--radius)] bg-card shadow-[var(--shadow-card)] p-4">
+    <li className="rounded-[4px] border-2 border-foreground p-4">
       <p className="flex items-center gap-2 text-[16px] font-medium"><Icon className="h-4 w-4 text-sea" aria-hidden />{t(title)}</p>
       <p className="mt-1.5 text-[14px] text-muted-foreground leading-relaxed">{t(body)}</p>
     </li>
@@ -40,29 +32,35 @@ const GettingAround = () => {
   const heavy = traffic.data?.jams.filter((j) => j.level >= 3).length ?? null;
   const closures = traffic.data?.reports.filter((r) => r.type === "ROAD_CLOSED").length ?? null;
 
+  const L = (en: string, he: string) => (lang === "he" ? he : en);
   return (
-    <SiteLayout>
-      <section className="relative isolate overflow-hidden text-white" style={{ background: "linear-gradient(135deg, #0b63e5 0%, #4263eb 45%, #7048e8 100%)" }}>
-        <div className="container-page py-8 sm:py-12">
-          <h1 className="font-display text-[42px] sm:text-[64px] leading-[0.95]">{t("go.title")}</h1>
-          <p className="mt-2 text-[17px] text-white/90 max-w-xl">{t("go.body")}</p>
-          <Link to="/live?where=1" className="mt-5 inline-flex h-12 items-center gap-2 rounded-full bg-white text-[hsl(230_35%_10%)] px-6 text-[15px] font-semibold shadow-[0_12px_30px_-10px_rgba(0,0,0,0.5)]">
-            <Search className="h-4 w-4" aria-hidden />{t("where.button")}
-          </Link>
+    <SiteLayout zone="lines">
+      <section className="container-page pt-12 pb-8">
+        <h1 className="font-display text-[52px] sm:text-[88px] leading-[0.95] max-w-[13ch]">{L("Getting around, one stop at a time.", "מתניידים בעיר, תחנה אחר תחנה.")}</h1>
+        <p className="mt-4 text-[19px] max-w-[54ch] text-muted-foreground">{L("Pick a stop on any line to see what's around it right now: bikes, car parks, what's open and what's on.", "בחרו תחנה בכל קו וראו מה יש סביבה עכשיו: אופניים, חניונים, מה פתוח ומה קורה.")}</p>
+        <Link to="/live?where=1" className="mt-6 inline-flex h-12 items-center gap-2 rounded-[4px] bg-foreground text-background px-6 text-[15px] font-bold">
+          <Search className="h-4 w-4" aria-hidden />{t("where.button")}
+        </Link>
+        <div className="mt-12"><LineMap /></div>
+      </section>
+
+      <section className="bg-[#101820] text-white py-12">
+        <div className="container-page">
+          <h2 className="font-display text-[34px] sm:text-[40px] mb-5">{L("The city board", "לוח העיר")}</h2>
+          <div className="grid gap-[2px] bg-[#2b3540] sm:grid-cols-2 lg:grid-cols-3">
+            <BoardRow code="B" color="#0072ce" label={t("now.busesMoving")} value={buses.data ? String(buses.data.buses.length) : "…"} to="/live" />
+            <BoardRow code="T" color="#7b2d8e" label={t("go.jams")} value={heavy != null ? String(heavy) : "…"} to="/live?layers=traffic" />
+            <BoardRow code="X" color="#e4002b" label={t("go.closures")} value={closures != null ? String(closures) : "…"} to="/live?layers=traffic" />
+            <BoardRow code="P" color="#00a651" label={t("go.lots")} value={freeLots != null ? `${freeLots}${parking.data ? `/${parking.data.length}` : ""}` : "…"} to="/live?layers=parking" />
+            <BoardRow code="O" color="#ff8200" label={t("go.bikes")} value={bikes != null ? String(bikes) : "…"} to="/live?layers=bikes" />
+            <BoardRow code="S" color="#ffffff" label={L("Weekend shuttle and Shabbat times", "שאטל סופ״ש וזמני שבת")} value="→" to="/shabbat" />
+          </div>
         </div>
       </section>
 
       <div className="container-page">
-        <h2 className="mt-8 font-display text-[26px] leading-none">{t("go.now")}</h2>
-        <div className="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <Tile to="/live" icon={Bus} n={buses.data?.buses.length ?? null} label={t("now.busesMoving")} color="#0b63e5" />
-          <Tile to="/live?layers=traffic" icon={Car} n={heavy} label={t("go.jams")} sub={closures != null ? `${closures} ${t("go.closures")}` : undefined} color="#e8590c" />
-          <Tile to="/live?layers=parking" icon={SquareParking} n={freeLots} label={t("go.lots")} sub={parking.data ? `${t("bus.of")} ${parking.data.length}` : undefined} color="#1971c2" />
-          <Tile to="/live?layers=bikes" icon={Bike} n={bikes} label={t("go.bikes")} sub={docks.data ? `${docks.data.length} ${t("go.docks")}` : undefined} color="#2f9e44" />
-        </div>
-
-        <h2 className="mt-10 font-display text-[26px] leading-none">{t("go.how")}</h2>
-        <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+        <h2 className="mt-12 font-display text-[34px] sm:text-[40px]">{t("go.how")}</h2>
+        <ul className="mt-4 grid gap-4 sm:grid-cols-2">
           <Tip icon={CreditCard} title="go.payT" body="go.payB" />
           <Tip icon={TrainFront} title="go.railT" body="go.railB" />
           <Tip icon={Bus} title="go.shabbatT" body="go.shabbatB" />
@@ -70,6 +68,11 @@ const GettingAround = () => {
           <Tip icon={Bike} title="go.bikeT" body="go.bikeB" />
           <Tip icon={SquareParking} title="go.parkT" body="go.parkB" />
         </ul>
+        <div className="mt-8 flex flex-wrap gap-2">
+          {[["/magazine/tel-aviv-light-rail-guide", L("Riding the light rail", "הרכבת הקלה")], ["/magazine/ben-gurion-airport-to-tel-aviv", L("Airport to the city", "מהשדה לעיר")], ["/magazine/shabbat-in-tel-aviv", L("Shabbat in Tel Aviv", "שבת בתל אביב")]].map(([to, label]) => (
+            <Link key={to} to={to} className="h-10 inline-flex items-center rounded-[4px] border-2 border-foreground px-4 font-bold hover:bg-foreground hover:text-background">{label}</Link>
+          ))}
+        </div>
         <p className="mt-6 text-[12px] text-muted-foreground">{t("go.sources")}</p>
       </div>
     </SiteLayout>

@@ -96,7 +96,7 @@ export const Markdown = ({ source }: { source: string }) => {
     if (line.startsWith(">")) {
       const q: string[] = [];
       while (i < lines.length && lines[i].startsWith(">")) q.push(lines[i++].replace(/^>\s?/, ""));
-      out.push(<blockquote key={key} className="mt-6 border-s-4 border-[#d6336c] ps-5 font-display text-[24px] leading-snug">{inline(q.join(" "), key)}</blockquote>);
+      out.push(<blockquote key={key} className="mt-6 border-s-4 border-[#ff5a4e] ps-5 font-display text-[24px] leading-snug">{inline(q.join(" "), key)}</blockquote>);
       continue;
     }
     const img = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(line.trim());

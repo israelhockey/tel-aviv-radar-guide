@@ -15,7 +15,7 @@ import {
 } from "@/lib/areas";
 import { PosterCard } from "@/components/radar/PosterCard";
 
-const COLORS = ["#d6336c", "#1971c2", "#2f9e44", "#e8590c", "#5f3dc4", "#0c8599", "#f08c00"];
+const COLORS = ["#ff5a4e", "#0057ff", "#2f9e44", "#e8590c", "#5f3dc4", "#0c8599", "#f08c00"];
 const colorFor = (s: string) => COLORS[[...s].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORS.length];
 
 const PlaceGrid = ({ list, limit = 60 }: { list: Place[]; limit?: number }) => {
@@ -32,8 +32,8 @@ const PlaceGrid = ({ list, limit = 60 }: { list: Place[]; limit?: number }) => {
           return (
             <li key={p.id}>
               <Link to={`/place/${placeSlug(p)}`} className="group block">
-                {ph ? <img src={ph.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover rounded-lg" /> : <span className="block w-full aspect-[4/3] rounded-lg bg-[#ffc233]" />}
-                <span className="mt-1.5 block text-[16px] font-semibold leading-snug truncate group-hover:text-[#d6336c]" dir="auto">{(lang === "en" && p.nameEn) || p.name}</span>
+                {ph ? <img src={ph.src} alt="" loading="lazy" referrerPolicy="no-referrer" className="w-full aspect-[4/3] object-cover rounded-lg" /> : <span className="block w-full aspect-[4/3] rounded-lg bg-[#ffcb05]" />}
+                <span className="mt-1.5 block text-[16px] font-semibold leading-snug truncate group-hover:text-[#ff5a4e]" dir="auto">{(lang === "en" && p.nameEn) || p.name}</span>
                 <span className="block text-[12px] text-muted-foreground truncate">{placeKindLabel(p.kind, lang)}{hood ? `, ${lang === "he" ? hood.he : hood.en}` : ""}</span>
                 {s.status === "open" && <span className="block text-[12px] font-semibold text-[#2f9e44]">{t("food.openTill")} {s.until ?? ""}</span>}
               </Link>
@@ -62,7 +62,7 @@ const AreaIndex = ({ places }: { places: Place[] }) => {
   const counts = useMemo(() => NEIGHBOURHOODS.map((h) => ({ h, n: placesInHood(places, h).length })).filter((x) => x.n > 0), [places]);
   return (
     <>
-      <Hero title={t("area.title")} dek={t("area.dek")} color="#1971c2" />
+      <Hero title={t("area.title")} dek={t("area.dek")} color="#0057ff" />
       <div className="container-page mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
         {counts.map(({ h, n }) => (
           <Link key={h.en} to={`/area/${hoodSlug(h)}`} style={{ background: colorFor(h.en) }} className="rounded-lg p-4 text-white hover:opacity-90">
@@ -146,7 +146,7 @@ const AreaPage = () => {
 
       <div className="container-page">
         {data.guide && (
-          <Link to={`/magazine/${data.guide.slug}`} className="mt-6 block rounded-lg bg-[#ffc233] text-[#1f1400] p-4 hover:opacity-90">
+          <Link to={`/magazine/${data.guide.slug}`} className="mt-6 block rounded-lg bg-[#ffcb05] text-[#0b1a33] p-4 hover:opacity-90">
             <span className="block text-[13px] font-semibold">{craving ? t("eat.ourPicks") : t("area.guide")}</span>
             <span className="block text-[20px] font-display leading-tight">{data.guide.title}</span>
           </Link>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { eventSlug } from "@/lib/areas";
-import { TonightHero } from "@/components/radar/TonightHero";
+import { NightHero, NightMarquee, WhereTheNightGoes, WhosOn } from "@/components/night/Night";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n, type StringKey } from "@/lib/i18n";
 import { useEventsFeed } from "@/lib/live/hooks";
@@ -100,7 +100,7 @@ const MonthCalendar = ({ events, selected, onSelect }: { events: FeedEvent[]; se
       <div className="mt-1 grid grid-cols-7 gap-1">
         {cells.map((c, i) => c ? (
           <button key={c.key} onClick={() => onSelect(c.key)} disabled={c.past || !c.n} aria-pressed={selected === c.key}
-            className={`relative h-16 sm:h-20 rounded-md p-1.5 text-start transition-colors ${selected === c.key ? "bg-foreground text-background" : c.n && !c.past ? "bg-secondary hover:bg-secondary/70" : "opacity-40"} ${c.key === today ? "ring-2 ring-[#d6336c]" : ""}`}>
+            className={`relative h-16 sm:h-20 rounded-md p-1.5 text-start transition-colors ${selected === c.key ? "bg-foreground text-background" : c.n && !c.past ? "bg-secondary hover:bg-secondary/70" : "opacity-40"} ${c.key === today ? "ring-2 ring-accent" : ""}`}>
             <span className="block text-[13px] font-semibold tabular">{c.day}</span>
             {c.n > 0 && !c.past && <span className="block text-[11px] tabular opacity-80">{c.n}</span>}
             <span className="absolute bottom-1.5 start-1.5 flex gap-0.5">{c.top.map((cat) => <span key={cat} className={`h-1.5 w-1.5 rounded-full ${CAT_BG[cat] ?? CAT_BG.other}`} />)}</span>
@@ -154,10 +154,12 @@ const WhatsOn = () => {
     }`;
 
   return (
-    <SiteLayout>
-      <TonightHero onWhatsOn />
-      <div id="list" className="container-page pt-6 sm:pt-10 max-w-5xl scroll-mt-16">
-        <h2 className="font-display text-[34px] sm:text-[48px] leading-[0.95]">{t("on.title")}</h2>
+    <SiteLayout zone="night">
+      <NightHero title={path === "/free" ? (lang === "he" ? ["בחינם", "השבוע"] : ["Free", "this week"]) : undefined} />
+      <NightMarquee />
+      {path !== "/free" && <WhosOn />}
+      <div id="list" className="container-page pt-14 max-w-5xl scroll-mt-20">
+        <h2 className="font-display text-[60px] sm:text-[84px] leading-[0.9]">{path === "/free" ? t("on.free") : t("on.title")}</h2>
 
         <div className="mt-5 flex gap-2">
           <button aria-pressed={view === "list"} onClick={() => setView("list")} className={chip(view === "list")}>{t("on.viewList")}</button>
@@ -202,7 +204,7 @@ const WhatsOn = () => {
 
         {groups.map(([key, list]) => (
           <section key={key} className="mt-6" aria-label={dayHeading(key, lang)}>
-            <h2 className="font-display text-[24px] leading-none">{dayHeading(key, lang)}</h2>
+            <h2 className="font-display text-[36px] leading-none">{dayHeading(key, lang)}</h2>
             <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
               {list.map((e) => (
                 <div key={e.id}>
@@ -216,6 +218,7 @@ const WhatsOn = () => {
 
         <p className="mt-10 text-[12px] text-muted-foreground">{t("on.sources")}</p>
       </div>
+      <WhereTheNightGoes />
     </SiteLayout>
   );
 };

@@ -34,7 +34,7 @@ const Photo = ({ photo, className = "" }: { photo?: DishPhoto; className?: strin
   return photo && !broken ? (
     <img src={photo.src} alt="" loading="lazy" referrerPolicy="no-referrer" onError={() => setBroken(true)} className={`object-cover ${className}`} />
   ) : (
-    <span className={`block bg-[#ffc233] ${className}`} />
+    <span className={`block bg-[#ffcb05] ${className}`} />
   );
 };
 
@@ -107,12 +107,12 @@ const Food = () => {
   return (
     <SiteLayout>
       {/* A table full of food: six dishes in a tight grid, the headline on a citrus block */}
-      <section className="relative bg-[#0f1530]">
+      <section className="relative bg-[#0b1a33]">
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-[3px] h-[300px] sm:h-[380px]">
           {heroPhotos.map((ph, i) => <Photo key={i} photo={ph} className={`h-full w-full ${i > 2 ? "hidden sm:block" : ""}`} />)}
         </div>
         <div className="container-page relative -mt-24 sm:-mt-28 pb-2">
-          <div className="inline-block max-w-full rounded-lg bg-[#ffc233] text-[#1f1400] px-5 py-4 sm:px-7 sm:py-5">
+          <div className="inline-block max-w-full rounded-lg bg-[#ffcb05] text-[#0b1a33] px-5 py-4 sm:px-7 sm:py-5">
             <h1 className="font-display text-[38px] sm:text-[60px] leading-[0.95]">{t("food.hungry")}</h1>
             <p className="mt-1 text-[16px] sm:text-[18px]">
               {places.data ? <><span className="font-semibold tabular">{openRows.length}</span> {t("food.openNow")}</> : "…"}
@@ -144,11 +144,11 @@ const Food = () => {
               return (
                 <button key={c.id} onClick={() => setCraving(active ? null : c.id)} aria-pressed={active}
                   className={`group snap-start shrink-0 w-[132px] sm:w-[156px] text-start focus-visible:outline-none`}>
-                  <span className={`relative block aspect-square rounded-lg overflow-hidden ${active ? "outline outline-[3px] outline-offset-2 outline-[#d6336c]" : "group-hover:outline group-hover:outline-2 group-hover:outline-offset-2 group-hover:outline-foreground/40"} group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-sea`}>
+                  <span className={`relative block aspect-square rounded-lg overflow-hidden ${active ? "outline outline-[3px] outline-offset-2 outline-[#ff5a4e]" : "group-hover:outline group-hover:outline-2 group-hover:outline-offset-2 group-hover:outline-foreground/40"} group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-sea`}>
                     <Photo photo={pickPhoto(photos.data?.[CRAVING_PHOTO[c.id]], c.id)} className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-105" />
-                    {places.data && <span className="absolute top-2 end-2 rounded-md bg-white text-[#0f1530] px-1.5 py-0.5 text-[12px] font-semibold tabular">{n}</span>}
+                    {places.data && <span className="absolute top-2 end-2 rounded-md bg-white text-[#0b1a33] px-1.5 py-0.5 text-[12px] font-semibold tabular">{n}</span>}
                   </span>
-                  <span className={`mt-1.5 block text-[15px] font-medium ${active ? "text-[#d6336c]" : ""}`}>{lang === "he" ? c.he : c.en}</span>
+                  <span className={`mt-1.5 block text-[15px] font-medium ${active ? "text-[#ff5a4e]" : ""}`}>{lang === "he" ? c.he : c.en}</span>
                 </button>
               );
             })}
@@ -164,7 +164,7 @@ const Food = () => {
                 <Link key={p.id} to={`/place/${placeSlug(p)}`}
                   className="relative shrink-0 w-[240px] h-[160px] rounded-lg overflow-hidden text-white">
                   <Photo photo={pickPhoto(photos.data?.[dish === "beer" ? "beer" : "cocktail"], p.id)} className="absolute inset-0 h-full w-full" />
-                  <span className="absolute inset-x-0 bottom-0 p-3 bg-[#d6336c]">
+                  <span className="absolute inset-x-0 bottom-0 p-3 bg-[#ff5a4e]">
                     <span className="block text-[16px] font-semibold leading-tight truncate" dir="auto">{name(p)}</span>
                     <span className="block text-[12px]">{happy?.until ? `${t("food.hhUntil")} ${happy.until}` : t("food.happy")}, {walkMinutes(d)} {t("now.walk")}</span>
                   </span>
@@ -182,7 +182,7 @@ const Food = () => {
             </button>
           ))}
           <label className="ms-auto inline-flex items-center gap-2 text-[14px]">
-            <input type="checkbox" checked={openOnly} onChange={(e) => setOpenOnly(e.target.checked)} className="h-4 w-4 accent-[#d6336c]" />
+            <input type="checkbox" checked={openOnly} onChange={(e) => setOpenOnly(e.target.checked)} className="h-4 w-4 accent-[#ff5a4e]" />
             {t("food.onlyOpen")}
           </label>
         </div>
@@ -201,11 +201,11 @@ const Food = () => {
               <Link to={`/place/${placeSlug(p)}`} className="group block focus-visible:outline-none">
                 <span className="relative block aspect-[4/3] rounded-lg overflow-hidden group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-sea">
                   <Photo photo={pickPhoto(photos.data?.[dish], p.id)} className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover:scale-105" />
-                  <span className={`absolute top-2 start-2 rounded-md px-2 py-0.5 text-[12px] font-semibold ${state.status === "open" ? "bg-[#2f9e44] text-white" : "bg-white text-[#0f1530]"}`}>{stateLine(state)}</span>
-                  {happy?.status === "open" && <span className="absolute bottom-2 start-2 rounded-md bg-[#d6336c] text-white px-2 py-0.5 text-[12px] font-semibold">{t("food.happy")}</span>}
+                  <span className={`absolute top-2 start-2 rounded-md px-2 py-0.5 text-[12px] font-semibold ${state.status === "open" ? "bg-[#2f9e44] text-white" : "bg-white text-[#0b1a33]"}`}>{stateLine(state)}</span>
+                  {happy?.status === "open" && <span className="absolute bottom-2 start-2 rounded-md bg-[#ff5a4e] text-white px-2 py-0.5 text-[12px] font-semibold">{t("food.happy")}</span>}
                 </span>
                 <span className="mt-2 flex items-baseline justify-between gap-2">
-                  <span className="text-[16px] font-semibold leading-snug truncate group-hover:text-[#d6336c]" dir="auto">{name(p)}</span>
+                  <span className="text-[16px] font-semibold leading-snug truncate group-hover:text-[#ff5a4e]" dir="auto">{name(p)}</span>
                   <span className="hidden sm:inline shrink-0 text-[12px] tabular text-muted-foreground">{walkMinutes(d)} {t("now.walk")}</span>
                 </span>
                 <span className="block text-[13px] text-muted-foreground truncate" dir="auto">
@@ -240,12 +240,12 @@ const Food = () => {
           </div>
         </section>
 
-        <div className="mt-12 rounded-lg bg-[#0f1530] text-white p-6 sm:flex sm:items-center sm:justify-between gap-6">
+        <div className="mt-12 rounded-lg bg-[#0b1a33] text-white p-6 sm:flex sm:items-center sm:justify-between gap-6">
           <div>
             <p className="font-display text-[24px] leading-tight">{t("food.knowDeal")}</p>
             <p className="mt-1 text-[14px] text-white/80">{t("food.knowDealBody")}</p>
           </div>
-          <Link to="/submit?kind=happy" className="mt-4 sm:mt-0 shrink-0 inline-flex h-11 items-center rounded-lg bg-[#ffc233] text-[#1f1400] px-5 text-[14px] font-semibold">{t("food.addDeal")}</Link>
+          <Link to="/submit?kind=happy" className="mt-4 sm:mt-0 shrink-0 inline-flex h-11 items-center rounded-lg bg-[#ffcb05] text-[#0b1a33] px-5 text-[14px] font-semibold">{t("food.addDeal")}</Link>
         </div>
         <p className="mt-4 text-[12px] text-muted-foreground">{t("food.source")} {t("food.photoCredit")}</p>
       </div>
