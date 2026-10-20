@@ -95,8 +95,8 @@ const Beach = () => {
   return (
     <SiteLayout>
       <PhotoHero
-        photo={photos.data?.__city?.hilton?.src}
-        alt={lang === "he" ? "חוף הילטון" : "Hilton Beach, Tel Aviv"}
+        photo={photos.data?.__city?.promenade?.src}
+        alt={lang === "he" ? "חוף תל אביב" : "The Tel Aviv seafront"}
         kicker={t("beach.title")}
         title={forecast.data ? t(verdictKey(headline)) : "…"}
         stamp={forecast.data ? (

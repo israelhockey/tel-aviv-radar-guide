@@ -2,7 +2,7 @@
 title: מדריך החופים של תל אביב
 dek: כל חופי העיר מתל ברוך ועד יפו, למי כל אחד מתאים, ואיך לבדוק את מצב הים היום.
 category: outdoors
-cover: city:hilton
+cover: city:promenade
 date: 2026-10-19
 tags: חופים, ים, בחוץ, קיץ
 featured: true

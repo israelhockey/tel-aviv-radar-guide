@@ -112,7 +112,7 @@ const CITY = {
   sarona: "Sarona, Tel Aviv", dizengoff: "Dizengoff Square", dizengoffst: "Dizengoff Street", yarkon: "Yarkon Park",
   hatachana: "HaTachana", habima: "Habima Square", museum: "Tel Aviv Museum of Art", kerem: "Kerem HaTeimanim",
   gordon: "Gordon Beach", azrieli: "Azrieli Center", rabin: "Rabin Square", nahalat: "Nahalat Binyamin Street",
-  hilton: "Hilton Beach", charlesclore: "Charles Clore Park", ramataviv: "Ramat Aviv", cinematheque: "Tel Aviv Cinematheque",
+  charlesclore: "Charles Clore Park", ramataviv: "Ramat Aviv", cinematheque: "Tel Aviv Cinematheque",
   bauhaus: "Bauhaus Center (Tel Aviv)", ulpan: "Ulpan", sukkah: "Sukkah", hanukkah: "Hanukkah", purim: "Purim", pride: "Tel Aviv Pride",
   shabbat: "Shabbat", hotel: "Dan Tel Aviv Hotel", lightrail: "Red Line (Tel Aviv Light Rail)",
 };

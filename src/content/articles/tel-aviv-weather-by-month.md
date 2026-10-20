@@ -2,7 +2,7 @@
 title: Tel Aviv weather by month: when to visit
 dek: Long hot summers, warm autumns and short rainy winters. What to expect each season, and when the sea is warm enough to swim.
 category: tourists
-cover: city:hilton
+cover: city:jaffa
 date: 2026-10-19
 tags: weather, climate, when to visit, visitors, beach
 featured: false

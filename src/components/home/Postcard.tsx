@@ -174,7 +174,7 @@ const CARDS: { hood: string; photo: string; blurb: L; tilt: string }[] = [
   { hood: "Jaffa", photo: "oldjaffa", blurb: { en: "The flea market, the old port and sunsets.", he: "שוק הפשפשים, הנמל העתיק והשקיעות." }, tilt: "-rotate-2" },
   { hood: "Kerem HaTeimanim", photo: "carmel", blurb: { en: "The Carmel Market and the Yemenite Quarter's lanes.", he: "שוק הכרמל וסמטאות כרם התימנים." }, tilt: "rotate-[1.5deg]" },
   { hood: "Florentin", photo: "florentin", blurb: { en: "Street art by day, the late bars by night.", he: "גרפיטי ביום, הברים המאוחרים בלילה." }, tilt: "-rotate-1" },
-  { hood: "Lev HaIr", photo: "whitecity", blurb: { en: "Rothschild, the White City and the boulevard cafés.", he: "רוטשילד, העיר הלבנה ובתי הקפה בשדרה." }, tilt: "rotate-2" },
+  { hood: "Lev HaIr", photo: "habima", blurb: { en: "Rothschild, the White City and the boulevard cafés.", he: "רוטשילד, העיר הלבנה ובתי הקפה בשדרה." }, tilt: "rotate-2" },
 ];
 
 export const NeighbourhoodPostcards = () => {
