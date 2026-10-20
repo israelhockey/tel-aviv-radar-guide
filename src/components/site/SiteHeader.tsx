@@ -73,7 +73,7 @@ export const SiteHeader = () => {
   const { t } = useI18n();
   return (
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border [[data-zone=lines]_&]:border-b-2">
-      <div className="container-page flex h-16 items-center justify-between gap-4">
+      <div className="container-page flex h-16 items-center justify-between gap-3">
         <Logo />
         <nav className="hidden lg:flex items-center gap-0.5 text-[15px] font-semibold" aria-label="Main">
           {TABS.filter((tab) => tab.to !== "/").map((tab) => (
@@ -91,9 +91,9 @@ export const SiteHeader = () => {
             </NavLink>
           ))}
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <Link to="/search" aria-label={t("nav.search")} className="h-9 w-9 rounded-md border border-border flex items-center justify-center hover:bg-secondary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea"><Search className="h-4 w-4" aria-hidden /></Link>
-          <ThemeToggle />
+          <span className="hidden sm:inline-flex"><ThemeToggle /></span>
           <LanguageToggle />
           <DropdownMenu>
             <DropdownMenuTrigger

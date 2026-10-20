@@ -57,7 +57,7 @@ export const PostcardHero = () => {
         {weather.data?.sunset && <span className="text-[13px]">{L({ en: "Sunset", he: "שקיעה" })} {weather.data.sunset.slice(11, 16)}</span>}
       </div>
       <div className="absolute inset-x-[4%] -bottom-[0.12em]">
-        <h1 className="font-display text-white leading-[0.8] text-[22vw] sm:text-[180px] lg:text-[196px]" style={{ fontStretch: lang === "he" ? undefined : "125%" }}>
+        <h1 className="font-display text-white leading-[0.8] text-[17vw] sm:text-[150px] lg:text-[196px] whitespace-nowrap" style={{ fontStretch: lang === "he" ? undefined : "125%" }}>
           {lang === "he" ? "תל אביב" : "Tel Aviv"}
         </h1>
       </div>

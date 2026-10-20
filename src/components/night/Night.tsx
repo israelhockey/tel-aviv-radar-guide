@@ -152,6 +152,7 @@ export const WhereTheNightGoes = () => {
     return [...m.entries()].sort((a, b) => b[1].open - a[1].open || b[1].total - a[1].total).slice(0, 5);
   }, [places.data, tonight]);
   const happy = (places.data ?? []).filter((p) => p.happy).length;
+  const late = (places.data ?? []).filter((p) => BAR_KINDS.includes(p.kind) && openStateAt(p.hours, (() => { const d = new Date(); d.setHours(23, 30, 0, 0); return d; })()).status === "open").length;
   const bikes = (docks.data ?? []).reduce((n, d) => n + d.bikes + d.ebikes, 0);
   if (!places.data) return null;
   return (
@@ -176,10 +177,10 @@ export const WhereTheNightGoes = () => {
         </ul>
       </div>
       <div className="flex-1 basis-[340px] flex flex-col gap-4">
-        <Link to="/food" className="block rounded-[4px] bg-accent text-accent-foreground p-7">
-          <span className="block text-[15px] font-extrabold">{he ? "הפי האוור" : "Happy hour"}</span>
-          <span className="block font-poster text-[80px] sm:text-[96px] leading-[0.9]">{happy}</span>
-          <span className="block font-semibold">{he ? "ברים ומסעדות עם הפי האוור על המפה" : "bars and kitchens with a happy hour on the map"}</span>
+        <Link to={happy ? "/food" : "/nightlife"} className="block rounded-[4px] bg-accent text-accent-foreground p-7">
+          <span className="block text-[15px] font-extrabold">{happy ? (he ? "הפי האוור" : "Happy hour") : (he ? "פתוח עד מאוחר" : "Open late")}</span>
+          <span className="block font-poster text-[80px] sm:text-[96px] leading-[0.9]">{happy || late}</span>
+          <span className="block font-semibold">{happy ? (he ? "ברים ומסעדות עם הפי האוור על המפה" : "bars and kitchens with a happy hour on the map") : (he ? "ברים שפתוחים אחרי 23:30 הלילה" : "bars still open after 23:30 tonight")}</span>
         </Link>
         <Link to="/getting-around" className="block rounded-[4px] bg-[#7a5cff] text-white p-7">
           <span className="block text-[15px] font-extrabold">{he ? "הדרך הביתה" : "Getting home"}</span>
