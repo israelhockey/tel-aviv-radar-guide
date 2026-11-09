@@ -9,6 +9,16 @@
   "lon": null,
   "checked": "2026-10-29T13:26:17.193Z"
  },
+ "205 HaYarkon St. Independence Park Tel Aviv, 6340506 Israel": {
+  "lat": null,
+  "lon": null,
+  "checked": "2026-11-09T20:54:42.818Z"
+ },
+ "6 Hatnufa Street, 6688402 Tel Aviv, Israel": {
+  "lat": null,
+  "lon": null,
+  "checked": "2026-11-09T20:54:31.125Z"
+ },
  "Abraham Tel Aviv": {
   "lat": 32.087184,
   "lon": 34.818674,
@@ -212,7 +222,7 @@
  "Levinsky Street 108, (New Central Bus Station), Fifth floor, Studio 5008, 66990 Tel Aviv, Israel": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-02T20:26:51.498Z"
+  "checked": "2026-11-09T20:54:18.973Z"
  },
  "Levontin 7 לבונטין": {
   "lat": 32.0617378,
@@ -233,6 +243,11 @@
   "lat": 32.0611271,
   "lon": 34.7913062,
   "checked": "2026-10-20T11:09:27.843Z"
+ },
+ "Mesilat Wolfson 14, Tel Aviv, Israel": {
+  "lat": 32.057678,
+  "lon": 34.767684,
+  "checked": "2026-11-09T20:54:23.025Z"
  },
  "Mike's Place - Tel Aviv": {
   "lat": 32.0772016,
@@ -342,7 +357,7 @@
  "YUNG YiDiSH TLV יונג יידיש תל אביב": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-02T20:26:55.439Z"
+  "checked": "2026-11-09T20:54:35.411Z"
  },
  "ZOA Tel Aviv - בית ציוני אמריקה": {
   "lat": null,
@@ -567,7 +582,7 @@
  "בית תמי מרכז קהילתי לב תל אביב": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-02T20:26:59.903Z"
+  "checked": "2026-11-09T20:54:47.171Z"
  },
  "בן יהודה 13, 6380202 תל אביב - יפו, ישראל": {
   "lat": 32.074816,
@@ -799,6 +814,11 @@
   "lon": 34.7963224,
   "checked": "2026-10-18T16:31:16.907Z"
  },
+ "מוזיאון ארץ ישראל אולם קלצ'קין": {
+  "lat": null,
+  "lon": null,
+  "checked": "2026-11-09T20:54:55.865Z"
+ },
  "מוזיאון ארץ ישראל תל אביב": {
   "lat": 32.102116,
   "lon": 34.7960141,
@@ -927,7 +947,7 @@
  "פאפאיתו papaito": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-02T20:27:03.999Z"
+  "checked": "2026-11-09T20:54:51.278Z"
  },
  "‎פראנצויז 12‎, Tel Aviv, Israel": {
   "lat": 32.055606,
