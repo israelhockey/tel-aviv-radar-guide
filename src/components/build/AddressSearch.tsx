@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { NEIGHBOURHOODS } from "@/lib/live/geo";
 import { LocateFixed, Search } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { nearestAddress, resolveInput, searchAddresses, streetPoint, type Address } from "@/lib/live/build";
@@ -7,8 +8,25 @@ import { nearestAddress, resolveInput, searchAddresses, streetPoint, type Addres
 // One box for everything: type an address, pick a suggestion, paste a listing link or its text,
 // or use your location. It ends on /check with the point in the URL, so results can be shared.
 
-export const checkUrl = (lat: number, lon: number, label?: string) =>
-  `/check?lat=${lat.toFixed(6)}&lon=${lon.toFixed(6)}${label ? `&a=${encodeURIComponent(label)}` : ""}`;
+export const checkUrl = (lat: number, lon: number, label?: string, r?: number) =>
+  `/check?lat=${lat.toFixed(6)}&lon=${lon.toFixed(6)}${label ? `&a=${encodeURIComponent(label)}` : ""}${r ? `&r=${r}` : ""}`;
+
+/** One tap per neighbourhood, for people who'd rather browse than type an address. */
+export const NeighbourhoodChips = ({ className = "", active }: { className?: string; active?: string }) => {
+  const { lang } = useI18n();
+  return (
+    <div className={`flex flex-wrap items-center gap-2 text-[14px] ${className}`}>
+      <span className="text-white/80 font-semibold">{lang === "he" ? "או לפי שכונה:" : "Or by neighbourhood:"}</span>
+      {NEIGHBOURHOODS.map((h) => {
+        const name = lang === "he" ? h.he : h.en;
+        return (
+          <Link key={h.en} to={checkUrl(h.lat, h.lon, name, 500)} aria-current={active === name ? "true" : undefined}
+            className={`rounded-md px-3 py-1.5 font-semibold ${active === name ? "bg-[#ffcb05] text-[#0b1a33]" : "bg-white/15 hover:bg-white/25"}`}>{name}</Link>
+        );
+      })}
+    </div>
+  );
+};
 
 export const AddressSearch = ({ big = false, autoFocus = false }: { big?: boolean; autoFocus?: boolean }) => {
   const { lang } = useI18n();

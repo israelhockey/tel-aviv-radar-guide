@@ -1,9 +1,8 @@
-import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { BellRing, ClipboardPaste, MapPinned } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { fetchCityBuildCounts } from "@/lib/live/build";
-import { AddressSearch, checkUrl } from "./AddressSearch";
+import { AddressSearch, NeighbourhoodChips } from "./AddressSearch";
 
 // The home page's main job: "what's being built next to this address?"
 export const BuildHero = () => {
@@ -13,12 +12,6 @@ export const BuildHero = () => {
   const counts = useQuery({ queryKey: ["build-counts"], queryFn: fetchCityBuildCounts, staleTime: 60 * 60_000 });
   const c = counts.data;
   const n = (v: number | null | undefined) => (v == null ? "…" : v.toLocaleString(he ? "he-IL" : "en-GB"));
-  const tries = [
-    { label: L("Dizengoff 100", "דיזנגוף 100"), to: checkUrl(32.079249, 34.774114, L("Meir Dizengoff 100", "דיזנגוף 100")) },
-    { label: L("Florentin", "פלורנטין"), to: checkUrl(32.0565, 34.7695, L("Florentin", "פלורנטין")) },
-    { label: L("Old North", "הצפון הישן"), to: checkUrl(32.0875, 34.7765, L("Old North", "הצפון הישן")) },
-    { label: L("Jaffa", "יפו"), to: checkUrl(32.0525, 34.7555, L("Jaffa", "יפו")) },
-  ];
   return (
     <>
       <section className="bg-[#0057ff] text-white">
@@ -29,10 +22,7 @@ export const BuildHero = () => {
             {L("Type an address or paste an apartment listing. We'll show every building permit, construction site, night work and road closure around it, straight from the city's records.", "הקלידו כתובת או הדביקו מודעת דירה. נראה לכם כל היתר בניה, אתר בניה, עבודת לילה וחסימת כביש מסביב, ישר מהנתונים של העירייה.")}
           </p>
           <div className="mt-8 max-w-3xl"><AddressSearch big /></div>
-          <div className="mt-4 flex flex-wrap items-center gap-2 text-[14px]">
-            <span className="text-white/80">{L("Try:", "נסו:")}</span>
-            {tries.map((t) => <Link key={t.label} to={t.to} className="rounded-md bg-white/15 px-3 py-1.5 font-semibold hover:bg-white/25">{t.label}</Link>)}
-          </div>
+          <NeighbourhoodChips className="mt-5 max-w-4xl" />
         </div>
       </section>
 

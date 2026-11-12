@@ -82,7 +82,7 @@ export const streetNames = () =>
     const all: { he: string; en?: string }[] = [];
     for (let off = 0; off < 6000; off += 1000) {
       const rows = await q(527, { where: "1=1", outFields: "t_rechov,t_rechov_eng", returnDistinctValues: "true", returnGeometry: "false", orderByFields: "t_rechov", resultOffset: String(off), resultRecordCount: "1000" });
-      all.push(...rows.map((r) => ({ he: String(r.attributes.t_rechov ?? "").trim(), en: r.attributes.t_rechov_eng?.trim() || undefined })));
+      all.push(...rows.map((r) => ({ he: String(r.attributes.t_rechov ?? "").trim(), en: title(r.attributes.t_rechov_eng?.trim()) || undefined })));
       if (rows.length < 1000) break;
     }
     return all.filter((x, i, l) => x.he.length > 1 && l.findIndex((y) => y.he === x.he) === i);
@@ -144,6 +144,7 @@ export type Activity = {
   id: string; kind: ActivityKind; title: string; address?: string; stage?: string; detail?: string;
   units?: number; tama38?: boolean; start?: number; end?: number; opened?: number; hours?: string;
   url?: string; distance: number; lat: number; lon: number; geometry?: Geo; progress?: number;
+  permitted?: number; expires?: number;
 };
 
 const dist = (a: { lat: number; lon: number }, b: { lat: number; lon: number }) => {
@@ -202,7 +203,7 @@ export const fetchActivity = async (lat: number, lon: number, radius: number): P
       id: `permit-${a.oid_permit}`, kind: "permit", title: clean(a.sug_bakasha) ?? "בקשה להיתר בניה",
       address: clean(a.addresses)?.split(",").filter((x, i, l) => l.indexOf(x) === i).join(", "), stage: clean(a.building_stage),
       detail: clean(a.tochen_bakasha), units: a.yechidot_diyur || undefined, tama38: a.sw_tama_38 === "כן",
-      opened: date(a.open_request), start: date(a.tr_hathalat_bniya) ?? date(a.permission_date), end: date(a.expiry_date),
+      opened: date(a.open_request), start: date(a.tr_hathalat_bniya), permitted: date(a.permission_date), expires: date(a.expiry_date),
       url: clean(a.url_hadmaya), progress: a.progress ?? undefined,
     }, f.geometry);
   }
@@ -307,4 +308,25 @@ export const fetchCityBuildCounts = async () => {
     count(852).catch(() => null),
   ]);
   return { review, building, sites, nights, roads };
+};
+
+/* ---------------- English addresses ---------------- */
+
+/** "רחוב דיזנגוף מס' 98, אסתר המלכה 2" → "Meir Dizengoff 98, Ester Hamalka 2", using the city's own street names. */
+export const addressEn = (he: string | undefined, streets: { he: string; en?: string }[] | undefined) => {
+  if (!he || !streets?.length) return undefined;
+  const norm = (x: string) => x.replace(/["״׳']/g, "").replace(/\s+/g, " ").trim();
+  const parts = he.split(",").map((p) => norm(p.replace(/^\s*(רחוב|רח'|שדרות|שד'|דרך)\s+/, "").replace(/מס'\s*/g, "")));
+  const out: string[] = [];
+  for (const p of parts) {
+    if (!p) continue;
+    let best: { he: string; en?: string } | undefined;
+    for (const s of streets) {
+      const n = norm(s.he);
+      if (s.en && p.startsWith(n) && (!best || n.length > norm(best.he).length)) best = s;
+    }
+    out.push(best ? `${best.en}${p.slice(norm(best.he).length)}` : p);
+  }
+  const res = [...new Set(out)].join(", ");
+  return /[א-ת]/.test(res) ? undefined : res;
 };

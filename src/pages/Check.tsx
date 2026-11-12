@@ -5,10 +5,11 @@ import { BellRing, ChevronDown, ExternalLink, Share2 } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchActivity, isLive, nearestAddress, stageEn, typeEn, type Activity, type ActivityKind } from "@/lib/live/build";
+import { addressEn, fetchActivity, isLive, nearestAddress, stageEn, streetNames, typeEn, type Activity, type ActivityKind } from "@/lib/live/build";
+import { IMPACT_STYLE, PERMIT_STEPS, canTranslateOnDevice, googleTranslateUrl, impactOf, permitStep, requestFacts, requestSections, statusCheck, translateOnDevice } from "@/lib/live/buildInsight";
 import { neighbourhoodOf } from "@/lib/live/geo";
 import { hoodSlug } from "@/lib/areas";
-import { AddressSearch } from "@/components/build/AddressSearch";
+import { AddressSearch, NeighbourhoodChips } from "@/components/build/AddressSearch";
 import { ActivityMap, KIND_COLOR } from "@/components/build/ActivityMap";
 
 const KINDS: { id: ActivityKind; en: string; he: string }[] = [
@@ -24,18 +25,40 @@ const RADII = [100, 250, 500];
 const fmtDate = (ms: number | undefined, lang: string) =>
   ms ? new Intl.DateTimeFormat(lang === "he" ? "he-IL" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jerusalem" }).format(new Date(ms)) : null;
 
-const ItemCard = ({ a, open, onToggle }: { a: Activity; open: boolean; onToggle: () => void }) => {
+const ItemCard = ({ a, open, onToggle, streets }: { a: Activity; open: boolean; onToggle: () => void; streets?: { he: string; en?: string }[] }) => {
   const { lang } = useI18n();
   const he = lang === "he";
   const L = (en: string, h: string) => (he ? h : en);
+  const T = (x: { en: string; he: string }) => (he ? x.he : x.en);
   const kind = KINDS.find((k) => k.id === a.kind)!;
   const title = he ? a.title : typeEn(a.title);
   const stage = he ? a.stage : stageEn(a.stage);
+  const address = he ? a.address : addressEn(a.address, streets) ?? a.address;
+  const impact = impactOf(a);
+  const style = IMPACT_STYLE[impact.level];
+  const flags = statusCheck(a);
+  const facts = requestFacts(a.detail);
+  const sections = requestSections(a.detail);
+  const [translated, setTranslated] = useState<string | null>(null);
+  const [translating, setTranslating] = useState(false);
+  const [showOriginal, setShowOriginal] = useState(false);
   const dates = [
     a.opened && [L("Requested", "הוגשה"), fmtDate(a.opened, lang)],
-    a.start && [a.kind === "plan" ? L("Deposited", "הופקדה") : L("From", "מ-"), fmtDate(a.start, lang)],
-    a.end && [a.kind === "plan" ? L("In force since", "בתוקף מ-") : a.kind === "permit" ? L("Permit valid until", "תוקף ההיתר עד") : L("Until", "עד"), fmtDate(a.end, lang)],
+    a.permitted && [L("Permit granted", "ההיתר ניתן"), fmtDate(a.permitted, lang)],
+    a.kind === "permit" && a.start && [L("Construction started", "תחילת בניה"), fmtDate(a.start, lang)],
+    a.expires && [L("Deadline to start work", "תוקף ההיתר"), fmtDate(a.expires, lang)],
+    a.kind !== "permit" && a.start && [a.kind === "plan" ? L("Deposited", "הופקדה") : L("From", "מ-"), fmtDate(a.start, lang)],
+    a.end && [a.kind === "plan" ? L("In force since", "בתוקף מ-") : L("Until", "עד"), fmtDate(a.end, lang)],
   ].filter(Boolean) as [string, string][];
+  const step = a.kind === "permit" ? permitStep(a) : -1;
+  const translate = async () => {
+    if (!a.detail) return;
+    setTranslating(true);
+    const r = await translateOnDevice(a.detail);
+    setTranslating(false);
+    if (r) setTranslated(r);
+    else window.open(googleTranslateUrl(a.detail), "_blank", "noopener");
+  };
   return (
     <li id={`item-${a.id}`} className={`rounded-[10px] border-2 bg-card transition-colors ${open ? "border-foreground" : "border-border"}`}>
       <button onClick={onToggle} aria-expanded={open} className="w-full text-start p-4 flex gap-3">
@@ -46,22 +69,75 @@ const ItemCard = ({ a, open, onToggle }: { a: Activity; open: boolean; onToggle:
             <span className="text-muted-foreground normal-case tracking-normal font-semibold tabular">{a.distance} {L("m away", "מ' ממך")}</span>
           </span>
           <span className="mt-1 block font-display text-[19px] leading-snug" dir="auto">{title}</span>
-          {a.address && <span className="mt-0.5 block text-[14px] text-muted-foreground" dir="rtl">{a.address}</span>}
+          {address && <span className="mt-0.5 block text-[14px] text-muted-foreground" dir="auto">{address}</span>}
           <span className="mt-2 flex flex-wrap gap-1.5">
             {stage && <span className="rounded-[4px] bg-secondary px-2 py-0.5 text-[12px] font-semibold" dir="auto">{stage}</span>}
             {a.tama38 && a.kind === "permit" && <span className="rounded-[4px] bg-[#ffcb05] text-[#0b1a33] px-2 py-0.5 text-[12px] font-bold">{L("TAMA 38", "תמ״א 38")}</span>}
             {a.units ? <span className="rounded-[4px] bg-[#d6e4ff] text-[#0b1a33] px-2 py-0.5 text-[12px] font-semibold">{a.units} {L("homes", "יח״ד")}</span> : null}
-            {a.hours && <span className="rounded-[4px] bg-[#f3d9fa] text-[#0b1a33] px-2 py-0.5 text-[12px] font-semibold" dir="auto">{a.hours}</span>}
+            {a.hours && <span className="rounded-[4px] bg-[#f3d9fa] text-[#0b1a33] px-2 py-0.5 text-[12px] font-semibold" dir="auto">{he ? a.hours : a.hours.replace("אישור לעבודת לילה", "Night work approved").replace("עבודות יום", "day works").replace("עבודות לילה", "night works")}</span>}
+            {flags.some((f) => f.downgrade) && <span className="rounded-[4px] border border-[#f59f00] text-[#f59f00] px-2 py-0.5 text-[12px] font-bold">{L("Status may be out of date", "ייתכן שהסטטוס לא עדכני")}</span>}
           </span>
         </span>
-        <ChevronDown className={`mt-1 h-5 w-5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        <span className="shrink-0 flex flex-col items-end gap-2">
+          <span className="rounded-[6px] px-2 py-1 text-center leading-none" style={{ background: style.bg, color: style.fg }} title={T(style)}>
+            <span className="block font-poster text-[26px]">{impact.score}</span>
+            <span className="block text-[10px] font-bold uppercase">{L("impact", "השפעה")}</span>
+          </span>
+          <ChevronDown className={`h-5 w-5 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
+        </span>
       </button>
       {open && (
-        <div className="px-4 pb-4 ps-10 text-[14px]">
+        <div className="px-4 pb-5 ps-10 text-[14px] space-y-4">
+          {step >= 0 && (
+            <ol className="flex items-center gap-1" aria-label={L("Progress", "התקדמות")}>
+              {PERMIT_STEPS.map((x, i) => (
+                <li key={x.en} className="flex-1">
+                  <span className={`block h-2 rounded-full ${i <= step ? "bg-[#0057ff]" : "bg-secondary"}`} />
+                  <span className={`mt-1 block text-[12px] ${i === step ? "font-bold" : "text-muted-foreground"}`}>{T(x)}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+
+          <div className="rounded-[8px] p-3" style={{ background: `${style.bg}22` }}>
+            <p className="font-bold">{T(style)}: {impact.score}/10</p>
+            <ul className="mt-1 list-disc ps-5 space-y-0.5">{impact.reasons.map((r) => <li key={r.en}>{T(r)}</li>)}</ul>
+          </div>
+
+          {flags.map((f) => (
+            <p key={f.en} className={`rounded-[8px] p-3 ${f.tone === "warn" ? "bg-[#fff4c2] text-[#0b1a33]" : "bg-secondary"}`}>{T(f)}</p>
+          ))}
+
           {dates.length > 0 && <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1">{dates.flatMap(([k, v]) => [<dt key={`${k}-t`} className="text-muted-foreground">{k}</dt>, <dd key={`${k}-d`} className="font-semibold tabular">{v}</dd>])}</dl>}
-          {!he && a.title !== title && <p className="mt-3 text-[13px] text-muted-foreground" dir="rtl">{a.title}</p>}
-          {a.detail && <p className="mt-3 whitespace-pre-line leading-relaxed" dir="rtl">{a.detail.length > 900 ? `${a.detail.slice(0, 900)}…` : a.detail}</p>}
-          {a.url && <a href={a.url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 font-bold text-sea hover:underline"><ExternalLink className="h-4 w-4" aria-hidden />{a.kind === "plan" ? L("Plan documents (city site)", "מסמכי התכנית (אתר העירייה)") : L("Drawings on the city's building archive", "תכניות בארכיון הבניין העירוני")}</a>}
+
+          {facts.length > 0 && (
+            <div>
+              <p className="font-bold">{L("What's planned", "מה מתוכנן")}</p>
+              <ul className="mt-1 flex flex-wrap gap-1.5">{facts.map((f) => <li key={f.en} className="rounded-[4px] bg-secondary px-2 py-1 font-semibold">{T(f)}</li>)}</ul>
+            </div>
+          )}
+          {!he && sections.length > 0 && (
+            <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1">
+              {sections.flatMap((x) => [<dt key={`${x.label.en}-t`} className="text-muted-foreground">{x.label.en}</dt>, <dd key={`${x.label.en}-d`} dir={x.en ? "ltr" : "rtl"}>{x.en ?? x.items}</dd>])}
+            </dl>
+          )}
+
+          {a.detail && (
+            he ? <p className="whitespace-pre-line leading-relaxed">{a.detail.length > 900 ? `${a.detail.slice(0, 900)}…` : a.detail}</p> : (
+              <div>
+                {translated ? (
+                  <p className="whitespace-pre-line leading-relaxed">{translated}</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={translate} disabled={translating} className="h-9 rounded-md bg-sea text-sea-foreground px-3 font-bold">{translating ? "…" : canTranslateOnDevice() ? "Translate the full description" : "Translate the full description (Google)"}</button>
+                    <button onClick={() => setShowOriginal(!showOriginal)} className="h-9 rounded-md border border-border px-3 font-semibold">{showOriginal ? "Hide the Hebrew" : "Show the original Hebrew"}</button>
+                  </div>
+                )}
+                {(showOriginal || translated) && <p className="mt-3 whitespace-pre-line leading-relaxed text-muted-foreground" dir="rtl">{a.detail.length > 900 ? `${a.detail.slice(0, 900)}…` : a.detail}</p>}
+              </div>
+            )
+          )}
+          {a.url && <a href={a.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-bold text-sea hover:underline"><ExternalLink className="h-4 w-4" aria-hidden />{a.kind === "plan" ? L("Plan documents (city site, Hebrew)", "מסמכי התכנית (אתר העירייה)") : L("Drawings on the city's building archive (Hebrew)", "תכניות בארכיון הבניין העירוני")}</a>}
         </div>
       )}
     </li>
@@ -125,10 +201,12 @@ const Check = () => {
   }, [lat, lon, valid]);
   useEffect(() => { document.title = `${label || L("Your address", "הכתובת שלך")}: ${L("construction and permits nearby", "בניה והיתרים בסביבה")} · Discover Tel Aviv`; }, [label, lang]);
 
+  const streets = useQuery({ queryKey: ["street-names"], queryFn: streetNames, staleTime: Infinity, enabled: lang === "en" });
+  const [sort, setSort] = useState<"near" | "impact">("impact");
   const q = useQuery({ queryKey: ["activity", lat, lon, radius], queryFn: () => fetchActivity(lat, lon, radius), enabled: valid, staleTime: 10 * 60_000 });
   const all = useMemo(() => (q.data ?? []).filter((a) => finished || isLive(a)), [q.data, finished]);
   const counts = useMemo(() => Object.fromEntries(KINDS.map((k) => [k.id, all.filter((a) => a.kind === k.id).length])) as Record<ActivityKind, number>, [all]);
-  const list = all.filter((a) => show === "all" || a.kind === show);
+  const list = all.filter((a) => show === "all" || a.kind === show).slice().sort((x, y) => sort === "impact" ? impactOf(y).score - impactOf(x).score || x.distance - y.distance : x.distance - y.distance);
   const finishedCount = (q.data ?? []).length - (q.data ?? []).filter(isLive).length;
   const hood = valid ? neighbourhoodOf({ lat, lon }) : null;
   const inReview = all.filter((a) => a.kind === "permit" && /בתהליך/.test(a.stage ?? "")).length;
@@ -147,6 +225,7 @@ const Check = () => {
       <section className="bg-[#0057ff] text-white">
         <div className="container-page pt-8 pb-8">
           <AddressSearch />
+          <details className="mt-3"><summary className="cursor-pointer text-[14px] font-semibold text-white/85">{L("Browse by neighbourhood", "חיפוש לפי שכונה")}</summary><NeighbourhoodChips className="mt-3" active={label} /></details>
           {valid && (
             <>
               <p className="mt-8 text-[15px] font-bold text-white/85">{L("Construction and permits near", "בניה והיתרים ליד")}</p>
@@ -192,12 +271,18 @@ const Check = () => {
                   </button>
                 ))}
               </div>
+              <div className="mt-4 flex items-center gap-2 text-[14px]">
+                <span className="text-muted-foreground">{L("Sort by", "מיון לפי")}</span>
+                {([["impact", L("Most disruptive", "הכי משפיע")], ["near", L("Nearest", "הכי קרוב")]] as const).map(([k, label]) => (
+                  <button key={k} onClick={() => setSort(k)} aria-pressed={sort === k} className={`h-8 rounded-md px-3 font-bold ${sort === k ? "bg-foreground text-background" : "bg-secondary"}`}>{label}</button>
+                ))}
+              </div>
               {q.isLoading ? (
                 <div className="mt-5 space-y-3">{[0, 1, 2, 3].map((i) => <div key={i} className="h-24 rounded-[10px] bg-secondary animate-pulse" />)}</div>
               ) : list.length === 0 ? (
                 <p className="mt-6 text-[17px]">{L(`Nothing active within ${radius} m right now. That's good news. Try a wider radius, or sign up and we'll tell you when that changes.`, `אין כרגע פעילות ברדיוס ${radius} מ'. אלה חדשות טובות. נסו רדיוס רחב יותר, או הירשמו ונעדכן כשמשהו ישתנה.`)}</p>
               ) : (
-                <ul className="mt-5 space-y-3">{list.slice(0, 120).map((a) => <ItemCard key={a.id} a={a} open={sel === a.id} onToggle={() => setSel(sel === a.id ? null : a.id)} />)}</ul>
+                <ul className="mt-5 space-y-3">{list.slice(0, 120).map((a) => <ItemCard key={a.id} a={a} streets={streets.data} open={sel === a.id} onToggle={() => setSel(sel === a.id ? null : a.id)} />)}</ul>
               )}
               {finishedCount > 0 && (
                 <label className="mt-5 flex items-center gap-2 text-[14px]">
