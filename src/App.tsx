@@ -24,6 +24,7 @@ import About from "./pages/About";
 import Search from "./pages/Search";
 import Nightlife from "./pages/Nightlife";
 import Check from "./pages/Check";
+import { ScrollToTop } from "./components/site/ScrollToTop";
 import Jobs from "./pages/Jobs";
 import Weekend from "./pages/Weekend";
 import { I18nProvider } from "@/lib/i18n";
@@ -53,6 +54,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<Now />} />
           <Route path="/live" element={<Live />} />
