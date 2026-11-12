@@ -41,6 +41,7 @@ jobs:
           git checkout --orphan screens
           git rm -rfq .
           cp /tmp/screens/*.png .
-          git add *.png
+          cp /tmp/screens/console.log . 2>/dev/null || true
+          git add *.png $(ls console.log 2>/dev/null)
           git commit -qm "Screens ${{ github.run_id }}"
           git push -f origin screens
