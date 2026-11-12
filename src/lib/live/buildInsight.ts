@@ -70,7 +70,7 @@ export type Flag = T & { downgrade?: boolean; tone: "warn" | "info" };
 export const statusCheck = (a: Activity, now = Date.now()): Flag[] => {
   const out: Flag[] = [];
   const s = stageOf(a);
-  const y = (ms: number) => new Date(ms).getFullYear();
+  const y = (ms: number) => new Date(ms + 3 * 3600e3).getUTCFullYear();
   if (a.kind === "permit") {
     if (a.expires && a.expires < now) {
       if (/בבניה/.test(s)) out.push({ tone: "info", en: `The permit's deadline (${y(a.expires)}) has passed, but the city lists it as under construction. Permits mainly set a deadline to start work, so building can legally continue after it.`, he: `מועד תוקף ההיתר (${y(a.expires)}) עבר, אבל העירייה מציגה שהבניה בעיצומה. ההיתר קובע בעיקר מועד לתחילת עבודות, כך שהבניה יכולה להימשך גם אחריו.` });
@@ -99,6 +99,9 @@ export const permitStep = (a: Activity) => {
 /* ---------------- reading the Hebrew request text ---------------- */
 
 const WORDS: [RegExp, string][] = [
+  [/כמות מקומות חניה/g, "parking spaces"], [/מקומות חניה/g, "parking spaces"], [/גדר בגבולות מגרש בגובה \(מטר\)/g, "boundary fence, height (m)"],
+  [/בגבולות מגרש/g, "on the plot boundary"], [/מרתף אחד בלבד/g, "one basement level"], [/בלבד/g, "only"], [/אחד/g, "one"],
+  [/כמות קומות מגורים/g, "residential floors"], [/כמות יח"ד מבוקשות/g, "homes requested"], [/כמות/g, "number of"], [/קומות/g, "floors"],
   [/ממ"ד|ממ״ד|ממדים|ממ"דים/g, "safe room"], [/מרחב מוגן קומתי|ממ"ק/g, "shared safe room"], [/מקלט/g, "shelter"],
   [/מחסנים|מחסן/g, "storage room"], [/חדרי עזר|חדר עזר/g, "utility room"], [/חדר אשפה/g, "refuse room"], [/חדר גז/g, "gas room"],
   [/חדר משחקים/g, "playroom"], [/חדר כושר/g, "gym"], [/חדר טכני|חדרים טכניים/g, "technical room"], [/חדר אופניים/g, "bike room"],
