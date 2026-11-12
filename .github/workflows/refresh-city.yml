@@ -15,7 +15,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,11 +27,14 @@ jobs:
         continue-on-error: true
       - run: node scripts/fetch-jobs.mjs
         continue-on-error: true
+      - run: node scripts/fetch-build.mjs
+        continue-on-error: true
       - name: Commit if changed
         run: |
           [ -f public/data/city.json ] && git add public/data/city.json
           [ -f public/data/food-photos.json ] && git add public/data/food-photos.json
           [ -f public/data/jobs.json ] && git add public/data/jobs.json
+          [ -f public/data/build-changes.json ] && git add public/data/build-changes.json data/build-snapshot.json
           if git diff --cached --quiet; then
             echo "No changes."
             exit 0
