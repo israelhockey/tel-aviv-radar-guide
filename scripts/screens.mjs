@@ -1,6 +1,6 @@
 // Screenshots of the built site for design review. Used by .github/workflows/screens.yml.
 import { chromium } from "playwright";
-import { mkdir } from "node:fs/promises";
+import { mkdir, appendFile } from "node:fs/promises";
 
 const BASE = "http://localhost:4173";
 const routes = (process.env.ROUTES || "/").split(/\s+/).filter(Boolean);
@@ -9,6 +9,9 @@ await mkdir("screens", { recursive: true });
 const browser = await chromium.launch();
 for (const [name, width, height] of sizes) {
   const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: name === "mobile" ? 2 : 1 });
+  // Keep browser errors so broken pages can be diagnosed from the screens branch.
+  page.on("console", (m) => { if (m.type() === "error") appendFile("screens/console.log", `[${name}] ${m.text()}\n`).catch(() => undefined); });
+  page.on("pageerror", (e) => appendFile("screens/console.log", `[${name}] PAGEERROR ${e.message}\n`).catch(() => undefined));
   for (const r of routes) {
     await page.goto(BASE + r, { waitUntil: "networkidle", timeout: 45000 }).catch(() => undefined);
     await page.waitForTimeout(4000);
