@@ -23,6 +23,7 @@ import AreaPage from "./pages/Area";
 import About from "./pages/About";
 import Search from "./pages/Search";
 import Nightlife from "./pages/Nightlife";
+import Check from "./pages/Check";
 import Jobs from "./pages/Jobs";
 import Weekend from "./pages/Weekend";
 import { I18nProvider } from "@/lib/i18n";
@@ -73,6 +74,7 @@ const App = () => (
           <Route path="/hotel/:id" element={<HotelPage />} />
           <Route path="/about" element={<About />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/check" element={<Check />} />
           <Route path="/privacy" element={<About />} />
           <Route path="/event/:slug" element={<EventPage />} />
           <Route path="/area" element={<AreaPage />} />

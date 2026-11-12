@@ -6,7 +6,8 @@ import { useNewsFeed } from "@/lib/live/hooks";
 import { NewsCard } from "@/components/radar/NewsCard";
 import { articlesFor, type Article } from "@/lib/articles";
 import { ArticleCard, ArticleRow } from "./Magazine";
-import { Hungry, LiveStrip, NeighbourhoodPostcards, NumbersBand, PostcardHero, TonightTickets } from "@/components/home/Postcard";
+import { Hungry, NeighbourhoodPostcards, NumbersBand, TonightTickets } from "@/components/home/Postcard";
+import { BuildHero } from "@/components/build/BuildHero";
 
 const Shelf = ({ title, to, list }: { title: string; to: string; list: Article[] }) => {
   const { t } = useI18n();
@@ -35,13 +36,15 @@ const Now = () => {
   const pick = (cats: string[]) => all.filter((a) => cats.includes(a.category) && !used.has(a.slug));
 
   useEffect(() => {
-    document.title = lang === "he" ? "Discover Tel Aviv · מה קורה בתל אביב עכשיו" : "Discover Tel Aviv · Events, food, beaches and the city right now";
+    document.title = lang === "he" ? "מה בונים לידך? היתרי בניה ואתרי בניה לפי כתובת · Discover Tel Aviv" : "What's being built near you? Tel Aviv building permits and construction by address · Discover Tel Aviv";
   }, [lang]);
 
   return (
     <SiteLayout>
-      <PostcardHero />
-      <LiveStrip />
+      <BuildHero />
+      <div className="container-page pt-20">
+        <p className="text-[15px] font-bold text-accent">{L("And the rest of the city, right now", "ושאר העיר, עכשיו")}</p>
+      </div>
       <TonightTickets />
       <NumbersBand />
 

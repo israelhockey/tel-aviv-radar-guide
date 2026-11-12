@@ -179,15 +179,15 @@ const sectionPages = (d: Data): Page[] => {
   const mag = `<ul>${ARTICLES.map((a) => `<li><a href="/magazine/${a.slug}">${esc(a.title)}</a> · ${esc(a.dek)}</li>`).join("")}</ul>`;
   const home: Page = {
     path: "/",
-    title: "Discover Tel Aviv · Events, food, beaches and the city right now",
-    description: "Everything Tel Aviv in one place: every event tonight and this weekend, the best food and bars, beach conditions, Shabbat times, traffic, parking and a live city map. Free.",
+    title: "What's being built near you? Tel Aviv building permits and construction by address · Discover Tel Aviv",
+    description: "Type any Tel Aviv-Yafo address or paste an apartment listing to see building permits, construction sites, night works and road closures around it, from the city's own records. Free alerts for your street.",
     priority: 1, changefreq: "hourly",
     jsonld: [
       { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: SITE_URL, inLanguage: ["en", "he"],
         potentialAction: { "@type": "SearchAction", target: { "@type": "EntryPoint", urlTemplate: `${SITE_URL}/search?q={search_term_string}` }, "query-input": "required name=search_term_string" } },
       { "@context": "https://schema.org", ...ORG },
     ],
-    body: frame(`<h1>Discover Tel Aviv</h1><p>Tel Aviv right now: what's on tonight, where to eat, the beach, the news and a live map of the city.</p><h2>Coming up</h2>${evList}<h2>From the magazine</h2>${mag}`),
+    body: frame(`<h1>What's being built next to you?</h1><p>Type a Tel Aviv-Yafo address or paste an apartment listing from Yad2 or Facebook, and see every building permit request, approved permit, active building site, night work and road closure around it, straight from the City of Tel Aviv-Yafo's records. Sign up free for alerts when something new starts near your address.</p><p><a href="/check">Check an address</a></p><h2>Also in Tel Aviv right now</h2><h2>Coming up</h2>${evList}<h2>From the magazine</h2>${mag}`),
   };
   const hoodLinks = `<ul>${NEIGHBOURHOODS.map((h) => `<li><a href="/area/${hoodSlug(h)}">${esc(h.en)}</a></li>`).join("")}</ul>`;
   const cravingLinks = `<ul>${CRAVINGS.map((c) => `<li><a href="/eat/${c.id}">${esc(c.en)} in Tel Aviv</a></li>`).join("")}</ul>`;
@@ -212,6 +212,7 @@ const sectionPages = (d: Data): Page[] => {
     S("/getting-around", "Getting around Tel Aviv: buses, trains, bikes and taxis · Discover Tel Aviv", "How to get around Tel Aviv: the light rail, buses, trains, Tel-O-Fun bikes, scooters, taxis, the airport and the Shabbat shuttle.", "", 0.7, "monthly"),
     S("/guide", "Tel Aviv city guide: everything visitors and newcomers need · Discover Tel Aviv", "Practical help for Tel Aviv: money, phones, safety and shelters, public toilets, dog parks, Shabbat, and where to find what.", "", 0.7, "monthly"),
     S("/jobs", "Jobs in Tel Aviv: open positions at tech companies · Discover Tel Aviv", "Open jobs in Tel Aviv from the city's tech companies and startups, updated every day.", "", 0.7, "daily"),
+    S("/check", "Check an address: building permits and construction near you · Discover Tel Aviv", "See building permits, construction sites, night works, road works and dangerous buildings around any Tel Aviv-Yafo address, from the city's own records.", "", 0.9, "daily"),
     S("/about", "About Discover Tel Aviv: who we are, how we make money, privacy", "Discover Tel Aviv is a free, independent guide to Tel Aviv-Yafo. Where our data comes from, how affiliate links work, and our privacy policy.", "", 0.3, "monthly"),
     S("/newsletter", "The Discover Tel Aviv weekly email", "Every Thursday: the best of the weekend in Tel Aviv, new places to eat and drink, and what's coming up.", "", 0.4, "monthly"),
   ];

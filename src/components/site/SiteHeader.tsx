@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { BedDouble, BookOpen, CalendarDays, MapPinned, Menu, Moon, Radar, Search, Sun, SunMoon, UtensilsCrossed, Waves } from "lucide-react";
+import { BedDouble, BookOpen, Building2, CalendarDays, MapPinned, Menu, Moon, Radar, Search, Sun, SunMoon, UtensilsCrossed, Waves } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -9,9 +9,10 @@ import { Logo } from "./Logo";
 
 export const TABS: { to: string; key: StringKey; icon: typeof Sun; end?: boolean; desktopOnly?: boolean }[] = [
   { to: "/", key: "nav.now", icon: Sun, end: true },
+  { to: "/check", key: "nav.check", icon: Building2 },
   { to: "/events", key: "nav.whatson", icon: CalendarDays },
   { to: "/food", key: "nav.foodShort", icon: UtensilsCrossed },
-  { to: "/beach", key: "nav.beach", icon: Waves },
+  { to: "/beach", key: "nav.beach", icon: Waves, desktopOnly: true },
   { to: "/magazine", key: "nav.magazine", icon: BookOpen, desktopOnly: true },
   { to: "/area", key: "nav.areas", icon: MapPinned, desktopOnly: true },
   { to: "/hotels", key: "nav.hotels", icon: BedDouble, desktopOnly: true },
@@ -20,6 +21,7 @@ export const TABS: { to: string; key: StringKey; icon: typeof Sun; end?: boolean
 
 const MORE: { to: string; key: StringKey; mobileOnly?: boolean }[] = [
   { to: "/magazine", key: "nav.magazine", mobileOnly: true },
+  { to: "/beach", key: "nav.beach", mobileOnly: true },
   { to: "/area", key: "nav.areas", mobileOnly: true },
   { to: "/hotels", key: "nav.hotels", mobileOnly: true },
   { to: "/news", key: "nav.news" },
