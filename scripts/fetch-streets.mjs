@@ -15,7 +15,7 @@ const page = async (offset) => {
     } catch (e) { if (a === 2) throw e; await sleep(2000 * (a + 1)); }
   }
 };
-const title = (s) => s.toLowerCase().replace(/(^|[\s\-'(])([a-z])/g, (m, p, c) => p + c.toUpperCase()).replace(/\s+/g, " ").trim();
+const title = (s) => s.toLowerCase().replace(/(^|[\s\-(])([a-z])/g, (m, p, c) => p + c.toUpperCase()).replace(/\s+/g, " ").trim();
 const by = new Map();
 const seen = new Set();
 for (let off = 0; off < 80000; off += 1000) {

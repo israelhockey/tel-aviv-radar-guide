@@ -2,11 +2,9 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n } from "@/lib/i18n";
-import { useNewsFeed } from "@/lib/live/hooks";
-import { NewsCard } from "@/components/radar/NewsCard";
 import { articlesFor, type Article } from "@/lib/articles";
-import { ArticleCard, ArticleRow } from "./Magazine";
-import { Hungry, NeighbourhoodPostcards, NumbersBand, TonightTickets } from "@/components/home/Postcard";
+import { ArticleCard } from "./Magazine";
+import { NeighbourhoodPostcards, TonightTickets } from "@/components/home/Postcard";
 import { BuildHero } from "@/components/build/BuildHero";
 import { DailyChanges } from "@/components/build/DailyChanges";
 
@@ -27,13 +25,12 @@ const Shelf = ({ title, to, list }: { title: string; to: string; list: Article[]
 };
 
 const Now = () => {
-  const { t, lang } = useI18n();
-  const news = useNewsFeed();
+  const { lang } = useI18n();
   const L = (en: string, he: string) => (lang === "he" ? he : en);
   const all = articlesFor(lang);
-  const lead = all.find((a) => a.featured) ?? all[0];
-  const side = all.filter((a) => a !== lead).slice(0, 5);
-  const used = new Set([lead, ...side].map((a) => a?.slug));
+  const living = ["renting-an-apartment-tel-aviv", "best-neighbourhoods-to-live-tel-aviv", "tama-38-explained", "arnona-tel-aviv-explained"]
+    .map((slug) => all.find((a) => a.slug === slug || a.pair === slug)).filter(Boolean) as Article[];
+  const used = new Set(living.map((a) => a.slug));
   const pick = (cats: string[]) => all.filter((a) => cats.includes(a.category) && !used.has(a.slug));
 
   useEffect(() => {
@@ -44,63 +41,33 @@ const Now = () => {
     <SiteLayout>
       <BuildHero />
       <DailyChanges />
-      <div className="container-page pt-20">
-        <p className="text-[15px] font-bold text-accent">{L("And the rest of the city, right now", "ושאר העיר, עכשיו")}</p>
-      </div>
-      <TonightTickets />
-      <NumbersBand />
 
       <div className="container-page">
-        {lead && (
-          <section className="pt-16">
-            <div className="flex items-baseline justify-between gap-3 border-b-[3px] border-foreground pb-2">
-              <h2 className="font-display text-[38px] sm:text-[56px] leading-[1]">{L("The latest", "החדשים במגזין")}</h2>
-              <Link to="/magazine" className="text-[17px] font-bold text-sea hover:underline underline-offset-4">{L("The magazine", "למגזין")}</Link>
-            </div>
-            <div className="mt-7 grid gap-8 lg:grid-cols-[1.5fr,1fr]">
-              <ArticleCard a={lead} big />
-              <div>{side.map((a) => <ArticleRow key={a.slug} a={a} />)}</div>
-            </div>
-          </section>
-        )}
-      </div>
-
-      <NeighbourhoodPostcards />
-
-      <div className="container-page">
-        <Shelf title={L("Eat & drink: the best of", "אוכל ושתייה: הכי טובים")} to="/magazine" list={pick(["food", "drink"])} />
-        <Shelf title={L("Visiting Tel Aviv", "מבקרים בתל אביב")} to="/magazine" list={pick(["tourists", "outdoors"])} />
-      </div>
-
-      <Hungry />
-
-      <div className="container-page">
-        <Shelf title={L("Living here", "לגור כאן")} to="/magazine" list={pick(["newcomers", "neighbourhoods", "holidays", "family"])} />
-
-        {(news.data?.news ?? []).length > 0 && (
-          <section className="mt-14">
-            <div className="flex items-baseline justify-between gap-3 border-b-[3px] border-foreground pb-2">
-              <h2 className="font-display text-[28px] sm:text-[34px] leading-none">{t("now.news")}</h2>
-              <Link to="/news" className="text-[15px] font-bold text-sea hover:underline underline-offset-4">{t("now.allNews")}</Link>
-            </div>
-            <div className="mt-5 -mx-4 px-4 sm:mx-0 sm:px-0 flex gap-4 overflow-x-auto snap-x pb-2 [scrollbar-width:thin]">
-              {(news.data?.news ?? []).slice(0, 10).map((n) => <NewsCard key={n.id} n={n} className="snap-start shrink-0 w-[78%] sm:w-[280px]" />)}
-            </div>
-          </section>
-        )}
-
         <section className="mt-16 grid gap-4 sm:grid-cols-3">
           {[
-            { to: "/weekend", bg: "#ff5a4e", fg: "#fff", t: L("This weekend", "סוף השבוע"), s: L("Our picks, the beach outlook and Shabbat times.", "הבחירות שלנו, תחזית חוף וזמני שבת.") },
-            { to: "/hotels", bg: "#0057ff", fg: "#fff", t: L("Where to stay", "איפה לישון"), s: L("Every hotel and hostel on the map, by beach.", "כל המלונות וההוסטלים על המפה.") },
-            { to: "/walks", bg: "#ffcb05", fg: "#0b1a33", t: L("Free walking tours", "סיורים חינם"), s: L("Bauhaus, Jaffa, Florentin and the market.", "באוהאוס, יפו, פלורנטין והשוק.") },
+            { to: "/compare", bg: "#0057ff", fg: "#fff", t: L("Compare apartments", "השוואת דירות"), s: L("Up to three addresses side by side, with a noise score for each.", "עד שלוש כתובות זו לצד זו, עם ציון רעש לכל אחת.") },
+            { to: "/construction-noise-rules", bg: "#ffcb05", fg: "#0b1a33", t: L("Noise rules and your rights", "כללי רעש והזכויות שלך"), s: L("When building work is allowed, and how to complain.", "מתי מותר לבנות, ואיך מתלוננים.") },
+            { to: "/area", bg: "#ff5a4e", fg: "#fff", t: L("Neighbourhood guides", "מדריכי שכונות"), s: L("What each area is like to live in, with live construction data.", "איך זה לגור בכל שכונה, עם נתוני בניה חיים.") },
           ].map((c) => (
             <Link key={c.to} to={c.to} className="rounded-[10px] p-6 transition-transform hover:-translate-y-1" style={{ background: c.bg, color: c.fg }}>
-              <span className="block font-display text-[30px] leading-tight">{c.t}</span>
+              <span className="block font-display text-[28px] leading-tight">{c.t}</span>
               <span className="mt-1 block text-[15px] opacity-90">{c.s}</span>
             </Link>
           ))}
         </section>
+
+        <Shelf title={L("Living in Tel Aviv", "לגור בתל אביב")} to="/magazine?cat=newcomers" list={living} />
+      </div>
+
+      <NeighbourhoodPostcards />
+
+      <div className="container-page pt-6">
+        <p className="text-[15px] font-bold text-accent">{L("And when you're not apartment hunting", "וכשלא מחפשים דירה")}</p>
+      </div>
+      <TonightTickets />
+
+      <div className="container-page">
+        <Shelf title={L("Eat & drink: the best of", "אוכל ושתייה: הכי טובים")} to="/magazine?cat=food" list={pick(["food", "drink"])} />
       </div>
     </SiteLayout>
   );

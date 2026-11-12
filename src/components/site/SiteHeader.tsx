@@ -1,5 +1,5 @@
 import { Link, NavLink } from "react-router-dom";
-import { BedDouble, BookOpen, Building2, CalendarDays, MapPinned, Menu, Moon, Radar, Search, Sun, SunMoon, UtensilsCrossed, Waves } from "lucide-react";
+import { BookOpen, Building2, CalendarDays, MapPinned, Menu, Moon, Search, Sun, SunMoon, UtensilsCrossed } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -7,32 +7,32 @@ import {
 import { useI18n, type StringKey } from "@/lib/i18n";
 import { Logo } from "./Logo";
 
-export const TABS: { to: string; key: StringKey; icon: typeof Sun; end?: boolean; desktopOnly?: boolean }[] = [
-  { to: "/", key: "nav.now", icon: Sun, end: true },
-  { to: "/check", key: "nav.check", icon: Building2 },
+export const TABS: { to: string; key: StringKey; icon: typeof Sun; end?: boolean; desktopOnly?: boolean; mobileOnly?: boolean; short?: StringKey }[] = [
+  { to: "/", key: "nav.home", icon: Sun, end: true, mobileOnly: true },
+  { to: "/check", key: "nav.checkLong", icon: Building2, short: "nav.checkShort" },
+  { to: "/area", key: "nav.areas", icon: MapPinned, short: "nav.areasShort" },
   { to: "/events", key: "nav.whatson", icon: CalendarDays },
-  { to: "/food", key: "nav.foodShort", icon: UtensilsCrossed },
-  { to: "/beach", key: "nav.beach", icon: Waves, desktopOnly: true },
-  { to: "/magazine", key: "nav.magazine", icon: BookOpen, desktopOnly: true },
-  { to: "/area", key: "nav.areas", icon: MapPinned, desktopOnly: true },
-  { to: "/hotels", key: "nav.hotels", icon: BedDouble, desktopOnly: true },
-  { to: "/live", key: "nav.live", icon: Radar },
+  { to: "/food", key: "nav.food", icon: UtensilsCrossed, short: "nav.foodShort" },
+  { to: "/magazine", key: "nav.guides", icon: BookOpen, desktopOnly: true },
 ];
 
 const MORE: { to: string; key: StringKey; mobileOnly?: boolean }[] = [
-  { to: "/magazine", key: "nav.magazine", mobileOnly: true },
-  { to: "/beach", key: "nav.beach", mobileOnly: true },
-  { to: "/area", key: "nav.areas", mobileOnly: true },
-  { to: "/hotels", key: "nav.hotels", mobileOnly: true },
-  { to: "/news", key: "nav.news" },
-  { to: "/walks", key: "nav.walks" },
-  { to: "/jobs", key: "nav.jobs" },
-  { to: "/shabbat", key: "nav.shabbat" },
-  { to: "/cinema", key: "nav.cinema" },
+  { to: "/magazine", key: "nav.guides", mobileOnly: true },
+  { to: "/compare", key: "nav.compare" },
+  { to: "/construction-noise-rules", key: "nav.noise" },
+  { to: "/weekend", key: "nav.weekend" },
+  { to: "/nightlife", key: "nav.nightlife" },
+  { to: "/beach", key: "nav.beach" },
+  { to: "/hotels", key: "nav.hotels" },
+  { to: "/live", key: "nav.live" },
   { to: "/getting-around", key: "nav.around" },
   { to: "/guide", key: "nav.guide" },
-  { to: "/weekend", key: "nav.weekend" },
+  { to: "/walks", key: "nav.walks" },
+  { to: "/shabbat", key: "nav.shabbat" },
+  { to: "/cinema", key: "nav.cinema" },
   { to: "/free", key: "nav.free" },
+  { to: "/news", key: "nav.news" },
+  { to: "/jobs", key: "nav.jobs" },
   { to: "/newsletter", key: "nav.newsletter" },
   { to: "/submit", key: "nav.submit" },
 ];
@@ -78,13 +78,13 @@ export const SiteHeader = () => {
       <div className="container-page flex h-16 items-center justify-between gap-3">
         <Logo />
         <nav className="hidden lg:flex items-center gap-0.5 text-[15px] font-semibold" aria-label="Main">
-          {TABS.filter((tab) => tab.to !== "/").map((tab) => (
+          {TABS.filter((tab) => !tab.mobileOnly).map((tab) => (
             <NavLink
               key={tab.to}
               to={tab.to}
               end={tab.end}
               className={({ isActive }) =>
-                `relative whitespace-nowrap px-2.5 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea rounded-md ${
+                `relative whitespace-nowrap px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sea rounded-md ${
                   isActive ? "text-foreground after:absolute after:inset-x-3 after:-bottom-[13px] after:h-[3px] after:bg-accent" : "text-foreground/80 hover:text-foreground"
                 }`
               }
@@ -139,7 +139,7 @@ export const BottomTabs = () => {
             {({ isActive }) => (
               <>
                 <tab.icon className={`h-5 w-5 ${isActive ? "text-accent" : ""}`} aria-hidden />
-                {t(tab.key)}
+                {t(tab.short ?? tab.key)}
               </>
             )}
           </NavLink>

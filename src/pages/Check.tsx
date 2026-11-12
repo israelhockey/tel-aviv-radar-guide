@@ -392,6 +392,7 @@ const Check = () => {
               {hood && <Link to={`/area/${hoodSlug(hood)}`} className="h-11 inline-flex items-center rounded-md bg-secondary px-4 font-bold">{he ? hood.he : hood.en}: {L("places and events", "מקומות ואירועים")}</Link>}
               <Link to="/construction-noise-rules" className="h-11 inline-flex items-center rounded-md bg-[#fff4c2] text-[#0b1a33] px-4 font-bold">{L("Noise rules and how to complain", "כללי רעש ואיך מתלוננים")}</Link>
               <Link to="/compare" className="h-11 inline-flex items-center rounded-md bg-secondary px-4 font-bold">{L("Compare apartments", "השוואת דירות")}</Link>
+              <Link to="/street" className="h-11 inline-flex items-center rounded-md bg-secondary px-4 font-bold">{L("Construction by street", "בניה לפי רחוב")}</Link>
               <Link to="/live?layers=parking" className="h-11 inline-flex items-center rounded-md bg-secondary px-4 font-bold">{L("Parking near here", "חניה בסביבה")}</Link>
               <Link to="/live?layers=traffic" className="h-11 inline-flex items-center rounded-md bg-secondary px-4 font-bold">{L("Live traffic", "תנועה עכשיו")}</Link>
               <Link to="/events" className="h-11 inline-flex items-center rounded-md bg-secondary px-4 font-bold">{L("What's on tonight", "מה קורה הערב")}</Link>

@@ -68,14 +68,14 @@ export const translationOf = (a: Article, lang: "en" | "he") =>
 export const articlesFor = (lang: "en" | "he") => ARTICLES.filter((a) => a.lang === lang || !translationOf(a, lang));
 
 export const CATEGORY_LABEL: Record<ArticleCategory, { en: string; he: string; color: string }> = {
+  newcomers: { en: "Living here", he: "לגור כאן", color: "#5f3dc4" },
+  neighbourhoods: { en: "Neighbourhoods", he: "שכונות", color: "#2f9e44" },
   food: { en: "Food", he: "אוכל", color: "#e8590c" },
   drink: { en: "Drinks", he: "שתייה", color: "#ff5a4e" },
   nightlife: { en: "Nightlife", he: "חיי לילה", color: "#7048e8" },
   culture: { en: "Culture", he: "תרבות", color: "#0057ff" },
   outdoors: { en: "Outdoors", he: "בחוץ", color: "#0c8599" },
-  neighbourhoods: { en: "Neighbourhoods", he: "שכונות", color: "#2f9e44" },
   holidays: { en: "Holidays", he: "חגים", color: "#f08c00" },
-  newcomers: { en: "Living here", he: "לגור כאן", color: "#5f3dc4" },
   tourists: { en: "Visiting", he: "ביקור", color: "#0b7285" },
   family: { en: "Family", he: "משפחה", color: "#c2255c" },
 };

@@ -42,6 +42,8 @@ export const seoPages = (): Plugin => {
           hotels: readJson(path.join(data, "hotels.json"), { hotels: [] }).hotels ?? [],
           events: readJson(path.join(data, "events.json"), { events: [] }).events ?? [],
           photos: readJson(path.join(data, "food-photos.json"), { dishes: {}, city: {} }),
+          streets: readJson(path.join(data, "streets.json"), { streets: [] }).streets ?? [],
+          snapshot: readJson(path.join(root, "data", "build-snapshot.json"), { items: {} }).items ?? {},
           now,
         }) as {
           path: string; title: string; description: string; image?: string; type?: string; jsonld: object[]; body: string;

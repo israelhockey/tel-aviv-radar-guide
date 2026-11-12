@@ -176,30 +176,34 @@ const date = (v: unknown): number | undefined => {
 };
 const clean = (s: unknown) => (typeof s === "string" ? s.replace(/\s+/g, " ").replace(/\s*,\s*$/, "").trim() || undefined : undefined);
 
-export const fetchActivity = async (lat: number, lon: number, radius: number): Promise<Activity[]> => {
+/** Everything around a point, or (with `street`) everything the city lists on one street. */
+export const fetchActivity = async (lat: number, lon: number, radius: number, street?: string): Promise<Activity[]> => {
   const around = {
     geometry: `${lon},${lat}`, geometryType: "esriGeometryPoint", inSR: "4326", spatialRel: "esriSpatialRelIntersects",
     distance: String(radius), units: "esriSRUnit_Meter", returnGeometry: "true",
   };
   const here = { lat, lon };
   const settle = async <T,>(p: Promise<T[]>) => p.catch(() => [] as T[]);
+  // Street mode: match on the address text instead of distance; area-only layers are skipped.
+  const on = (field: string) => (street ? { where: `${field} LIKE '%${esc(street)}%'`, returnGeometry: "true" } : around);
+  const none = Promise.resolve([] as { attributes: Record<string, any>; geometry?: any }[]);
   const [permits, sites, nights, roads, danger, plans, publicNights, railRoute, railStops, railYards, businesses, zones] = await Promise.all([
-    settle(q(772, { ...around, outFields: "oid_permit,request_num,open_request,permission_date,expiry_date,tr_hathalat_bniya,sug_bakasha,tochen_bakasha,building_stage,koteret,progress,yechidot_diyur,addresses,sw_tama_38,url_hadmaya,finished,occupation", resultRecordCount: "300" })),
-    settle(q(499, { ...around, outFields: "oid_site,tik_tipul,ktovet,matzav_bniya,status_pikuach,tr_tchilat_avoda,sug_bakasha,tochen_bakasha,shimush,heterim,ishurei_laila", resultRecordCount: "200" })),
-    settle(q(479, { ...around, outFields: "oid_avoda,tik_tipul,mahut,tr_hatchala,tr_siyum,shaot_between,ktovet", resultRecordCount: "100" })),
-    settle(q(852, { ...around, outFields: "OBJECTID,GlobalID,t_ktovet,mahut_avoda,sivug_yom_layla,tzimtzum_netivim,commnets,time_start,time_end,date_start,date_end,kablan_name", resultRecordCount: "100" })),
-    settle(q(591, { ...around, outFields: "oid_mivne,t_ktovet,t_tzav", resultRecordCount: "100" })),
-    settle(q(528, { ...around, distance: "0", outFields: "id_taba,taba,shem_taba,t_status,t_status_klali,t_hekef,tr_matan_tokef,tr_hafkada,url_documents,sw_hitchadshut_ironit", resultRecordCount: "60" })),
+    settle(q(772, { ...on("addresses"), outFields: "oid_permit,request_num,open_request,permission_date,expiry_date,tr_hathalat_bniya,sug_bakasha,tochen_bakasha,building_stage,koteret,progress,yechidot_diyur,addresses,sw_tama_38,url_hadmaya,finished,occupation", resultRecordCount: "300" })),
+    settle(q(499, { ...on("ktovet"), outFields: "oid_site,tik_tipul,ktovet,matzav_bniya,status_pikuach,tr_tchilat_avoda,sug_bakasha,tochen_bakasha,shimush,heterim,ishurei_laila", resultRecordCount: "200" })),
+    settle(q(479, { ...on("ktovet"), outFields: "oid_avoda,tik_tipul,mahut,tr_hatchala,tr_siyum,shaot_between,ktovet", resultRecordCount: "100" })),
+    settle(q(852, { ...on("t_ktovet"), outFields: "OBJECTID,GlobalID,t_ktovet,mahut_avoda,sivug_yom_layla,tzimtzum_netivim,commnets,time_start,time_end,date_start,date_end,kablan_name", resultRecordCount: "100" })),
+    settle(q(591, { ...on("t_ktovet"), outFields: "oid_mivne,t_ktovet,t_tzav", resultRecordCount: "100" })),
+    street ? none : settle(q(528, { ...around, distance: "0", outFields: "id_taba,taba,shem_taba,t_status,t_status_klali,t_hekef,tr_matan_tokef,tr_hafkada,url_documents,sw_hitchadshut_ironit", resultRecordCount: "60" })),
     // Night works in the street itself (utilities, roads), separate from building sites.
-    settle(q(858, { ...around, outFields: "OBJECTID,k_avodot_laila_shura,t_rechov,t_rechov_me,t_rechov_ad,tr_avodat_laila_me,tr_avodat_laila_ad,taarichim_shaot,gorem_yozem_rishayon", resultRecordCount: "60" })),
+    settle(q(858, { ...(street ? { where: `t_rechov = '${esc(street)}'`, returnGeometry: "true" } : around), outFields: "OBJECTID,k_avodot_laila_shura,t_rechov,t_rechov_me,t_rechov_ad,tr_avodat_laila_me,tr_avodat_laila_ad,taarichim_shaot,gorem_yozem_rishayon", resultRecordCount: "60" })),
     // Light rail: Green and Purple line routes being built, their stations and work compounds.
-    Promise.all([settle(q(761, { ...around, outFields: "*", resultRecordCount: "20" })), settle(q(762, { ...around, outFields: "*", resultRecordCount: "20" }))]).then((x) => x.flat()),
-    Promise.all([settle(q(764, { ...around, outFields: "*", resultRecordCount: "10" })), settle(q(766, { ...around, outFields: "*", resultRecordCount: "10" }))]).then((x) => x.flat()),
-    settle(q(633, { ...around, outFields: "*", resultRecordCount: "10" })),
+    street ? none : Promise.all([settle(q(761, { ...around, outFields: "*", resultRecordCount: "20" })), settle(q(762, { ...around, outFields: "*", resultRecordCount: "20" }))]).then((x) => x.flat()),
+    street ? none : Promise.all([settle(q(764, { ...around, outFields: "*", resultRecordCount: "10" })), settle(q(766, { ...around, outFields: "*", resultRecordCount: "10" }))]).then((x) => x.flat()),
+    street ? none : settle(q(633, { ...around, outFields: "*", resultRecordCount: "10" })),
     // Businesses licensed in the last year (a new bar downstairs can be louder than a building site).
-    settle(q(964, { ...around, outFields: "*", orderByFields: "taarich_kabalat_rishayon DESC", resultRecordCount: "80" })),
+    settle(q(964, { ...(street ? { where: `shem_rechov = '${esc(street)}'`, returnGeometry: "true" } : around), outFields: "*", orderByFields: "taarich_kabalat_rishayon DESC", resultRecordCount: "80" })),
     // Nightlife policy zones: where venues may stay open late.
-    settle(q(575, { ...around, distance: "0", outFields: "OBJECTID,shem,t_sug", resultRecordCount: "5" })),
+    street ? none : settle(q(575, { ...around, distance: "0", outFields: "OBJECTID,shem,t_sug", resultRecordCount: "5" })),
   ]);
   const out: Activity[] = [];
   const add = (a: Omit<Activity, "distance" | "lat" | "lon">, g: any) => {
@@ -293,7 +297,25 @@ export const fetchActivity = async (lat: number, lon: number, radius: number): P
       tama38: !!a.sw_hitchadshut_ironit,
     }, f.geometry);
   }
+  if (street) {
+    // LIKE also matches longer names ("הרצל" in "הרצליה"), so keep only real matches on this street.
+    const onStreet = (a: Activity) => !a.address || streetsIn(a.address).includes(street) || (a.kind === "road" && a.address.includes(street)) || a.id.startsWith("pnight-") || a.id.startsWith("biz-");
+    return out.filter(onStreet).sort((a, b) => (houseNo(a.address, street) ?? 9999) - (houseNo(b.address, street) ?? 9999));
+  }
   return out.sort((a, b) => a.distance - b.distance);
+};
+
+/** Street names in a city address text like "דיזנגוף 100, דיזנגוף 102א". */
+export const streetsIn = (address: string) =>
+  [...new Set(address.split(",").map((p) => p.replace(/\s+/g, " ").trim().replace(/\s+\d+\s*[א-ת]?$/, "").trim()).filter(Boolean))];
+/** The house number on a given street in an address text, for sorting. */
+export const houseNo = (address: string | undefined, street: string) => {
+  if (!address) return undefined;
+  for (const p of address.split(",")) {
+    const m = /^(.*?)\s+(\d+)\s*[א-ת]?$/.exec(p.replace(/\s+/g, " ").trim());
+    if (m && m[1] === street) return Number(m[2]);
+  }
+  return undefined;
 };
 
 /** Is a permit item still "live" (in process, approved recently, or building), rather than long finished? */

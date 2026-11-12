@@ -49,7 +49,7 @@ const Magazine = () => {
   const [cat, setCat] = useState<ArticleCategory | "all">(() => (new URLSearchParams(window.location.search).get("cat") as ArticleCategory) || "all");
 
   useEffect(() => {
-    document.title = lang === "he" ? "מגזין · Discover Tel Aviv" : "Magazine · Discover Tel Aviv";
+    document.title = lang === "he" ? "מדריכים לתל אביב: לגור, לאכול ולצאת · Discover Tel Aviv" : "Tel Aviv guides: living here, eating out and going out · Discover Tel Aviv";
   }, [lang]);
 
   const ALL = articlesFor(lang);

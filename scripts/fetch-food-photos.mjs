@@ -115,6 +115,9 @@ const CITY = {
   charlesclore: "Charles Clore Park", ramataviv: "Ramat Aviv", cinematheque: "Tel Aviv Cinematheque",
   bauhaus: "Bauhaus Center (Tel Aviv)", ulpan: "Ulpan", sukkah: "Sukkah", hanukkah: "Hanukkah", purim: "Purim", pride: "Tel Aviv Pride",
   shabbat: "Shabbat", hotel: "Dan Tel Aviv Hotel", lightrail: "Red Line (Tel Aviv Light Rail)",
+  ajami: "Ajami", neveshaanan: "Neve Sha'anan", shapira: "Shapira, Tel Aviv", yadeliyahu: "Menora Mivtachim Arena",
+  telbaruch: "Tel Baruch", kikar: "Kikar HaMedina", hatikva: "Hatikva Market", cityhall: "Tel Aviv City Hall",
+  university: "Tel Aviv University", shuk: "Sarona Market", hilton: "Hilton Beach",
 };
 const city = {};
 for (const [key, title] of Object.entries(CITY)) {

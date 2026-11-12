@@ -17,10 +17,16 @@ import {
 } from "@/lib/areas";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { NOISE_FAQ, NOISE_HOURS, NOISE_SECTIONS } from "@/lib/noiseRules";
+import { nearbyStreets, numbersOn, streetIndex, streetName, streetPath, streetSlug, streetsInAddress, type Street } from "@/lib/streets";
+import { stageEn, typeEn } from "@/lib/live/build";
+import { HOODS } from "@/content/hoods";
 import type { FeedEvent, Hotel, Place } from "@/lib/live/sources";
 
 type Photo = { src: string; by?: string; license?: string; page?: string };
+type SnapItem = { kind: string; key: string; lat: number; lon: number; stage?: string; title?: string; address?: string; units?: number; tama38?: boolean; opened?: number; from?: number; to?: number; hours?: string };
 export type Data = {
+  streets?: Street[];
+  snapshot?: Record<string, SnapItem>;
   places: Place[];
   hotels: Hotel[];
   events: FeedEvent[];
@@ -70,7 +76,7 @@ const photoFor = (d: Data, spec?: string, seed = ""): Photo | undefined => {
 
 const NAV: [string, string][] = [
   ["What's on", "/events"], ["Food", "/food"], ["Beach", "/beach"], ["Magazine", "/magazine"], ["Hotels", "/hotels"],
-  ["Walking tours", "/walks"], ["Neighbourhoods", "/area"], ["Live map", "/live"], ["News", "/news"], ["Jobs", "/jobs"],
+  ["Walking tours", "/walks"], ["Neighbourhoods", "/area"], ["Construction by street", "/street"], ["Live map", "/live"], ["News", "/news"], ["Jobs", "/jobs"],
 ];
 const frame = (inner: string) =>
   `<div class="container-page py-8"><nav aria-label="Sections"><a href="/"><strong>${SITE_NAME}</strong></a> · ${NAV.map(([n, p]) => `<a href="${p}">${n}</a>`).join(" · ")}</nav><main>${inner}</main></div>`;
@@ -388,11 +394,11 @@ const areaPages = (d: Data): Page[] => {
     const ev = eventsNear(d.events, h).slice(0, 10);
     out.push({
       path: `/area/${slug}`,
-      title: `${h.en}, Tel Aviv: where to eat, drink and go · ${SITE_NAME}`,
-      description: clip(`A guide to ${h.en} in Tel Aviv: ${kinds.map(({ k, list }) => `${list.length} ${k.en.toLowerCase()}`).join(", ")}, with opening hours, a map and what's on nearby.`),
+      title: `Living in ${h.en}, Tel Aviv: neighbourhood guide, construction and where to eat · ${SITE_NAME}`,
+      description: clip(HOODS[h.en] ? `${HOODS[h.en].tagline.en}. What it's like to live in ${h.en}, who it suits, construction and noise nearby, and ${kinds.map(({ k, list }) => `${list.length} ${k.en.toLowerCase()}`).join(", ")}.` : `A guide to ${h.en} in Tel Aviv: ${kinds.map(({ k, list }) => `${list.length} ${k.en.toLowerCase()}`).join(", ")}, with opening hours, a map and what's on nearby.`),
       priority: 0.7, changefreq: "weekly",
       jsonld: [crumbs([["Neighbourhoods", "/area"], [h.en, `/area/${slug}`]]), itemList(`Places in ${h.en}`, all.slice(0, 50).map((p) => [nameOf(p), `/place/${placeSlug(p)}`]))],
-      body: frame(`<h1>${esc(h.en)}</h1>${guide ? `<p>Read our <a href="/magazine/${guide.slug}">${esc(guide.title)}</a>.</p>` : ""}${kinds.map(({ k, list }) => `<h2><a href="/area/${slug}/${k.id}">${esc(k.en)} in ${esc(h.en)}</a></h2><ul>${list.slice(0, 8).map(placeLine).join("")}</ul>`).join("")}${ev.length ? `<h2>On nearby</h2><ul>${ev.map((e) => `<li><a href="/event/${eventSlug(e)}">${esc(e.title)}</a></li>`).join("")}</ul>` : ""}`),
+      body: frame(`<h1>${esc(h.en)}</h1>${HOODS[h.en] ? `<p><strong>${esc(HOODS[h.en].tagline.en)}.</strong> ${esc(HOODS[h.en].vibe.en)}</p><h2>Good for</h2><p>${esc(HOODS[h.en].goodFor.en)}</p><h2>Worth knowing</h2><p>${esc(HOODS[h.en].watch.en)}</p><h2>Getting around</h2><p>${esc(HOODS[h.en].around.en)}</p><p><a href="/check?lat=${h.lat}&amp;lon=${h.lon}&amp;r=500&amp;a=${encodeURIComponent(h.en)}">Construction and noise in ${esc(h.en)}</a></p>` : ""}${(d.streets ?? []).filter((x) => x.en && neighbourhoodOf(x)?.en === h.en).slice(0, 14).map((x) => `<a href="${streetPath(x)}">${esc(streetName(x) ?? "")}</a>`).join(" · ")}${guide ? `<p>Read our <a href="/magazine/${guide.slug}">${esc(guide.title)}</a>.</p>` : ""}${kinds.map(({ k, list }) => `<h2><a href="/area/${slug}/${k.id}">${esc(k.en)} in ${esc(h.en)}</a></h2><ul>${list.slice(0, 8).map(placeLine).join("")}</ul>`).join("")}${ev.length ? `<h2>On nearby</h2><ul>${ev.map((e) => `<li><a href="/event/${eventSlug(e)}">${esc(e.title)}</a></li>`).join("")}</ul>` : ""}`),
     });
     for (const { k, list } of kinds) {
       out.push({
@@ -422,6 +428,97 @@ const cravingPages = (d: Data): Page[] =>
     } satisfies Page;
   });
 
+// ---------- street pages ----------
+
+const STREET_GROUPS: { id: string; en: string; he: string; test: (i: SnapItem) => boolean }[] = [
+  { id: "review", en: "Permit requests under review", he: "בקשות להיתר בבדיקה", test: (i) => i.kind === "permit" && /בתהליך/.test(i.stage ?? "") },
+  { id: "approved", en: "Approved, not started yet", he: "אושרו, טרם התחילו", test: (i) => i.kind === "permit" && /קיים היתר/.test(i.stage ?? "") },
+  { id: "building", en: "Being built now", he: "בבניה עכשיו", test: (i) => (i.kind === "permit" && /בבניה/.test(i.stage ?? "")) || i.kind === "site" },
+  { id: "works", en: "Night works and road works", he: "עבודות לילה ועבודות כביש", test: (i) => i.kind === "night" || i.kind === "road" },
+];
+
+const streetPages = (d: Data): Page[] => {
+  const streets = d.streets ?? [];
+  const snap = Object.values(d.snapshot ?? {});
+  if (!streets.length || !snap.length) return [];
+  const nowMs = Date.parse(d.now);
+  const live = (i: SnapItem) => {
+    if (i.kind === "permit") return !/תעודת גמר|אכלוס|בוטל|נסגר/.test(i.stage ?? "") && (i.opened ?? 0) > nowMs - 6 * 365 * 864e5;
+    if (i.kind === "road") return !i.to || i.to > nowMs - 7 * 864e5;
+    return true;
+  };
+  const byHe = new Map(streets.map((s) => [s.he, s]));
+  const items = new Map<string, SnapItem[]>();
+  for (const i of snap) {
+    if (!i.address || !live(i)) continue;
+    const names = i.kind === "road" ? streets.filter((s) => s.he.length > 2 && i.address!.includes(s.he)).map((s) => s.he).slice(0, 4) : streetsInAddress(i.address).filter((n) => byHe.has(n));
+    for (const n of names) items.set(n, [...(items.get(n) ?? []), i]);
+  }
+  const index = streetIndex(streets);
+  const chosen = [...index.values()].map((s) => ({ s, list: items.get(s.he) ?? [] })).filter((x) => x.list.length >= 2)
+    .sort((a, b) => b.list.length - a.list.length).slice(0, 700);
+  const allowed = new Set(chosen.map((x) => streetSlug(x.s)));
+  const date = new Date(nowMs).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jerusalem" });
+  const dateHe = new Date(nowMs).toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jerusalem" });
+  const out: Page[] = [];
+  for (const { s, list } of chosen) {
+    const hood = neighbourhoodOf(s);
+    const near = nearbyStreets(s, streets, 8, allowed);
+    const groups = STREET_GROUPS.map((g) => ({ g, list: list.filter(g.test) })).filter((x) => x.list.length);
+    const count = (id: string) => groups.find((x) => x.g.id === id)?.list.length ?? 0;
+    const tama = list.filter((i) => i.tama38).length;
+    const units = list.reduce((t, i) => t + (i.kind === "permit" ? i.units ?? 0 : 0), 0);
+    const alternates = [{ lang: "en" as const, path: streetPath(s) }, { lang: "he" as const, path: streetPath(s, true) }];
+    for (const he of [false, true]) {
+      const name = he ? s.he : streetName(s)!;
+      const line = (i: SnapItem) => {
+        const nums = numbersOn(i.address, s.he);
+        const what = he ? i.title : typeEn(i.title);
+        const bits = [he ? i.stage : stageEn(i.stage), i.units ? `${i.units} ${he ? "יח״ד" : "homes"}` : "", i.tama38 ? (he ? "תמ״א 38" : "TAMA 38") : ""].filter(Boolean).join(", ");
+        return `<li>${nums.length ? `<strong>${esc(nums.join(", "))}</strong>: ` : ""}${esc(what ?? "")}${bits ? ` (${esc(bits)})` : ""}</li>`;
+      };
+      const summary = he
+        ? `נכון ל-${dateHe}: ${count("review")} בקשות להיתר בבדיקה, ${count("approved")} היתרים שאושרו וטרם התחילו, ${count("building")} פרויקטים בבניה ו-${count("works")} עבודות לילה וכביש ברחוב ${s.he}${tama ? `, מתוכם ${tama} בתמ״א 38` : ""}${units ? `, עם ${units} דירות חדשות מתוכננות` : ""}.`
+        : `As of ${date}: ${count("review")} permit requests under review, ${count("approved")} approved permits not started yet, ${count("building")} projects being built and ${count("works")} night and road works on ${streetName(s)} (${s.he})${tama ? `, ${tama} of them TAMA 38` : ""}${units ? `, with ${units} new homes planned` : ""}.`;
+      const faq = he ? [
+        [`האם יש בניה ברחוב ${s.he}?`, summary],
+        [`האם יש פרויקטים של תמ״א 38 ברחוב ${s.he}?`, tama ? `כן, ${tama} בקשות או היתרים ברחוב מסומנים כתמ״א 38.` : `אין כרגע בקשות או היתרים פעילים של תמ״א 38 ברחוב לפי רישומי העירייה.`],
+        [`איך מקבלים התראות על בניה ברחוב ${s.he}?`, `בדקו כתובת ברחוב בבודק הבניה של Discover Tel Aviv והירשמו להתראות במייל על בקשות היתר חדשות, אתרי בניה ועבודות לילה.`],
+      ] : [
+        [`Is there construction on ${streetName(s)}?`, summary],
+        [`Are there TAMA 38 projects on ${streetName(s)}?`, tama ? `Yes, ${tama} permit requests or permits on the street are marked TAMA 38.` : `There are no active TAMA 38 requests or permits on the street in the city's records right now.`],
+        [`How do I get alerts for construction on ${streetName(s)}?`, `Check an address on the street in the Discover Tel Aviv construction checker and sign up for email alerts about new permit requests, building sites and night works.`],
+      ];
+      const body = `<h1>${esc(he ? `בניה ברחוב ${name}, תל אביב` : `Construction on ${name}, Tel Aviv`)}</h1><p>${esc(summary)}</p>`
+        + `<p><a href="/check?lat=${s.lat}&amp;lon=${s.lon}&amp;r=250&amp;a=${encodeURIComponent(name)}">${he ? "לצפייה במפה ולהרשמה להתראות" : "See it on the map and get alerts"}</a>${hood ? ` · <a href="/area/${hoodSlug(hood)}">${esc(he ? hood.he : hood.en)}</a>` : ""}</p>`
+        + groups.map(({ g, list: l }) => `<h2>${esc(he ? g.he : g.en)} (${l.length})</h2><ul>${l.slice(0, 40).map(line).join("")}</ul>`).join("")
+        + `<h2>${he ? "שאלות נפוצות" : "Frequently asked questions"}</h2>${faq.map(([q, a]) => `<h3>${esc(q)}</h3><p>${esc(a)}</p>`).join("")}`
+        + (near.length ? `<h2>${he ? "רחובות סמוכים" : "Nearby streets"}</h2><ul>${near.map((n) => `<li><a href="${streetPath(n, he)}">${esc(he ? n.he : streetName(n)!)}</a></li>`).join("")}</ul>` : "")
+        + `<p><a href="${he ? "/magazine/he-tama-38-explained" : "/magazine/tama-38-explained"}">${he ? "תמ״א 38 בהסבר פשוט" : "TAMA 38 explained"}</a> · <a href="/construction-noise-rules">${he ? "כללי רעש בניה" : "Construction noise rules"}</a> · <a href="/street">${he ? "כל הרחובות" : "All streets"}</a></p>`;
+      const title = he
+        ? `בניה ברחוב ${s.he}, תל אביב: ${list.length} היתרים ואתרי בניה · ${SITE_NAME}`
+        : `Construction on ${streetName(s)}, Tel Aviv: ${list.length} permits and building sites · ${SITE_NAME}`;
+      out.push({
+        path: streetPath(s, he), lang: he ? "he" : "en", alternates, title,
+        description: clip(summary), priority: 0.6, changefreq: "daily", lastmod: d.now,
+        jsonld: [
+          crumbs(he ? [["בודק הבניה", "/check"], ["רחובות", "/street"], [s.he, streetPath(s, true)]] : [["Construction checker", "/check"], ["Streets", "/street"], [streetName(s)!, streetPath(s)]]),
+          { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) },
+        ],
+        body: frame(body),
+      });
+    }
+  }
+  const az = chosen.map((x) => x.s).sort((a, b) => streetName(a)!.localeCompare(streetName(b)!));
+  out.push({
+    path: "/street", title: `Construction by street in Tel Aviv: permits and building sites · ${SITE_NAME}`,
+    description: "Building permits, building sites, night works and road works on every busy street in Tel Aviv-Yafo, from the city's own records, updated nightly.",
+    jsonld: [], priority: 0.7, changefreq: "daily",
+    body: frame(`<h1>Construction by street in Tel Aviv</h1><ul>${az.map((s) => `<li><a href="${streetPath(s)}">${esc(streetName(s)!)}</a> · <a href="${streetPath(s, true)}" lang="he">${esc(s.he)}</a></li>`).join("")}</ul>`),
+  });
+  return out;
+};
+
 export const renderSite = (d: Data): Page[] => {
   const nowMs = Date.parse(d.now);
   // Weekly community classes are thin pages; leave them out of the index.
@@ -432,6 +529,7 @@ export const renderSite = (d: Data): Page[] => {
     ...ARTICLES.map((a) => articlePage(data, a)),
     ...WALKS.map((w) => walkPage(data, w)),
     ...areaPages(data),
+    ...streetPages(data),
     ...cravingPages(data),
     ...d.places.filter((p) => p.kind !== "bicycle_rental" && p.name).map((p) => placePage(data, p)),
     ...d.hotels.map((h) => hotelPage(data, h)),
