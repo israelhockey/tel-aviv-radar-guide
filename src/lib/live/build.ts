@@ -298,6 +298,8 @@ export const fetchActivity = async (lat: number, lon: number, radius: number): P
 
 /** Is a permit item still "live" (in process, approved recently, or building), rather than long finished? */
 export const isLive = (a: Activity) => {
+  // Street night-work approvals have exact dates: once they've passed, they're over.
+  if (a.id.startsWith("pnight-")) return !a.end || a.end > Date.now() - 864e5;
   if (a.kind !== "permit") return a.kind !== "plan" || !a.end || a.end > Date.now() - 3 * 365 * 864e5;
   if (/תעודת גמר|אכלוס|בוטל|נסגר/.test(a.stage ?? "")) return false;
   return (a.opened ?? 0) > Date.now() - 6 * 365 * 864e5;

@@ -22,10 +22,12 @@ export const summarize = (items: Activity[]): Summary => {
   const nearestBuild = buildingItems.length ? Math.min(...buildingItems.map((a) => a.distance)) : undefined;
   // The loudest thing matters most; the next few add to it.
   const s = scored.filter((a) => a.kind !== "zone" && a.kind !== "plan").map((a) => a.impact);
-  const rest = s.slice(1, 6);
-  const raw = s.length ? s[0] * 0.65 + (rest.reduce((t, x) => t + x, 0) / Math.max(rest.length, 1)) * 0.35 + Math.min(1.5, s.filter((x) => x >= 5).length * 0.25) : 0;
+  // The ten most disruptive things nearby, averaged over ten (so a couple of items can't max it out),
+  // plus a nudge for how many loud ones there are. One decimal, so busy streets can still be compared.
+  const top10 = s.slice(0, 10).reduce((t, x) => t + x, 0) / 10;
   const zone = live.find((a) => a.kind === "zone");
-  const score = Math.max(0, Math.min(10, Math.round(raw + (zone ? 0.5 : 0))));
+  const raw = top10 + Math.min(1, s.filter((x) => x >= 7).length * 0.1) + (zone ? 0.3 : 0);
+  const score = Math.max(0, Math.min(10, Math.round(raw * 10) / 10));
   const level = score >= 7 ? "high" : score >= 4 ? "medium" : score >= 1 ? "low" : "none";
   const rail = scored.find((a) => a.kind === "rail");
   const bars = live.filter((a) => a.kind === "business" && impactOf(a).score >= 3).length;

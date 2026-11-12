@@ -208,7 +208,7 @@ const AlertSignup = ({ lat, lon, label, radius }: { lat: number; lon: number; la
         <form onSubmit={submit} className="mt-4 space-y-3">
           <div className="flex flex-col sm:flex-row gap-2">
             <label htmlFor="alert-email" className="sr-only">{L("Email", "אימייל")}</label>
-            <input id="alert-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" dir="ltr" className="flex-1 h-12 rounded-md bg-white px-4 text-[16px] outline-none focus-visible:ring-4 focus-visible:ring-[#0b1a33]/30" />
+            <input id="alert-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" dir="ltr" className="shrink-0 sm:shrink sm:flex-1 h-12 rounded-md bg-white px-4 text-[16px] outline-none focus-visible:ring-4 focus-visible:ring-[#0b1a33]/30" />
             <button disabled={state === "busy"} className="h-12 rounded-md bg-[#0b1a33] text-white px-6 font-extrabold disabled:opacity-60">{state === "busy" ? "…" : watched.length ? L("Add this address", "הוספת הכתובת") : L("Alert me", "עדכנו אותי")}</button>
           </div>
           <fieldset className="flex flex-wrap gap-2 text-[14px]">

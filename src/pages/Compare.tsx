@@ -32,7 +32,10 @@ const Compare = () => {
   const list = shared ?? saved;
   const results = useQueries({ queries: list.map((s) => ({ queryKey: ["activity", s.lat, s.lon, s.r ?? 250], queryFn: () => fetchActivity(s.lat, s.lon, s.r ?? 250), staleTime: 10 * 60_000 })) });
   const sums = results.map((r) => (r.data ? summarize(r.data) : null));
-  const best = sums.every(Boolean) && sums.length > 1 ? sums.reduce((b, x, i) => (x!.score < sums[b]!.score ? i : b), 0) : -1;
+  const ready = sums.every(Boolean) && sums.length > 1;
+  const scores = ready ? sums.map((x) => x!.score) : [];
+  // Only call one "quietest" when it's clearly ahead of the rest.
+  const best = ready && Math.min(...scores) <= [...scores].sort((a, b) => a - b)[1] - 0.3 ? scores.indexOf(Math.min(...scores)) : -1;
 
   useEffect(() => { document.title = `${L("Compare apartments: construction and noise", "השוואת דירות: בניה ורעש")} · Discover Tel Aviv`; }, [lang]);
 
@@ -98,7 +101,7 @@ const Compare = () => {
                         <td key={i} className="py-2">
                           {s ? (
                             <span className="inline-flex items-center gap-3">
-                              <span className="rounded-[8px] px-3 py-1 font-poster text-[36px] leading-none" style={{ background: st.bg, color: st.fg }}>{s.score}</span>
+                              <span className="rounded-[8px] px-3 py-1 font-poster text-[36px] leading-none tabular" style={{ background: st.bg, color: st.fg }}>{s.score.toFixed(1)}</span>
                               {i === best && <span className="rounded-[4px] bg-[#2f9e44] text-white px-2 py-0.5 text-[12px] font-extrabold uppercase">{L("Quietest", "הכי שקט")}</span>}
                             </span>
                           ) : <span className="inline-block h-10 w-16 rounded bg-secondary animate-pulse" />}

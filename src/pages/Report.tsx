@@ -65,7 +65,7 @@ const Report = () => {
           <>
             <section className="mt-6 grid gap-4 sm:grid-cols-[auto,1fr] items-center break-inside-avoid">
               <div className="rounded-[10px] px-6 py-4 text-center" style={{ background: style.bg, color: style.fg }}>
-                <p className="font-poster text-[64px] leading-none">{sum.score}</p>
+                <p className="font-poster text-[64px] leading-none tabular">{sum.score.toFixed(1)}</p>
                 <p className="text-[12px] font-extrabold uppercase">{L("out of 10", "מתוך 10")}</p>
               </div>
               <div>
@@ -95,7 +95,11 @@ const Report = () => {
             {(sum.zone || sum.rail) && (
               <section className="mt-6 space-y-2 break-inside-avoid">
                 {sum.zone && <p className="rounded-[8px] bg-[#f3d9fa] text-[#0b1a33] p-3 text-[15px]"><b>{L("Nightlife zone.", "אזור בילוי.")}</b> {L(`This address is inside a city nightlife zone (${stageEn(sum.zone.stage) ?? "late opening"}). Bars nearby may legally stay open late.`, `הכתובת בתוך אזור בילוי עירוני (${sum.zone.stage ?? ""}). ברים בסביבה רשאים לפתוח עד שעה מאוחרת.`)}</p>}
-                {sum.rail && <p className="rounded-[8px] bg-[#c3fae8] text-[#0b1a33] p-3 text-[15px]"><b>{L("Light rail.", "רכבת קלה.")}</b> {L(`${typeEn(sum.rail.title)} works pass ${sum.rail.distance} m away. Light rail works run for years and include night work.`, `עבודות ${sum.rail.title} עוברות ${sum.rail.distance} מ' מכאן. עבודות הרכבת נמשכות שנים וכוללות עבודות לילה.`)}</p>}
+                {sum.rail && <p className="rounded-[8px] bg-[#c3fae8] text-[#0b1a33] p-3 text-[15px]"><b>{L("Light rail.", "רכבת קלה.")}</b> {/התארגנות/.test(sum.rail.title)
+                  ? L(`A light rail works compound is ${sum.rail.distance} m away.`, `מתחם עבודה של הרכבת הקלה נמצא ${sum.rail.distance} מ' מכאן.`)
+                  : /תחנת/.test(sum.rail.title)
+                    ? L(`A light rail station is being built ${sum.rail.distance} m away (${typeEn(sum.rail.title)}).`, `${sum.rail.title} נבנית ${sum.rail.distance} מ' מכאן.`)
+                    : L(`The ${typeEn(sum.rail.title)?.replace(" (under construction)", "")} route passes ${sum.rail.distance} m away.`, `תוואי ${sum.rail.title} עובר ${sum.rail.distance} מ' מכאן.`)}{" "}{L("Light rail works run for years and often include night work.", "עבודות הרכבת נמשכות שנים ולעיתים קרובות כוללות עבודות לילה.")}</p>}
               </section>
             )}
 
