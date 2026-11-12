@@ -108,5 +108,5 @@ export const ActivityMap = ({ lat, lon, radius, items, selected, onSelect, class
     if (a && mapRef.current) mapRef.current.easeTo({ center: [a.lon, a.lat], duration: 400 });
   }, [selected]);
 
-  return <div className={`relative overflow-hidden rounded-[10px] bg-secondary ${className}`}><div ref={box} className="absolute inset-0" /></div>;
+  return <div className={`relative overflow-hidden rounded-[10px] bg-secondary ${className}`}><div className="absolute inset-0"><div ref={box} className="h-full w-full" /></div></div>;
 };
