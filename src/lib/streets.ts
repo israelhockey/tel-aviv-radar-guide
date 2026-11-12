@@ -12,7 +12,9 @@ export const streetName = (s: Pick<Street, "en" | "he">) => {
   if (!s.en) return undefined;
   const words = s.en.split(" ");
   const heWords = s.he.split(" ").length;
-  const name = words.length > heWords ? words.slice(-heWords).join(" ") : s.en;
+  let name = words.length > heWords ? words.slice(-heWords).join(" ") : s.en;
+  // "Simtat", "Kikar" and friends on their own say nothing: keep the full name.
+  if (/^(simtat|shvil|kikar|sderot|derekh|rehov|gan|ma'?avar|mitham)$/i.test(name)) name = s.en;
   return name.replace(/'([A-Z])/g, (_m, c: string) => `'${c.toLowerCase()}`);
 };
 

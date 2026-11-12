@@ -300,7 +300,8 @@ export const fetchActivity = async (lat: number, lon: number, radius: number, st
   if (street) {
     // LIKE also matches longer names ("הרצל" in "הרצליה"), so keep only real matches on this street.
     const onStreet = (a: Activity) => !a.address || streetsIn(a.address).includes(street) || (a.kind === "road" && a.address.includes(street)) || a.id.startsWith("pnight-") || a.id.startsWith("biz-");
-    return out.filter(onStreet).sort((a, b) => (houseNo(a.address, street) ?? 9999) - (houseNo(b.address, street) ?? 9999));
+    // Distance from the middle of a long street means nothing; score everything as "on the street".
+    return out.filter(onStreet).map((a) => ({ ...a, distance: 60 })).sort((a, b) => (houseNo(a.address, street) ?? 9999) - (houseNo(b.address, street) ?? 9999));
   }
   return out.sort((a, b) => a.distance - b.distance);
 };

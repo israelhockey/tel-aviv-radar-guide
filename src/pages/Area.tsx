@@ -121,7 +121,15 @@ const HoodProfileBlock = ({ hood }: { hood: (typeof NEIGHBOURHOODS)[number] }) =
 const HoodStreets = ({ hood }: { hood: (typeof NEIGHBOURHOODS)[number] }) => {
   const { lang } = useI18n();
   const q = useQuery({ queryKey: ["streets"], staleTime: Infinity, queryFn: async () => ((await (await fetchData("streets.json")).json()).streets ?? []) as Street[] });
-  const list = useMemo(() => (q.data ?? []).filter((s) => s.en && neighbourhoodOf(s)?.en === hood.en).slice(0, 14), [q.data, hood.en]);
+  const list = useMemo(() => {
+    const seen = new Set<string>();
+    return (q.data ?? []).filter((s) => {
+      const n = streetName(s);
+      if (!n || s.n < 15 || seen.has(n) || neighbourhoodOf(s)?.en !== hood.en) return false;
+      seen.add(n);
+      return true;
+    }).slice(0, 14);
+  }, [q.data, hood.en]);
   if (!list.length) return null;
   return (
     <div className="mt-5">
