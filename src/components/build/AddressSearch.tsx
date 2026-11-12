@@ -117,7 +117,7 @@ export const AddressSearch = ({ big = false, autoFocus = false }: { big?: boolea
           )}
         </div>
         <div className="flex gap-2">
-          <button type="submit" disabled={busy || !text.trim()} className={`${h} flex-1 sm:flex-none rounded-md bg-[#ffcb05] px-6 font-extrabold text-[#0b1a33] disabled:opacity-60`}>
+          <button type="submit" disabled={busy} className={`${h} flex-1 sm:flex-none rounded-md bg-[#ffcb05] px-6 font-extrabold text-[#0b1a33] disabled:opacity-60`}>
             {busy ? "…" : L("Check", "בדיקה")}
           </button>
           <button type="button" onClick={locate} aria-label={L("Use my location", "המיקום שלי")} title={L("Use my location", "המיקום שלי")} className={`${h} w-14 sm:w-16 rounded-md bg-white/15 text-white flex items-center justify-center hover:bg-white/25`}>
