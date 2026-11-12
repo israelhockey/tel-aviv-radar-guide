@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { BellRing, ChevronDown, ExternalLink, Share2 } from "lucide-react";
+import { BellRing, Check as CheckIcon, ChevronDown, ExternalLink, FileText, Link2, Scale, Share2, SquareStack } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,16 +11,22 @@ import { neighbourhoodOf } from "@/lib/live/geo";
 import { hoodSlug } from "@/lib/areas";
 import { AddressSearch, NeighbourhoodChips } from "@/components/build/AddressSearch";
 import { ActivityMap, KIND_COLOR } from "@/components/build/ActivityMap";
+import { COMPARE, MAX_COMPARE, WATCHED, addTo, getList, has, onChange, removeFrom, shareLink, type Spot } from "@/lib/live/saved";
 
 const KINDS: { id: ActivityKind; en: string; he: string }[] = [
   { id: "permit", en: "Permit requests and permits", he: "בקשות והיתרי בניה" },
   { id: "site", en: "Active building sites", he: "אתרי בניה פעילים" },
   { id: "night", en: "Night works", he: "עבודות לילה" },
   { id: "road", en: "Road works and closures", he: "עבודות כביש וחסימות" },
+  { id: "rail", en: "Light rail construction", he: "עבודות הרכבת הקלה" },
+  { id: "business", en: "New businesses (last 12 months)", he: "עסקים חדשים (12 חודשים)" },
+  { id: "zone", en: "Nightlife zone", he: "אזור בילוי" },
   { id: "danger", en: "Dangerous buildings", he: "מבנים מסוכנים" },
   { id: "plan", en: "Town plans covering this spot", he: "תכניות בניין עיר במקום" },
 ];
 const RADII = [100, 250, 500];
+
+const itemUrl = (id: string) => { const u = new URL(window.location.href); u.searchParams.set("item", id); return u.toString(); };
 
 const fmtDate = (ms: number | undefined, lang: string) =>
   ms ? new Intl.DateTimeFormat(lang === "he" ? "he-IL" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Jerusalem" }).format(new Date(ms)) : null;
@@ -51,6 +57,9 @@ const ItemCard = ({ a, open, onToggle, streets }: { a: Activity; open: boolean; 
     a.end && [a.kind === "plan" ? L("In force since", "בתוקף מ-") : L("Until", "עד"), fmtDate(a.end, lang)],
   ].filter(Boolean) as [string, string][];
   const step = a.kind === "permit" ? permitStep(a) : -1;
+  const [copied, setCopied] = useState(false);
+  const shareThis = () => shareLink(itemUrl(a.id), `${title}${address ? ` · ${address}` : ""}`, () => { setCopied(true); window.setTimeout(() => setCopied(false), 2000); });
+  const noisy = a.kind === "site" || a.kind === "night" || a.kind === "road" || a.kind === "rail";
   const translate = async () => {
     if (!a.detail) return;
     setTranslating(true);
@@ -60,10 +69,15 @@ const ItemCard = ({ a, open, onToggle, streets }: { a: Activity; open: boolean; 
     else window.open(googleTranslateUrl(a.detail), "_blank", "noopener");
   };
   return (
-    <li id={`item-${a.id}`} className={`rounded-[10px] border-2 bg-card transition-colors ${open ? "border-foreground" : "border-border"}`}>
+    <li id={`item-${a.id}`} className={`relative scroll-mt-24 rounded-[10px] border-2 bg-card transition-colors ${open ? "border-foreground" : "border-border"}`}>
+      <button onClick={shareThis} aria-label={L("Share this one", "שיתוף הפריט הזה")} title={L("Share this one", "שיתוף הפריט הזה")}
+        className="absolute bottom-3 end-12 h-8 w-8 rounded-md inline-flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground">
+        {copied ? <CheckIcon className="h-4 w-4 text-[#2f9e44]" aria-hidden /> : <Share2 className="h-4 w-4" aria-hidden />}
+      </button>
+      {copied && <span className="absolute bottom-12 end-4 rounded bg-foreground text-background px-2 py-1 text-[12px] font-semibold" role="status">{L("Link copied", "הקישור הועתק")}</span>}
       <button onClick={onToggle} aria-expanded={open} className="w-full text-start p-4 flex gap-3">
         <span className="mt-1 h-3 w-3 shrink-0 rounded-full" style={{ background: KIND_COLOR[a.kind] }} aria-hidden />
-        <span className="min-w-0 flex-1">
+        <span className="min-w-0 flex-1 pe-8">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] font-bold uppercase tracking-wider" style={{ color: KIND_COLOR[a.kind] }}>
             {he ? kind.he : kind.en}
             <span className="text-muted-foreground normal-case tracking-normal font-semibold tabular">{a.distance} {L("m away", "מ' ממך")}</span>
@@ -137,6 +151,12 @@ const ItemCard = ({ a, open, onToggle, streets }: { a: Activity; open: boolean; 
               </div>
             )
           )}
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button onClick={shareThis} className="h-9 rounded-md bg-foreground text-background px-3 font-bold inline-flex items-center gap-1.5"><Share2 className="h-4 w-4" aria-hidden />{L("Share this one", "שיתוף")}</button>
+            <button onClick={() => navigator.clipboard?.writeText(itemUrl(a.id)).then(() => { setCopied(true); window.setTimeout(() => setCopied(false), 2000); }).catch(() => undefined)} className="h-9 rounded-md border border-border px-3 font-semibold inline-flex items-center gap-1.5"><Link2 className="h-4 w-4" aria-hidden />{copied ? L("Copied", "הועתק") : L("Copy link", "העתקת קישור")}</button>
+            {noisy && <Link to="/construction-noise-rules" className="h-9 rounded-md border border-border px-3 font-semibold inline-flex items-center gap-1.5"><Scale className="h-4 w-4" aria-hidden />{L("Your rights: noise hours", "הזכויות שלך: שעות רעש")}</Link>}
+            {noisy && <a href="tel:106" className="h-9 rounded-md border border-border px-3 font-semibold inline-flex items-center">{L("Complain: call 106", "תלונה: חייגו 106")}</a>}
+          </div>
           {a.url && <a href={a.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 font-bold text-sea hover:underline"><ExternalLink className="h-4 w-4" aria-hidden />{a.kind === "plan" ? L("Plan documents (city site, Hebrew)", "מסמכי התכנית (אתר העירייה)") : L("Drawings on the city's building archive (Hebrew)", "תכניות בארכיון הבניין העירוני")}</a>}
         </div>
       )}
@@ -148,36 +168,92 @@ const AlertSignup = ({ lat, lon, label, radius }: { lat: number; lon: number; la
   const { lang } = useI18n();
   const he = lang === "he";
   const L = (en: string, h: string) => (he ? h : en);
-  const [email, setEmail] = useState("");
-  const [state, setState] = useState<"idle" | "busy" | "done" | "dupe" | "error">("idle");
+  const [email, setEmail] = useState(() => { try { return localStorage.getItem("dtla.email") ?? ""; } catch { return ""; } });
+  const [frequency, setFrequency] = useState<"instant" | "weekly">("instant");
+  const [state, setState] = useState<"idle" | "busy" | "done" | "dupe" | "full" | "error">("idle");
+  const [watched, setWatched] = useState<Spot[]>(() => getList(WATCHED));
+  useEffect(() => onChange(WATCHED, () => setWatched(getList(WATCHED))), []);
+  const here: Spot = { label, lat, lon, r: radius };
+  const already = watched.some((w) => Math.abs(w.lat - lat) < 0.0003 && Math.abs(w.lon - lon) < 0.0003);
+  const kinds = ["permit", "site", "night", "road", "rail", "business", "danger"];
   const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!/^\S+@\S+\.\S+$/.test(email)) return;
+    const clean = email.trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(clean)) return;
     setState("busy");
-    const { error } = await supabase.from("subscribers").insert({
-      email: email.trim().toLowerCase(), source: "build-alerts",
-      preferences: { lang, alerts: [{ label, lat, lon, radius, kinds: ["permit", "site", "night", "road", "danger"], created: new Date().toISOString() }] },
-    } as never);
-    setState(!error ? "done" : error.code === "23505" ? "dupe" : "error");
+    const alert = { label, lat, lon, radius, kinds };
+    // The alerts function lets one email watch several addresses. If it isn't reachable,
+    // fall back to a plain sign-up, which works for the first address.
+    const fn = await supabase.functions.invoke("alerts-subscribe", { body: { email: clean, alert, frequency, lang } }).catch(() => ({ data: null, error: true }));
+    let result: typeof state;
+    if (!fn.error && fn.data?.ok) result = "done";
+    else if (!fn.error && fn.data?.full) result = "full";
+    else {
+      const { error } = await supabase.from("subscribers").insert({
+        email: clean, source: "build-alerts", preferences: { lang, frequency, alerts: [{ ...alert, created: new Date().toISOString() }] },
+      } as never);
+      result = !error ? "done" : error.code === "23505" ? "dupe" : "error";
+    }
+    if (result === "done") { addTo(WATCHED, here); try { localStorage.setItem("dtla.email", clean); } catch { /* blocked */ } }
+    setState(result);
   };
   return (
     <section className="rounded-[10px] bg-[#ffcb05] text-[#0b1a33] p-5 sm:p-6">
-      <p className="flex items-center gap-2 text-[13px] font-extrabold uppercase tracking-wider"><BellRing className="h-4 w-4" aria-hidden />{L("Free alerts", "התראות חינם")}</p>
+      <p className="flex items-center gap-2 text-[13px] font-extrabold uppercase tracking-wider"><BellRing className="h-4 w-4" aria-hidden />{L("Free email alerts", "התראות חינם במייל")}</p>
       <h2 className="mt-2 font-display text-[26px] sm:text-[30px] leading-tight">{L(`Tell me when something new starts within ${radius} m`, `עדכנו אותי כשמשהו חדש מתחיל ברדיוס ${radius} מ'`)}</h2>
-      <p className="mt-2 text-[15px]">{L("New permit requests, approvals, building sites, night works and road closures near this address, by email. No spam, unsubscribe any time.", "בקשות היתר חדשות, אישורים, אתרי בניה, עבודות לילה וחסימות כביש ליד הכתובת, במייל. בלי ספאם, אפשר להסיר בכל עת.")}</p>
-      {state === "done" ? (
-        <p className="mt-4 rounded-md bg-white px-4 py-3 font-semibold" role="status">{L("You're on the list. We'll email you when something changes near this address.", "נרשמתם. נשלח מייל כשמשהו משתנה ליד הכתובת.")}</p>
+      <p className="mt-2 text-[15px]">{L("New permit requests, approvals, building sites, night works, road closures, light rail works and new bars near this address. Watch up to 5 addresses with one email. No spam, unsubscribe any time.", "בקשות היתר חדשות, אישורים, אתרי בניה, עבודות לילה, חסימות, עבודות הרכבת הקלה וברים חדשים ליד הכתובת. עד 5 כתובות במייל אחד. בלי ספאם, אפשר להסיר בכל עת.")}</p>
+      {state === "done" || already ? (
+        <p className="mt-4 rounded-md bg-white px-4 py-3 font-semibold" role="status">{L(`You're watching ${label || "this address"}. We'll email you when something changes.`, `אתם עוקבים אחרי ${label || "הכתובת"}. נשלח מייל כשמשהו משתנה.`)}</p>
       ) : (
-        <form onSubmit={submit} className="mt-4 flex flex-col sm:flex-row gap-2">
-          <label htmlFor="alert-email" className="sr-only">{L("Email", "אימייל")}</label>
-          <input id="alert-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder={L("you@example.com", "you@example.com")} dir="ltr" className="flex-1 h-12 rounded-md bg-white px-4 text-[16px] outline-none focus-visible:ring-4 focus-visible:ring-[#0b1a33]/30" />
-          <button disabled={state === "busy"} className="h-12 rounded-md bg-[#0b1a33] text-white px-6 font-extrabold disabled:opacity-60">{state === "busy" ? "…" : L("Alert me", "עדכנו אותי")}</button>
+        <form onSubmit={submit} className="mt-4 space-y-3">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <label htmlFor="alert-email" className="sr-only">{L("Email", "אימייל")}</label>
+            <input id="alert-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" dir="ltr" className="flex-1 h-12 rounded-md bg-white px-4 text-[16px] outline-none focus-visible:ring-4 focus-visible:ring-[#0b1a33]/30" />
+            <button disabled={state === "busy"} className="h-12 rounded-md bg-[#0b1a33] text-white px-6 font-extrabold disabled:opacity-60">{state === "busy" ? "…" : watched.length ? L("Add this address", "הוספת הכתובת") : L("Alert me", "עדכנו אותי")}</button>
+          </div>
+          <fieldset className="flex flex-wrap gap-2 text-[14px]">
+            <legend className="sr-only">{L("How often", "כל כמה זמן")}</legend>
+            {([["instant", L("As it happens", "מיד כשקורה")], ["weekly", L("Weekly digest (Sundays)", "סיכום שבועי (ימי ראשון)")]] as const).map(([k, t]) => (
+              <label key={k} className={`h-9 inline-flex items-center gap-2 rounded-md px-3 font-semibold cursor-pointer ${frequency === k ? "bg-[#0b1a33] text-white" : "bg-white/70"}`}>
+                <input type="radio" name="freq" value={k} checked={frequency === k} onChange={() => setFrequency(k)} className="sr-only" />{t}
+              </label>
+            ))}
+          </fieldset>
         </form>
       )}
-      {state === "dupe" && <p className="mt-2 text-[14px] font-semibold" role="status">{L("That email is already signed up. Watching more than one address is coming soon.", "המייל הזה כבר רשום. מעקב אחרי כמה כתובות יגיע בקרוב.")}</p>}
+      {watched.length > 0 && (
+        <div className="mt-4">
+          <p className="text-[13px] font-extrabold uppercase tracking-wider">{L("Addresses you watch", "הכתובות שלך")}</p>
+          <ul className="mt-1 space-y-1 text-[14px]">
+            {watched.map((w) => (
+              <li key={`${w.lat},${w.lon}`}><Link to={`/check?lat=${w.lat.toFixed(6)}&lon=${w.lon.toFixed(6)}&a=${encodeURIComponent(w.label)}${w.r ? `&r=${w.r}` : ""}`} className="font-semibold underline underline-offset-2" dir="auto">{w.label || `${w.lat.toFixed(4)}, ${w.lon.toFixed(4)}`}</Link></li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {state === "dupe" && <p className="mt-2 text-[14px] font-semibold" role="status">{L("That email is already signed up for another address. Adding more addresses will work in a moment; please try again a little later.", "המייל הזה כבר רשום לכתובת אחרת. הוספת כתובות נוספות תעבוד בקרוב; נסו שוב מעט מאוחר יותר.")}</p>}
+      {state === "full" && <p className="mt-2 text-[14px] font-semibold" role="status">{L("You're already watching 5 addresses, the most one email can follow.", "אתם כבר עוקבים אחרי 5 כתובות, המקסימום למייל אחד.")}</p>}
       {state === "error" && <p className="mt-2 text-[14px] font-semibold" role="status">{L("Something went wrong. Please try again.", "משהו השתבש. נסו שוב.")}</p>}
       <p className="mt-3 text-[12px] opacity-80">{L("We only use your email for these alerts.", "נשתמש במייל רק להתראות האלה.")} <Link to="/about#privacy" className="underline">{L("Privacy", "פרטיות")}</Link></p>
     </section>
+  );
+};
+
+/** Keep up to 3 addresses to see side by side on /compare. */
+const CompareButton = ({ spot }: { spot: Spot }) => {
+  const { lang } = useI18n();
+  const L = (en: string, h: string) => (lang === "he" ? h : en);
+  const [list, setList] = useState<Spot[]>(() => getList(COMPARE));
+  useEffect(() => onChange(COMPARE, () => setList(getList(COMPARE))), []);
+  const inList = has(COMPARE, spot) && list.length > 0;
+  return (
+    <span className="inline-flex gap-2">
+      <button onClick={() => (inList ? removeFrom(COMPARE, spot) : addTo(COMPARE, spot, MAX_COMPARE))} aria-pressed={inList}
+        className={`h-10 rounded-md px-4 text-[15px] font-bold inline-flex items-center gap-2 ${inList ? "bg-white text-[#0057ff]" : "bg-white/15 hover:bg-white/25"}`}>
+        <SquareStack className="h-4 w-4" aria-hidden />{inList ? L("In your comparison", "ברשימת ההשוואה") : L("Compare", "השוואה")}
+      </button>
+      {list.length >= 2 && <Link to="/compare" className="h-10 rounded-md bg-[#ffcb05] text-[#0b1a33] px-4 text-[15px] font-extrabold inline-flex items-center">{L(`Compare ${list.length}`, `השוואת ${list.length}`)}</Link>}
+    </span>
   );
 };
 
@@ -193,7 +269,7 @@ const Check = () => {
   const [label, setLabel] = useState(params.get("a") ?? "");
   const [show, setShow] = useState<ActivityKind | "all">("all");
   const [finished, setFinished] = useState(false);
-  const [sel, setSel] = useState<string | null>(null);
+  const [sel, setSel] = useState<string | null>(params.get("item"));
 
   useEffect(() => { setLabel(params.get("a") ?? ""); }, [params]);
   useEffect(() => {
@@ -213,11 +289,20 @@ const Check = () => {
   const building = all.filter((a) => (a.kind === "permit" && /בבניה|קיים היתר/.test(a.stage ?? "")) || a.kind === "site").length;
 
   const setRadius = (r: number) => { const p = new URLSearchParams(params); p.set("r", String(r)); setParams(p, { replace: true }); };
-  const share = () => {
-    const url = window.location.href;
-    if (navigator.share) navigator.share({ title: document.title, url }).catch(() => undefined);
-    else window.open(`https://wa.me/?text=${encodeURIComponent(`${document.title} ${url}`)}`, "_blank", "noopener");
-  };
+  const share = () => { const u = new URL(window.location.href); u.searchParams.delete("item"); shareLink(u.toString(), document.title); };
+  // A shared link to one item: open it, make sure it's in the list, and scroll to it once loaded.
+  const wanted = params.get("item");
+  useEffect(() => {
+    if (!wanted || !q.data) return;
+    const it = q.data.find((a) => a.id === wanted);
+    if (!it) return;
+    if (!isLive(it)) setFinished(true);
+    setShow("all");
+    setSel(wanted);
+    window.setTimeout(() => document.getElementById(`item-${wanted}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
+  }, [wanted, q.data]);
+  const spot: Spot = { label, lat, lon, r: radius };
+  const reportUrl = `/report?lat=${lat}&lon=${lon}&r=${radius}${label ? `&a=${encodeURIComponent(label)}` : ""}`;
   const select = (id: string) => { setSel(id); window.setTimeout(() => document.getElementById(`item-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50); };
 
   return (
@@ -234,7 +319,11 @@ const Check = () => {
                 {RADII.map((r) => (
                   <button key={r} onClick={() => setRadius(r)} aria-pressed={r === radius} className={`h-10 rounded-md px-4 text-[15px] font-bold ${r === radius ? "bg-[#ffcb05] text-[#0b1a33]" : "bg-white/15 hover:bg-white/25"}`}>{r} {L("m", "מ'")}</button>
                 ))}
-                <button onClick={share} className="ms-auto h-10 rounded-md bg-white/15 px-4 text-[15px] font-bold inline-flex items-center gap-2 hover:bg-white/25"><Share2 className="h-4 w-4" aria-hidden />{L("Share", "שיתוף")}</button>
+                <span className="ms-auto inline-flex flex-wrap gap-2">
+                <CompareButton spot={spot} />
+                <Link to={reportUrl} className="h-10 rounded-md bg-white/15 px-4 text-[15px] font-bold inline-flex items-center gap-2 hover:bg-white/25"><FileText className="h-4 w-4" aria-hidden />{L("Address report", "דוח לכתובת")}</Link>
+                <button onClick={share} className="h-10 rounded-md bg-white/15 px-4 text-[15px] font-bold inline-flex items-center gap-2 hover:bg-white/25"><Share2 className="h-4 w-4" aria-hidden />{L("Share", "שיתוף")}</button>
+                </span>
               </div>
             </>
           )}
@@ -301,13 +390,15 @@ const Check = () => {
             <div className="border-b-[3px] border-foreground pb-2"><h2 className="font-display text-[30px] sm:text-[36px] leading-none">{L("Also around here", "עוד בסביבה")}</h2></div>
             <div className="mt-5 flex flex-wrap gap-2">
               {hood && <Link to={`/area/${hoodSlug(hood)}`} className="h-11 inline-flex items-center rounded-md bg-secondary px-4 font-bold">{he ? hood.he : hood.en}: {L("places and events", "מקומות ואירועים")}</Link>}
+              <Link to="/construction-noise-rules" className="h-11 inline-flex items-center rounded-md bg-[#fff4c2] text-[#0b1a33] px-4 font-bold">{L("Noise rules and how to complain", "כללי רעש ואיך מתלוננים")}</Link>
+              <Link to="/compare" className="h-11 inline-flex items-center rounded-md bg-secondary px-4 font-bold">{L("Compare apartments", "השוואת דירות")}</Link>
               <Link to="/live?layers=parking" className="h-11 inline-flex items-center rounded-md bg-secondary px-4 font-bold">{L("Parking near here", "חניה בסביבה")}</Link>
               <Link to="/live?layers=traffic" className="h-11 inline-flex items-center rounded-md bg-secondary px-4 font-bold">{L("Live traffic", "תנועה עכשיו")}</Link>
               <Link to="/events" className="h-11 inline-flex items-center rounded-md bg-secondary px-4 font-bold">{L("What's on tonight", "מה קורה הערב")}</Link>
               <Link to="/guide" className="h-11 inline-flex items-center rounded-md bg-secondary px-4 font-bold">{L("Nearest shelters", "מקלטים קרובים")}</Link>
             </div>
           </section>
-          <p className="mt-8 text-[12px] text-muted-foreground">{L("Source: City of Tel Aviv-Yafo open map data (building permits, building sites, night works, road works, dangerous buildings and town plans), updated by the city every night. Locations and details are as published by the city; check the city's building archive for official documents.", "מקור: המידע הפתוח של עיריית תל אביב-יפו (היתרי בניה, אתרי בניה, עבודות לילה, עבודות כביש, מבנים מסוכנים ותב״עות), מתעדכן מדי לילה. המיקומים והפרטים כפי שפורסמו בידי העירייה; למסמכים רשמיים ראו את ארכיון הבניין העירוני.")}</p>
+          <p className="mt-8 text-[12px] text-muted-foreground">{L("Source: City of Tel Aviv-Yafo open map data (building permits, building sites, night works, road works, light rail works, business licences, nightlife zones, dangerous buildings and town plans), updated by the city every night. Locations and details are as published by the city; check the city's building archive for official documents.", "מקור: המידע הפתוח של עיריית תל אביב-יפו (היתרי בניה, אתרי בניה, עבודות לילה, עבודות כביש, הרכבת הקלה, רישוי עסקים, אזורי בילוי, מבנים מסוכנים ותב״עות), מתעדכן מדי לילה. המיקומים והפרטים כפי שפורסמו בידי העירייה; למסמכים רשמיים ראו את ארכיון הבניין העירוני.")}</p>
         </div>
       )}
     </SiteLayout>

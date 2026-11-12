@@ -139,7 +139,7 @@ export const resolveInput = async (raw: string): Promise<Resolved> => {
 
 /* ---------------- what's happening around a point ---------------- */
 
-export type ActivityKind = "permit" | "site" | "night" | "road" | "danger" | "plan";
+export type ActivityKind = "permit" | "site" | "night" | "road" | "rail" | "business" | "zone" | "danger" | "plan";
 export type Activity = {
   id: string; kind: ActivityKind; title: string; address?: string; stage?: string; detail?: string;
   units?: number; tama38?: boolean; start?: number; end?: number; opened?: number; hours?: string;
@@ -183,24 +183,38 @@ export const fetchActivity = async (lat: number, lon: number, radius: number): P
   };
   const here = { lat, lon };
   const settle = async <T,>(p: Promise<T[]>) => p.catch(() => [] as T[]);
-  const [permits, sites, nights, roads, danger, plans] = await Promise.all([
+  const [permits, sites, nights, roads, danger, plans, publicNights, railRoute, railStops, railYards, businesses, zones] = await Promise.all([
     settle(q(772, { ...around, outFields: "oid_permit,request_num,open_request,permission_date,expiry_date,tr_hathalat_bniya,sug_bakasha,tochen_bakasha,building_stage,koteret,progress,yechidot_diyur,addresses,sw_tama_38,url_hadmaya,finished,occupation", resultRecordCount: "300" })),
-    settle(q(499, { ...around, outFields: "oid_site,ktovet,matzav_bniya,status_pikuach,tr_tchilat_avoda,sug_bakasha,tochen_bakasha,shimush,heterim,ishurei_laila", resultRecordCount: "200" })),
-    settle(q(479, { ...around, outFields: "oid_avoda,mahut,tr_hatchala,tr_siyum,shaot_between,ktovet", resultRecordCount: "100" })),
-    settle(q(852, { ...around, outFields: "OBJECTID,t_ktovet,mahut_avoda,sivug_yom_layla,tzimtzum_netivim,commnets,time_start,time_end,date_start,date_end,kablan_name", resultRecordCount: "100" })),
+    settle(q(499, { ...around, outFields: "oid_site,tik_tipul,ktovet,matzav_bniya,status_pikuach,tr_tchilat_avoda,sug_bakasha,tochen_bakasha,shimush,heterim,ishurei_laila", resultRecordCount: "200" })),
+    settle(q(479, { ...around, outFields: "oid_avoda,tik_tipul,mahut,tr_hatchala,tr_siyum,shaot_between,ktovet", resultRecordCount: "100" })),
+    settle(q(852, { ...around, outFields: "OBJECTID,GlobalID,t_ktovet,mahut_avoda,sivug_yom_layla,tzimtzum_netivim,commnets,time_start,time_end,date_start,date_end,kablan_name", resultRecordCount: "100" })),
     settle(q(591, { ...around, outFields: "oid_mivne,t_ktovet,t_tzav", resultRecordCount: "100" })),
     settle(q(528, { ...around, distance: "0", outFields: "id_taba,taba,shem_taba,t_status,t_status_klali,t_hekef,tr_matan_tokef,tr_hafkada,url_documents,sw_hitchadshut_ironit", resultRecordCount: "60" })),
+    // Night works in the street itself (utilities, roads), separate from building sites.
+    settle(q(858, { ...around, outFields: "OBJECTID,k_avodot_laila_shura,t_rechov,t_rechov_me,t_rechov_ad,tr_avodat_laila_me,tr_avodat_laila_ad,taarichim_shaot,gorem_yozem_rishayon", resultRecordCount: "60" })),
+    // Light rail: Green and Purple line routes being built, their stations and work compounds.
+    Promise.all([settle(q(761, { ...around, outFields: "*", resultRecordCount: "20" })), settle(q(762, { ...around, outFields: "*", resultRecordCount: "20" }))]).then((x) => x.flat()),
+    Promise.all([settle(q(764, { ...around, outFields: "*", resultRecordCount: "10" })), settle(q(766, { ...around, outFields: "*", resultRecordCount: "10" }))]).then((x) => x.flat()),
+    settle(q(633, { ...around, outFields: "*", resultRecordCount: "10" })),
+    // Businesses licensed in the last year (a new bar downstairs can be louder than a building site).
+    settle(q(964, { ...around, outFields: "*", orderByFields: "taarich_kabalat_rishayon DESC", resultRecordCount: "80" })),
+    // Nightlife policy zones: where venues may stay open late.
+    settle(q(575, { ...around, distance: "0", outFields: "OBJECTID,shem,t_sug", resultRecordCount: "5" })),
   ]);
   const out: Activity[] = [];
   const add = (a: Omit<Activity, "distance" | "lat" | "lon">, g: any) => {
     const geo = toGeo(g);
     if (geo.lat == null || geo.lon == null) return;
-    out.push({ ...a, geometry: geo.geometry, lat: geo.lat, lon: geo.lon, distance: Math.round(dist(here, { lat: geo.lat, lon: geo.lon })) });
+    // For lines (roads, rail routes) the nearest vertex is the honest distance, not the midpoint.
+    const pts: number[][] = g?.paths ? g.paths.flat() : [];
+    let best = { lat: geo.lat, lon: geo.lon, d: pts.length ? Infinity : dist(here, { lat: geo.lat, lon: geo.lon }) };
+    for (const p of pts) { const d = dist(here, { lat: p[1], lon: p[0] }); if (d < best.d) best = { lat: p[1], lon: p[0], d }; }
+    out.push({ ...a, geometry: geo.geometry, lat: best.lat, lon: best.lon, distance: Math.round(best.d) });
   };
   for (const f of permits) {
     const a = f.attributes;
     add({
-      id: `permit-${a.oid_permit}`, kind: "permit", title: clean(a.sug_bakasha) ?? "בקשה להיתר בניה",
+      id: `permit-${a.request_num ?? a.oid_permit}`, kind: "permit", title: clean(a.sug_bakasha) ?? "בקשה להיתר בניה",
       address: clean(a.addresses)?.split(",").filter((x, i, l) => l.indexOf(x) === i).join(", "), stage: clean(a.building_stage),
       detail: clean(a.tochen_bakasha), units: a.yechidot_diyur || undefined, tama38: a.sw_tama_38 === "כן",
       opened: date(a.open_request), start: date(a.tr_hathalat_bniya), permitted: date(a.permission_date), expires: date(a.expiry_date),
@@ -210,19 +224,19 @@ export const fetchActivity = async (lat: number, lon: number, radius: number): P
   for (const f of sites) {
     const a = f.attributes;
     add({
-      id: `site-${a.oid_site}`, kind: "site", title: clean(a.sug_bakasha)?.split(",")[0] ?? "אתר בניה",
+      id: `site-${a.tik_tipul ?? a.oid_site}`, kind: "site", title: clean(a.sug_bakasha)?.split(",")[0] ?? "אתר בניה",
       address: clean(a.ktovet), stage: clean(a.matzav_bniya) ?? clean(a.status_pikuach), detail: clean(a.tochen_bakasha),
       start: date(a.tr_tchilat_avoda), hours: a.ishurei_laila ? "אישור לעבודת לילה" : undefined,
     }, f.geometry);
   }
   for (const f of nights) {
     const a = f.attributes;
-    add({ id: `night-${a.oid_avoda}`, kind: "night", title: clean(a.mahut) ?? "עבודות לילה", address: clean(a.ktovet), start: date(a.tr_hatchala), end: date(a.tr_siyum), hours: clean(a.shaot_between) }, f.geometry);
+    add({ id: `night-${a.tik_tipul ?? "x"}-${a.oid_avoda}`, kind: "night", title: clean(a.mahut) ?? "עבודות לילה", address: clean(a.ktovet), start: date(a.tr_hatchala), end: date(a.tr_siyum), hours: clean(a.shaot_between) }, f.geometry);
   }
   for (const f of roads) {
     const a = f.attributes;
     add({
-      id: `road-${a.OBJECTID}`, kind: "road", title: clean(a.mahut_avoda) ?? "עבודות כביש", address: clean(a.t_ktovet),
+      id: `road-${(a.GlobalID ?? String(a.OBJECTID)).replace(/[{}]/g, "")}`, kind: "road", title: clean(a.mahut_avoda) ?? "עבודות כביש", address: clean(a.t_ktovet),
       stage: clean(a.tzimtzum_netivim), detail: clean(a.commnets), start: date(a.date_start), end: date(a.date_end),
       hours: a.time_start && a.time_end ? `${a.time_start}–${a.time_end}${a.sivug_yom_layla ? ` (${a.sivug_yom_layla})` : ""}` : clean(a.sivug_yom_layla),
     }, f.geometry);
@@ -230,6 +244,43 @@ export const fetchActivity = async (lat: number, lon: number, radius: number): P
   for (const f of danger) {
     const a = f.attributes;
     add({ id: `danger-${a.oid_mivne}`, kind: "danger", title: "מבנה מסוכן", address: clean(a.t_ktovet), stage: clean(a.t_tzav) }, f.geometry);
+  }
+  for (const f of publicNights) {
+    const a = f.attributes;
+    const where = [a.t_rechov, a.t_rechov_me && a.t_rechov_ad ? `(${a.t_rechov_me}–${a.t_rechov_ad})` : ""].filter(Boolean).join(" ");
+    add({
+      id: `pnight-${a.k_avodot_laila_shura ?? a.OBJECTID}`, kind: "night", title: `עבודות לילה ברחוב${a.gorem_yozem_rishayon ? ` – ${clean(a.gorem_yozem_rishayon)}` : ""}`,
+      address: clean(where), start: date(a.tr_avodat_laila_me), end: date(a.tr_avodat_laila_ad), hours: clean(a.taarichim_shaot)?.split(",").pop()?.trim(),
+    }, f.geometry);
+  }
+  for (const f of railRoute) {
+    const a = f.attributes;
+    const line = /סגול|purple/i.test(JSON.stringify(a)) ? "סגול" : "ירוק";
+    add({ id: `rail-${line}-${a.oid ?? a.OBJECTID}`, kind: "rail", title: `הקו ה${line} של הרכבת הקלה`, detail: clean(a.mikta_teor), stage: clean(a.plan_name) }, f.geometry);
+  }
+  for (const f of railStops) {
+    const a = f.attributes;
+    const line = /סגול|purple/i.test(JSON.stringify(a)) ? "סגול" : "ירוק";
+    add({ id: `railstop-${line}-${a.oid ?? a.OBJECTID}`, kind: "rail", title: `תחנת ${clean(a.station_name_HEB) ?? ""} – הקו ה${line}`, address: clean(a.station_name_ENG), stage: clean(a.type) }, f.geometry);
+  }
+  for (const f of railYards) {
+    add({ id: `railyard-${f.attributes.oid ?? f.attributes.OBJECTID}`, kind: "rail", title: "שטח התארגנות של הרכבת הקלה", detail: "מתחם עבודה ואחסון לבניית הרכבת הקלה" }, f.geometry);
+  }
+  const yearAgo = Date.now() - 365 * 864e5;
+  for (const f of businesses) {
+    const a = f.attributes;
+    const m = /(\d{4})-(\d{2})-(\d{2})/.exec(String(a.taarich_kabalat_rishayon ?? ""));
+    const got = typeof a.taarich_kabalat_rishayon === "number" ? a.taarich_kabalat_rishayon : m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : undefined;
+    if (!got || got < yearAgo) continue;
+    add({
+      id: `biz-${a.oid_rishayon ?? a.OBJECTID}`, kind: "business", title: clean(a.t_shem_esek) ?? clean(a.t_hesber_mahut_esek)?.slice(0, 60) ?? "עסק חדש",
+      detail: clean(a.t_hesber_mahut_esek), address: [clean(a.shem_rechov), a.ms_bayit].filter(Boolean).join(" ") || undefined,
+      opened: got,
+    }, f.geometry);
+  }
+  for (const f of zones) {
+    const a = f.attributes;
+    add({ id: `zone-${a.OBJECTID}`, kind: "zone", title: `אזור בילוי${a.shem ? `: ${clean(a.shem)}` : ""}`, stage: clean(a.t_sug) }, { x: lon, y: lat });
   }
   for (const f of plans) {
     const a = f.attributes;
@@ -270,11 +321,23 @@ const STAGE_EN: [RegExp, string][] = [
   [/חסימה הרמטית/, "Road fully closed"],
   [/צמצום/, "Lanes reduced"],
   [/צו 3/, "Order: private engineer's inspection required"],
+  [/עד 1:00/, "Venues may open until 1:00"],
+  [/עד 2:00/, "Venues may open until 2:00"],
+  [/עד 3:00|ללא הגבלה/, "Venues may open late"],
+  [/^עילית$/, "Street-level station"],
+  [/^תחתית$|תת.?קרקעית/, "Underground station"],
   [/צו/, "Safety order issued"],
 ];
 export const stageEn = (s?: string) => (s ? STAGE_EN.find(([re]) => re.test(s))?.[1] ?? s : undefined);
 
 const TYPE_EN: [RegExp, string][] = [
+  [/עבודות לילה ברחוב/, "Street night works"],
+  [/תחנת .*הקו הירוק/, "Light rail station, Green Line"],
+  [/תחנת .*הקו הסגול/, "Light rail station, Purple Line"],
+  [/הקו הירוק/, "Light rail Green Line (under construction)"],
+  [/הקו הסגול/, "Light rail Purple Line (under construction)"],
+  [/שטח התארגנות/, "Light rail works compound"],
+  [/אזור בילוי/, "Nightlife zone"],
   [/תמ"א ?38|תמא 38/, "TAMA 38 (strengthening and adding floors)"],
   [/בניה חדשה.*מגורים גבוה|בניין מגורים גבוה/, "New high-rise residential building"],
   [/בניה חדשה.*מגורים/, "New residential building"],

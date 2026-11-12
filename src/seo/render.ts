@@ -16,6 +16,7 @@ import {
   AREA_KINDS, MIN_PER_PAGE, eventSlug, eventsNear, hoodSlug, placesForCraving, placesInHood, placesOfKind,
 } from "@/lib/areas";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
+import { NOISE_FAQ, NOISE_HOURS, NOISE_SECTIONS } from "@/lib/noiseRules";
 import type { FeedEvent, Hotel, Place } from "@/lib/live/sources";
 
 type Photo = { src: string; by?: string; license?: string; page?: string };
@@ -213,6 +214,15 @@ const sectionPages = (d: Data): Page[] => {
     S("/guide", "Tel Aviv city guide: everything visitors and newcomers need · Discover Tel Aviv", "Practical help for Tel Aviv: money, phones, safety and shelters, public toilets, dog parks, Shabbat, and where to find what.", "", 0.7, "monthly"),
     S("/jobs", "Jobs in Tel Aviv: open positions at tech companies · Discover Tel Aviv", "Open jobs in Tel Aviv from the city's tech companies and startups, updated every day.", "", 0.7, "daily"),
     S("/check", "Check an address: building permits and construction near you · Discover Tel Aviv", "See building permits, construction sites, night works, road works and dangerous buildings around any Tel Aviv-Yafo address, from the city's own records.", "", 0.9, "daily"),
+    (() => {
+      const extra = `<ul>${NOISE_HOURS.map((h) => `<li><b>${esc(h.when.en)}</b>: ${esc(h.rule.en)}</li>`).join("")}</ul>`
+        + NOISE_SECTIONS.map((x) => `<h2>${esc(x.title.en)}</h2>${(x.body ?? []).map((b) => `<p>${esc(b.en)}</p>`).join("")}${x.bullets ? `<ul>${x.bullets.map((b) => `<li>${esc(b.en)}</li>`).join("")}</ul>` : ""}`).join("")
+        + `<h2>Frequently asked questions</h2>${NOISE_FAQ.map((f) => `<h3>${esc(f.q.en)}</h3><p>${esc(f.a.en)}</p>`).join("")}`;
+      const pg = S("/construction-noise-rules", "Construction noise rules in Tel Aviv: hours, your rights and how to complain · Discover Tel Aviv", "When building work is allowed in Tel Aviv-Yafo (07:00 to 19:00, not on Shabbat), what builders must do about noise and dust, and how to complain to the 106 hotline.", extra, 0.7, "monthly");
+      pg.jsonld = [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: NOISE_FAQ.map((f) => ({ "@type": "Question", name: f.q.en, acceptedAnswer: { "@type": "Answer", text: f.a.en } })) }];
+      return pg;
+    })(),
+    S("/compare", "Compare apartments: construction and noise around each · Discover Tel Aviv", "Put up to three Tel Aviv addresses side by side: building permits, building sites, night works, light rail works and new bars nearby, with a noise score for each.", "", 0.6, "weekly"),
     S("/about", "About Discover Tel Aviv: who we are, how we make money, privacy", "Discover Tel Aviv is a free, independent guide to Tel Aviv-Yafo. Where our data comes from, how affiliate links work, and our privacy policy.", "", 0.3, "monthly"),
     S("/newsletter", "The Discover Tel Aviv weekly email", "Every Thursday: the best of the weekend in Tel Aviv, new places to eat and drink, and what's coming up.", "", 0.4, "monthly"),
   ];

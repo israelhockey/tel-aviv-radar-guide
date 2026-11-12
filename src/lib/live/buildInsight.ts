@@ -22,6 +22,17 @@ export const impactOf = (a: Activity, now = Date.now()): Impact => {
     base = /הרמטית/.test(s) ? 7 : 5;
     reasons.push(/הרמטית/.test(s) ? { en: "Road fully closed", he: "חסימה מלאה של הכביש" } : { en: "Lanes reduced", he: "צמצום נתיבים" });
     if (/לילה/.test(a.hours ?? "")) { base += 1; reasons.push({ en: "Includes night work", he: "כולל עבודות לילה" }); }
+  } else if (a.kind === "rail") {
+    if (/התארגנות/.test(a.title)) { base = 7; reasons.push({ en: "Light rail works compound: trucks, cranes and work around the clock at times", he: "מתחם עבודה של הרכבת הקלה: משאיות, מנופים ולעיתים עבודה מסביב לשעון" }); }
+    else if (/תחנת/.test(a.title)) { base = /תחתית|תת/.test(s) ? 7 : 5; reasons.push(/תחתית|תת/.test(s) ? { en: "Underground station: years of excavation", he: "תחנה תת־קרקעית: שנים של חפירות" } : { en: "Street-level station: the street is dug up and rebuilt", he: "תחנה עילית: הרחוב נחפר ונבנה מחדש" }); }
+    else if (/מנהור|תת"ק|תת קרקע/.test(`${a.detail ?? ""}`)) { base = 5; reasons.push({ en: "Tunnel section: most work is underground, with shafts and trucks at the surface", he: "קטע מנהור: רוב העבודה מתחת לאדמה, עם פירים ומשאיות על פני השטח" }); }
+    else { base = 6; reasons.push({ en: "Street-level track: lanes closed and the road rebuilt", he: "מסילה עילית: נתיבים נסגרים והרחוב נבנה מחדש" }); }
+  } else if (a.kind === "business") {
+    if (/בר|פאב|מועדון|דיסקוטק|מסיבות|אולם אירועים|מוסיקה|מוזיקה|הופעות/.test(t)) { base = 5; reasons.push({ en: "Newly licensed bar, club or venue: late-night noise and crowds possible", he: "מקום בילוי שקיבל רישיון לאחרונה: ייתכנו רעש וקהל בלילה" }); }
+    else if (/מסעדה|בית אוכל|קפה|מזון/.test(t)) { base = 2; reasons.push({ en: "New restaurant or café: deliveries, extraction fans, outside seating", he: "מסעדה או בית קפה חדש: פריקות, מנדפים, ישיבה בחוץ" }); }
+    else { base = 1; reasons.push({ en: "New business licence nearby", he: "רישיון עסק חדש בסביבה" }); }
+  } else if (a.kind === "zone") {
+    base = /2:00|3:00|ללא/.test(s) ? 4 : 3; reasons.push({ en: "Nightlife zone: venues here may legally stay open late", he: "אזור בילוי: מקומות כאן רשאים לפתוח עד שעה מאוחרת" });
   } else if (a.kind === "danger") { base = 2; reasons.push({ en: "Safety order on the building; repairs or scaffolding likely", he: "צו בטיחות למבנה; צפויים תיקונים או פיגומים" }); }
   else if (a.kind === "plan") { base = 1; reasons.push({ en: "A plan only: sets what may be built here in future", he: "תכנית בלבד: קובעת מה ניתן לבנות בעתיד" }); }
   else if (a.kind === "site") {
@@ -47,7 +58,7 @@ export const impactOf = (a: Activity, now = Date.now()): Impact => {
 
   // Closer is louder.
   const near = a.distance < 40 ? 1 : a.distance < 120 ? 0.85 : a.distance < 250 ? 0.65 : 0.5;
-  if (a.distance < 40) reasons.push({ en: "Right next door", he: "ממש בסמוך" });
+  if (a.distance < 40 && a.kind !== "zone") reasons.push({ en: "Right next door", he: "ממש בסמוך" });
   // Something whose dates have passed is probably done or paused.
   const stale = statusCheck(a, now).some((f) => f.downgrade);
   const score = Math.max(0, Math.min(10, Math.round(base * near * (stale ? 0.5 : 1))));

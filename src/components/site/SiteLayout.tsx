@@ -8,11 +8,11 @@ export type Zone = "night" | "lines";
 // `zone` switches the look: "night" for the going-out pages, "lines" for transport.
 export const SiteLayout = ({ children, fill = false, zone }: { children: ReactNode; fill?: boolean; zone?: Zone }) => (
   <div data-zone={zone} className={fill ? "h-[100dvh] flex flex-col overflow-hidden bg-background" : "min-h-screen flex flex-col bg-background overflow-x-clip"}>
-    <SiteHeader />
+    <div className="contents print:hidden"><SiteHeader /></div>
     <main className={fill ? "relative flex-1 min-h-0 pb-[calc(56px+env(safe-area-inset-bottom))] lg:pb-0" : "flex-1 pb-20 lg:pb-0"}>
       {children}
     </main>
-    {!fill && <SiteFooter />}
-    <BottomTabs />
+    {!fill && <div className="print:hidden"><SiteFooter /></div>}
+    <div className="contents print:hidden"><BottomTabs /></div>
   </div>
 );

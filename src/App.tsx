@@ -24,6 +24,9 @@ import About from "./pages/About";
 import Search from "./pages/Search";
 import Nightlife from "./pages/Nightlife";
 import Check from "./pages/Check";
+import Report from "./pages/Report";
+import Compare from "./pages/Compare";
+import NoiseRules from "./pages/NoiseRules";
 import { ScrollToTop } from "./components/site/ScrollToTop";
 import Jobs from "./pages/Jobs";
 import Weekend from "./pages/Weekend";
@@ -77,6 +80,9 @@ const App = () => (
           <Route path="/about" element={<About />} />
           <Route path="/search" element={<Search />} />
           <Route path="/check" element={<Check />} />
+          <Route path="/report" element={<Report />} />
+          <Route path="/compare" element={<Compare />} />
+          <Route path="/construction-noise-rules" element={<NoiseRules />} />
           <Route path="/privacy" element={<About />} />
           <Route path="/event/:slug" element={<EventPage />} />
           <Route path="/area" element={<AreaPage />} />
