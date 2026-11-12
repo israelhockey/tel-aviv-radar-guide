@@ -52,12 +52,17 @@ export const ActivityMap = ({ lat, lon, radius, items, selected, onSelect, class
     let cancelled = false;
     const ro = new ResizeObserver(() => mapRef.current?.resize());
     if (box.current) ro.observe(box.current);
+    const dbg = (m: string) => { if (new URLSearchParams(window.location.search).has("debugmap")) console.error(`[map] ${m}`); };
+    dbg(`effect ${box.current?.clientWidth}x${box.current?.clientHeight}`);
     Promise.all([loadMapLibre(), mapStyleFor(phase)]).then(([maplibregl, style]) => {
+      dbg(`loaded cancelled=${cancelled} box=${!!box.current}`);
       if (cancelled || !box.current) return;
       const map = new maplibregl.Map({ container: box.current, style, center: [lon, lat], zoom: 16, attributionControl: { compact: true }, cooperativeGestures: true });
       mapRef.current = map;
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+      map.on("error", (e: any) => dbg(`error ${e?.error?.message ?? e}`));
       map.once("style.load", () => {
+        dbg("style.load");
         const empty = { type: "FeatureCollection", features: [] };
         map.addSource("ring", { type: "geojson", data: empty });
         map.addSource("act", { type: "geojson", data: empty });
@@ -83,7 +88,7 @@ export const ActivityMap = ({ lat, lon, radius, items, selected, onSelect, class
         const lons = r.map((p) => p[0]), lats = r.map((p) => p[1]);
         map.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]], { padding: 24, duration: 0 });
       });
-    }).catch(() => undefined);
+    }).catch((e) => dbg(`failed ${e}`));
     return () => { cancelled = true; ready.current = false; ro.disconnect(); mapRef.current?.remove(); mapRef.current = null; };
   }, [lat, lon, phase]);
 
