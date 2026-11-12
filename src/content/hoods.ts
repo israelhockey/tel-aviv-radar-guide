@@ -69,7 +69,7 @@ export const HOODS: Record<string, HoodProfile> = {
     landmarks: [{ en: "Carmel Market", he: "שוק הכרמל" }, { en: "HaKovshim Park", he: "גן הכובשים" }],
   },
   "Lev HaIr": {
-    photo: "rothschild",
+    photo: "habima",
     tagline: { en: "The heart of the city: Rothschild, Bauhaus and the White City", he: "לב העיר: רוטשילד, באוהאוס והעיר הלבנה" },
     vibe: { en: "Tree-lined boulevards, Bauhaus buildings, kiosks, cafés and bars, with Rothschild Boulevard and Sheinkin Street at its centre. Busy, walkable and the city's classic postcard.", he: "שדרות מוצלות, בנייני באוהאוס, קיוסקים, בתי קפה וברים, עם שדרות רוטשילד ורחוב שינקין במרכז. סואנת, נוחה להליכה והגלויה הקלאסית של העיר." },
     goodFor: { en: "People who want to walk everywhere and be close to work, culture and nightlife.", he: "מי שרוצה ללכת לכל מקום ברגל ולהיות קרוב לעבודה, תרבות וחיי לילה." },
@@ -114,7 +114,7 @@ export const HOODS: Record<string, HoodProfile> = {
     landmarks: [{ en: "Rabin Square", he: "כיכר רבין" }, { en: "Basel Street", he: "רחוב בזל" }, { en: "Hilton Beach", he: "חוף הילטון" }],
   },
   "New North": {
-    photo: "kikar",
+    photo: "yarkon",
     tagline: { en: "Spacious, green and family-friendly, by the Yarkon Park", he: "מרווחת, ירוקה ומשפחתית, ליד פארק הירקון" },
     vibe: { en: "Newer and roomier apartments, more parks and schools, and a calmer pace. Close to the Yarkon Park and the Port.", he: "דירות חדשות ומרווחות יותר, יותר פארקים ובתי ספר וקצב רגוע יותר. קרוב לפארק הירקון ולנמל." },
     goodFor: { en: "Families, people who want space and parking, joggers and cyclists.", he: "משפחות, מי שרוצה מרחב וחניה, רצים ורוכבים." },
