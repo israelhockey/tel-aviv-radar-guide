@@ -8,6 +8,7 @@ import { articlesFor, type Article } from "@/lib/articles";
 import { ArticleCard, ArticleRow } from "./Magazine";
 import { Hungry, NeighbourhoodPostcards, NumbersBand, TonightTickets } from "@/components/home/Postcard";
 import { BuildHero } from "@/components/build/BuildHero";
+import { DailyChanges } from "@/components/build/DailyChanges";
 
 const Shelf = ({ title, to, list }: { title: string; to: string; list: Article[] }) => {
   const { t } = useI18n();
@@ -42,6 +43,7 @@ const Now = () => {
   return (
     <SiteLayout>
       <BuildHero />
+      <DailyChanges />
       <div className="container-page pt-20">
         <p className="text-[15px] font-bold text-accent">{L("And the rest of the city, right now", "ושאר העיר, עכשיו")}</p>
       </div>
