@@ -209,6 +209,11 @@
   "lon": 34.7697528,
   "checked": "2026-10-20T11:08:17.119Z"
  },
+ "InterContinental David Tel Aviv": {
+  "lat": 32.0653939,
+  "lon": 34.7636824,
+  "checked": "2026-11-13T09:48:18.817Z"
+ },
  "InterContinental David Tel Aviv, an IHG Hotel": {
   "lat": null,
   "lon": null,
@@ -367,7 +372,7 @@
  "The Tel Aviv Int'l Synagogue 23 Frishman, 60000 Tel Aviv, Israel": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-06T07:05:56.618Z"
+  "checked": "2026-11-13T09:48:15.925Z"
  },
  "The Wave Club": {
   "lat": null,
