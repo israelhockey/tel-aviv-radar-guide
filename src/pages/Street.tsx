@@ -13,6 +13,7 @@ import { hoodSlug } from "@/lib/areas";
 import { nearbyStreets, numbersOn, streetIndex, streetName, streetPath, type Street } from "@/lib/streets";
 import { checkUrl } from "@/components/build/AddressSearch";
 import { KIND_COLOR } from "@/components/build/ActivityMap";
+import { english, useTx } from "@/lib/live/tx";
 
 // "/street/dizengoff": everything the city lists on one street, live.
 
@@ -33,7 +34,7 @@ const Row = ({ a, street, he }: { a: Activity; street: Street; he: boolean }) =>
       <Link to={`${checkUrl(a.lat, a.lon, label, 100)}&item=${encodeURIComponent(a.id)}`} className="flex gap-3 py-3 border-b border-border hover:bg-secondary/50 -mx-2 px-2 rounded">
         <span className="w-14 shrink-0 font-poster text-[22px] leading-tight tabular" dir="auto">{nums.length ? nums.slice(0, 2).join(", ") : "–"}</span>
         <span className="min-w-0 flex-1">
-          <span className="block font-bold leading-snug" dir="auto">{he ? a.title : typeEn(a.title)}</span>
+          <span className="block font-bold leading-snug" dir="auto">{he ? a.title : a.kind === "business" ? english(a.detail) ?? "New business" : typeEn(a.title)}</span>
           <span className="mt-1 flex flex-wrap gap-1.5 text-[12px]">
             {a.stage && <span className="rounded bg-secondary px-2 py-0.5 font-semibold" dir="auto">{he ? a.stage : stageEn(a.stage)}</span>}
             {a.tama38 && a.kind === "permit" && <span className="rounded bg-[#ffcb05] text-[#0b1a33] px-2 py-0.5 font-bold">{he ? "תמ״א 38" : "TAMA 38"}</span>}
@@ -92,6 +93,7 @@ const StreetPage = () => {
   const q = useQuery({ queryKey: ["street-activity", street?.he], enabled: !!street, staleTime: 10 * 60_000, queryFn: () => fetchActivity(street!.lat, street!.lon, 0, street!.he) });
   const [finished, setFinished] = useState(false);
   const live = useMemo(() => (q.data ?? []).filter(isLive), [q.data]);
+  useTx((q.data ?? []).flatMap((a) => [a.title, a.stage, a.detail]), !he);
   const sum = useMemo(() => (q.data ? summarize(q.data) : null), [q.data]);
   const hood = street ? neighbourhoodOf(street) : null;
 

@@ -1,0 +1,42 @@
+name: Translate city data
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 4 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: translate-city
+  cancel-in-progress: false
+
+jobs:
+  translate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: .github/workflows/translate-city.yml
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-opus-mt-tc-big-he-en
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu && pip install "transformers<5" sentencepiece sacremoses
+      - run: python scripts/translate-city.py
+        env:
+          TX_MINUTES: "300"
+      - name: Commit
+        if: always()
+        run: |
+          git config user.name "tlv-radar-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/tx data/tx-segments.json 2>/dev/null || true
+          git diff --cached --quiet && exit 0
+          git commit -m "Translate city data"
+          for i in 1 2 3; do git pull --rebase -q -X ours && git push -q && break; sleep 5; done

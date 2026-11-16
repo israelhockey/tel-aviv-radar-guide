@@ -2,6 +2,8 @@
 // public map service, which the city refreshes every night: building permit requests and permits,
 // active building sites, night works, road works, dangerous buildings and town plans.
 
+import { txLookup } from "./tx";
+
 const GIS = "https://gisn.tel-aviv.gov.il/arcgis/rest/services/IView2/MapServer";
 
 export type Geo = { type: "Point" | "Polygon" | "MultiLineString"; coordinates: any };
@@ -253,7 +255,7 @@ export const fetchActivity = async (lat: number, lon: number, radius: number, st
     const a = f.attributes;
     const where = [a.t_rechov, a.t_rechov_me && a.t_rechov_ad ? `(${a.t_rechov_me}–${a.t_rechov_ad})` : ""].filter(Boolean).join(" ");
     add({
-      id: `pnight-${a.k_avodot_laila_shura ?? a.OBJECTID}`, kind: "night", title: `עבודות לילה ברחוב${a.gorem_yozem_rishayon ? ` – ${clean(a.gorem_yozem_rishayon)}` : ""}`,
+      id: `pnight-${a.k_avodot_laila_shura ?? a.OBJECTID}`, kind: "night", title: "עבודות לילה ברחוב", detail: clean(a.gorem_yozem_rishayon),
       address: clean(where), start: date(a.tr_avodat_laila_me), end: date(a.tr_avodat_laila_ad), hours: clean(a.taarichim_shaot)?.split(",").pop()?.trim(),
     }, f.geometry);
   }
@@ -265,7 +267,7 @@ export const fetchActivity = async (lat: number, lon: number, radius: number, st
   for (const f of railStops) {
     const a = f.attributes;
     const line = /סגול|purple/i.test(JSON.stringify(a)) ? "סגול" : "ירוק";
-    add({ id: `railstop-${line}-${a.oid ?? a.OBJECTID}`, kind: "rail", title: `תחנת ${clean(a.station_name_HEB) ?? ""} – הקו ה${line}`, address: clean(a.station_name_ENG), stage: clean(a.type) }, f.geometry);
+    add({ id: `railstop-${line}-${a.oid ?? a.OBJECTID}`, kind: "rail", title: `תחנת ${clean(a.station_name_HEB) ?? ""} – הקו ה${line}`, stage: clean(a.type) }, f.geometry);
   }
   for (const f of railYards) {
     add({ id: `railyard-${f.attributes.oid ?? f.attributes.OBJECTID}`, kind: "rail", title: "שטח התארגנות של הרכבת הקלה", detail: "מתחם עבודה ואחסון לבניית הרכבת הקלה" }, f.geometry);
@@ -353,7 +355,8 @@ const STAGE_EN: [RegExp, string][] = [
   [/^תחתית$|תת.?קרקעית/, "Underground station"],
   [/צו/, "Safety order issued"],
 ];
-export const stageEn = (s?: string) => (s ? STAGE_EN.find(([re]) => re.test(s))?.[1] ?? s : undefined);
+// Our own wording first; then the nightly machine translation (see tx.ts); else the Hebrew.
+export const stageEn = (s?: string) => (s ? STAGE_EN.find(([re]) => re.test(s))?.[1] ?? txLookup(s) ?? s : undefined);
 
 const TYPE_EN: [RegExp, string][] = [
   [/עבודות לילה ברחוב/, "Street night works"],
@@ -379,7 +382,7 @@ const TYPE_EN: [RegExp, string][] = [
   [/כביש|סלילה|ריבוד/, "Road works"],
   [/מבנה מסוכן/, "Dangerous building"],
 ];
-export const typeEn = (s?: string) => (s ? TYPE_EN.find(([re]) => re.test(s))?.[1] ?? s : undefined);
+export const typeEn = (s?: string) => (s ? TYPE_EN.find(([re]) => re.test(s))?.[1] ?? txLookup(s) ?? s : undefined);
 
 /** City-wide totals for the home page. */
 export const fetchCityBuildCounts = async () => {

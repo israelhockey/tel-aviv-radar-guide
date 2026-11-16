@@ -10,6 +10,7 @@ import { summarize } from "@/lib/live/summary";
 import { neighbourhoodOf } from "@/lib/live/geo";
 import { KIND_COLOR } from "@/components/build/ActivityMap";
 import { shareLink } from "@/lib/live/saved";
+import { english, useTx } from "@/lib/live/tx";
 
 // A one-page summary of an address, made to be printed, saved as a PDF or sent to a landlord,
 // a partner or a lawyer. Everything comes from the same city data as the full map.
@@ -34,6 +35,7 @@ const Report = () => {
   const streets = useQuery({ queryKey: ["street-names"], queryFn: streetNames, staleTime: Infinity, enabled: !he });
   const q = useQuery({ queryKey: ["activity", lat, lon, radius], queryFn: () => fetchActivity(lat, lon, radius), enabled: valid, staleTime: 10 * 60_000 });
   const sum = useMemo(() => (q.data ? summarize(q.data) : null), [q.data]);
+  useTx((sum?.top ?? []).flatMap((a) => [a.title, a.stage, a.address, a.detail]).concat(sum?.zone?.stage), !he);
   const hood = valid ? neighbourhoodOf({ lat, lon }) : null;
   const today = new Intl.DateTimeFormat(he ? "he-IL" : "en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Jerusalem" }).format(new Date());
   const fmt = (ms?: number) => (ms ? new Intl.DateTimeFormat(he ? "he-IL" : "en-GB", { month: "short", year: "numeric", timeZone: "Asia/Jerusalem" }).format(new Date(ms)) : null);
@@ -116,8 +118,8 @@ const Report = () => {
                         <span className="h-10 w-10 shrink-0 rounded-[6px] font-poster text-[22px] flex items-center justify-center" style={{ background: st.bg, color: st.fg }}>{imp.score}</span>
                         <div className="min-w-0">
                           <p className="text-[12px] font-bold uppercase tracking-wider" style={{ color: KIND_COLOR[a.kind] }}>{he ? KIND_LABEL[a.kind].he : KIND_LABEL[a.kind].en} · {a.distance} {L("m", "מ'")}</p>
-                          <p className="font-bold leading-snug" dir="auto">{he ? a.title : typeEn(a.title)}</p>
-                          <p className="text-[14px] text-muted-foreground" dir="auto">{[he ? a.address : addressEn(a.address, streets.data) ?? a.address, he ? a.stage : stageEn(a.stage), when].filter(Boolean).join(" · ")}</p>
+                          <p className="font-bold leading-snug" dir="auto">{he ? a.title : a.kind === "business" ? english(a.detail) ?? "New business" : typeEn(a.title)}</p>
+                          <p className="text-[14px] text-muted-foreground" dir="auto">{[he ? a.address : english(a.address, (x) => addressEn(x, streets.data) ?? undefined), he ? a.stage : stageEn(a.stage), when].filter(Boolean).join(" · ")}</p>
                           <p className="text-[13px]">{imp.reasons.slice(0, 2).map((r) => (he ? r.he : r.en)).join(". ")}</p>
                         </div>
                       </li>

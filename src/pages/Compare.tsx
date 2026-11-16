@@ -7,6 +7,7 @@ import { useI18n } from "@/lib/i18n";
 import { fetchActivity, typeEn } from "@/lib/live/build";
 import { IMPACT_STYLE } from "@/lib/live/buildInsight";
 import { summarize, type Summary } from "@/lib/live/summary";
+import { useTx } from "@/lib/live/tx";
 import { AddressSearch } from "@/components/build/AddressSearch";
 import { COMPARE, getList, onChange, removeFrom, shareLink, type Spot } from "@/lib/live/saved";
 
@@ -32,6 +33,7 @@ const Compare = () => {
   const list = shared ?? saved;
   const results = useQueries({ queries: list.map((s) => ({ queryKey: ["activity", s.lat, s.lon, s.r ?? 250], queryFn: () => fetchActivity(s.lat, s.lon, s.r ?? 250), staleTime: 10 * 60_000 })) });
   const sums = results.map((r) => (r.data ? summarize(r.data) : null));
+  useTx(sums.flatMap((s) => (s?.top ?? []).slice(0, 3).map((a) => a.title)), !he);
   const ready = sums.every(Boolean) && sums.length > 1;
   const scores = ready ? sums.map((x) => x!.score) : [];
   // Only call one "quietest" when it's clearly ahead of the rest.

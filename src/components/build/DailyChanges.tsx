@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { fetchData } from "@/lib/live/sources";
 import { useI18n } from "@/lib/i18n";
-import { stageEn, typeEn } from "@/lib/live/build";
+import { addressEn, stageEn, streetNames, typeEn } from "@/lib/live/build";
+import { useTx } from "@/lib/live/tx";
 import { KIND_COLOR } from "./ActivityMap";
 import { checkUrl } from "./AddressSearch";
 
@@ -39,6 +40,8 @@ export const DailyChanges = () => {
   const prevDay = days[days.indexOf(current) + 1];
   const prevCount = (q.data?.changes ?? []).filter((c) => c.date === prevDay).length;
   const [open, setOpen] = useState<string>("requested");
+  const streets = useQuery({ queryKey: ["street-names"], queryFn: streetNames, staleTime: Infinity, enabled: !he });
+  useTx(list.flatMap((c) => [c.title, c.stage, c.from]), !he);
 
   const fmtDay = (d: string) => new Intl.DateTimeFormat(he ? "he-IL" : "en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${d}T12:00:00Z`));
 
@@ -88,7 +91,7 @@ export const DailyChanges = () => {
                 <Link to={checkUrl(c.lat, c.lon, c.address?.split(",")[0])} className="flex gap-3 rounded-[10px] border-2 border-border p-3 hover:border-foreground">
                   <span className="mt-1.5 h-3 w-3 shrink-0 rounded-full" style={{ background: KIND_COLOR[c.kind] }} aria-hidden />
                   <span className="min-w-0">
-                    <span className="block font-semibold leading-snug" dir="rtl">{c.address ?? "—"}</span>
+                    <span className="block font-semibold leading-snug" dir="auto">{(he ? c.address : addressEn(c.address, streets.data) ?? c.address) ?? "—"}</span>
                     <span className="block text-[14px] text-muted-foreground" dir="auto">
                       {he ? c.title : typeEn(c.title)}
                       {c.change === "stage" && c.from ? ` · ${he ? c.from : stageEn(c.from)} → ${he ? c.stage : stageEn(c.stage)}` : ""}

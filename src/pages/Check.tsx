@@ -11,6 +11,7 @@ import { neighbourhoodOf } from "@/lib/live/geo";
 import { hoodSlug } from "@/lib/areas";
 import { AddressSearch, NeighbourhoodChips } from "@/components/build/AddressSearch";
 import { ActivityMap, KIND_COLOR } from "@/components/build/ActivityMap";
+import { english, txLookup, useTx } from "@/lib/live/tx";
 import { COMPARE, MAX_COMPARE, WATCHED, addTo, getList, has, onChange, removeFrom, shareLink, type Spot } from "@/lib/live/saved";
 
 const KINDS: { id: ActivityKind; en: string; he: string }[] = [
@@ -37,9 +38,14 @@ const ItemCard = ({ a, open, onToggle, streets }: { a: Activity; open: boolean; 
   const L = (en: string, h: string) => (he ? h : en);
   const T = (x: { en: string; he: string }) => (he ? x.he : x.en);
   const kind = KINDS.find((k) => k.id === a.kind)!;
-  const title = he ? a.title : typeEn(a.title);
-  const stage = he ? a.stage : stageEn(a.stage);
-  const address = he ? a.address : addressEn(a.address, streets) ?? a.address;
+  // English side: our own wording first, then the nightly machine translation of the city's text.
+  useTx([a.title, a.stage, a.detail, a.hours, a.address], !he);
+  const hoursEn = (x?: string) => x?.replace("אישור לעבודת לילה", "Night work approved").replace("עבודות יום", "day works").replace("עבודות לילה", "night works");
+  const title = he ? a.title : a.kind === "business" ? english(a.detail) ?? "New business" : english(a.title, typeEn);
+  const stage = he ? a.stage : english(a.stage, stageEn);
+  const address = he ? a.address : english(a.address, (x) => addressEn(x, streets) ?? undefined);
+  const hours = he ? a.hours : english(a.hours, hoursEn);
+  const detailEn = !he && a.kind !== "business" ? txLookup(a.detail) : undefined;
   const impact = impactOf(a);
   const style = IMPACT_STYLE[impact.level];
   const flags = statusCheck(a);
@@ -88,7 +94,7 @@ const ItemCard = ({ a, open, onToggle, streets }: { a: Activity; open: boolean; 
             {stage && <span className="rounded-[4px] bg-secondary px-2 py-0.5 text-[12px] font-semibold" dir="auto">{stage}</span>}
             {a.tama38 && a.kind === "permit" && <span className="rounded-[4px] bg-[#ffcb05] text-[#0b1a33] px-2 py-0.5 text-[12px] font-bold">{L("TAMA 38", "תמ״א 38")}</span>}
             {a.units ? <span className="rounded-[4px] bg-[#d6e4ff] text-[#0b1a33] px-2 py-0.5 text-[12px] font-semibold">{a.units} {L("homes", "יח״ד")}</span> : null}
-            {a.hours && <span className="rounded-[4px] bg-[#f3d9fa] text-[#0b1a33] px-2 py-0.5 text-[12px] font-semibold" dir="auto">{he ? a.hours : a.hours.replace("אישור לעבודת לילה", "Night work approved").replace("עבודות יום", "day works").replace("עבודות לילה", "night works")}</span>}
+            {hours && <span className="rounded-[4px] bg-[#f3d9fa] text-[#0b1a33] px-2 py-0.5 text-[12px] font-semibold" dir="auto">{hours}</span>}
             {flags.some((f) => f.downgrade) && <span className="rounded-[4px] border border-[#f59f00] text-[#f59f00] px-2 py-0.5 text-[12px] font-bold">{L("Status may be out of date", "ייתכן שהסטטוס לא עדכני")}</span>}
           </span>
         </span>
@@ -130,24 +136,29 @@ const ItemCard = ({ a, open, onToggle, streets }: { a: Activity; open: boolean; 
               <ul className="mt-1 flex flex-wrap gap-1.5">{facts.map((f) => <li key={f.en} className="rounded-[4px] bg-secondary px-2 py-1 font-semibold">{T(f)}</li>)}</ul>
             </div>
           )}
-          {!he && sections.length > 0 && (
+          {!he && a.kind === "business" && <p><span className="text-muted-foreground">Business name: </span><span dir="rtl" className="font-semibold">{a.title}</span></p>}
+          {!he && !detailEn && sections.length > 0 && (
             <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1">
               {sections.flatMap((x) => [<dt key={`${x.label.en}-t`} className="text-muted-foreground">{x.label.en}</dt>, <dd key={`${x.label.en}-d`} dir={x.en ? "ltr" : "rtl"}>{x.en ?? x.items}</dd>])}
             </dl>
           )}
 
-          {a.detail && (
+          {a.detail && a.kind !== "business" && (
             he ? <p className="whitespace-pre-line leading-relaxed">{a.detail.length > 900 ? `${a.detail.slice(0, 900)}…` : a.detail}</p> : (
               <div>
-                {translated ? (
-                  <p className="whitespace-pre-line leading-relaxed">{translated}</p>
+                {detailEn || translated ? (
+                  <div>
+                    <p className="font-bold">{a.kind === "permit" || a.kind === "site" ? "What's requested" : a.id.startsWith("pnight-") ? "Carried out by" : "Details"}</p>
+                    <p className="mt-1 whitespace-pre-line leading-relaxed">{detailEn ?? translated}</p>
+                    <button onClick={() => setShowOriginal(!showOriginal)} className="mt-2 text-[13px] font-semibold text-muted-foreground underline underline-offset-2">{showOriginal ? "Hide the Hebrew" : "Machine-translated. Show the original Hebrew"}</button>
+                  </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     <button onClick={translate} disabled={translating} className="h-9 rounded-md bg-sea text-sea-foreground px-3 font-bold">{translating ? "…" : canTranslateOnDevice() ? "Translate the full description" : "Translate the full description (Google)"}</button>
                     <button onClick={() => setShowOriginal(!showOriginal)} className="h-9 rounded-md border border-border px-3 font-semibold">{showOriginal ? "Hide the Hebrew" : "Show the original Hebrew"}</button>
                   </div>
                 )}
-                {(showOriginal || translated) && <p className="mt-3 whitespace-pre-line leading-relaxed text-muted-foreground" dir="rtl">{a.detail.length > 900 ? `${a.detail.slice(0, 900)}…` : a.detail}</p>}
+                {showOriginal && <p className="mt-3 whitespace-pre-line leading-relaxed text-muted-foreground" dir="rtl">{a.detail.length > 900 ? `${a.detail.slice(0, 900)}…` : a.detail}</p>}
               </div>
             )
           )}
