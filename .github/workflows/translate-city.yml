@@ -43,4 +43,4 @@ jobs:
           git add public/data/tx data/tx-segments.json 2>/dev/null || true
           git diff --cached --quiet && exit 0
           git commit -m "Translate city data"
-          for i in 1 2 3; do git pull --rebase -q -X ours && git push -q && break; sleep 5; done
+          for i in 1 2 3; do git pull --rebase -q -X theirs && git push -q && break; sleep 5; done
