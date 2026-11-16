@@ -2,7 +2,6 @@
 // stage on the cards (scripts/translate-city.py) into public/data/tx/{0-f}.json, keyed by a hash
 // of the normalised Hebrew. Here we load the shards a page needs and look texts up.
 import { useEffect, useState } from "react";
-import { fetchData } from "./sources";
 
 const norm = (s: string) => s.replace(/\s+/g, " ").trim();
 const enc = new TextEncoder();
@@ -17,7 +16,9 @@ const loading = new Map<string, Promise<void>>();
 const load = (c: string) => {
   if (shards.has(c)) return Promise.resolve();
   if (!loading.has(c)) {
-    loading.set(c, fetchData(`tx/${c}.json`).then((r) => r.json()).then((m) => { shards.set(c, m ?? {}); }).catch(() => { shards.set(c, {}); }));
+    // Loaded lazily so this module stays importable at build time (the data module pulls in the
+    // database client, which can't load in the pre-render step).
+    loading.set(c, import("./sources").then(({ fetchData }) => fetchData(`tx/${c}.json`)).then((r) => r.json()).then((m) => { shards.set(c, m ?? {}); }).catch(() => { shards.set(c, {}); }));
   }
   return loading.get(c)!;
 };
