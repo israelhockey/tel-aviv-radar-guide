@@ -2,6 +2,10 @@ name: Translate city data
 
 on:
   workflow_dispatch:
+    inputs:
+      minutes:
+        description: "Time budget in minutes"
+        default: "300"
   schedule:
     - cron: "41 4 * * *"
 
@@ -30,7 +34,7 @@ jobs:
       - run: pip install torch --index-url https://download.pytorch.org/whl/cpu && pip install "transformers<5" sentencepiece sacremoses
       - run: python scripts/translate-city.py
         env:
-          TX_MINUTES: "300"
+          TX_MINUTES: ${{ github.event.inputs.minutes || '300' }}
       - name: Commit
         if: always()
         run: |
