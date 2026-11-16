@@ -4,7 +4,7 @@ import { useQueries } from "@tanstack/react-query";
 import { Share2, X } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n } from "@/lib/i18n";
-import { fetchActivity, typeEn } from "@/lib/live/build";
+import { fetchActivity, titleEn } from "@/lib/live/build";
 import { IMPACT_STYLE } from "@/lib/live/buildInsight";
 import { summarize, type Summary } from "@/lib/live/summary";
 import { useTx } from "@/lib/live/tx";
@@ -122,7 +122,7 @@ const Compare = () => {
                     <th className="text-start font-semibold py-2.5">{L("Loudest nearby", "הכי רועש בסביבה")}</th>
                     {sums.map((s, i) => (
                       <td key={i} className="py-2.5">
-                        <ul className="space-y-1 text-[13px]">{s?.top.slice(0, 3).map((a) => <li key={a.id} dir="auto"><b className="tabular">{a.impact}</b> · {he ? a.title : typeEn(a.title)} <span className="text-muted-foreground">({a.distance} {L("m", "מ'")})</span></li>)}</ul>
+                        <ul className="space-y-1 text-[13px]">{s?.top.slice(0, 3).map((a) => <li key={a.id} dir="auto"><b className="tabular">{a.impact}</b> · {he ? a.title : titleEn(a)} <span className="text-muted-foreground">({a.distance} {L("m", "מ'")})</span></li>)}</ul>
                       </td>
                     ))}
                   </tr>

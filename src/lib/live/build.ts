@@ -143,7 +143,7 @@ export const resolveInput = async (raw: string): Promise<Resolved> => {
 
 export type ActivityKind = "permit" | "site" | "night" | "road" | "rail" | "business" | "zone" | "danger" | "plan";
 export type Activity = {
-  id: string; kind: ActivityKind; title: string; address?: string; stage?: string; detail?: string;
+  id: string; code?: string; kind: ActivityKind; title: string; address?: string; stage?: string; detail?: string;
   units?: number; tama38?: boolean; start?: number; end?: number; opened?: number; hours?: string;
   url?: string; distance: number; lat: number; lon: number; geometry?: Geo; progress?: number;
   permitted?: number; expires?: number;
@@ -294,7 +294,7 @@ export const fetchActivity = async (lat: number, lon: number, radius: number, st
     // City-wide plans cover every address, so they say nothing about this one.
     if (/מבוטל|גנוז|נדחת/.test(`${a.t_status_klali} ${a.t_status}`) || /כלל עירונית/.test(a.t_hekef ?? "")) continue;
     add({
-      id: `plan-${a.id_taba}`, kind: "plan", title: clean(a.shem_taba) ?? clean(a.taba) ?? "תכנית בניין עיר",
+      id: `plan-${a.id_taba}`, kind: "plan", title: clean(a.shem_taba) ?? clean(a.taba) ?? "תכנית בניין עיר", code: clean(a.taba),
       stage: clean(a.t_status), start: date(a.tr_hafkada), end: date(a.tr_matan_tokef), url: clean(a.url_documents),
       tama38: !!a.sw_hitchadshut_ironit,
     }, f.geometry);
@@ -383,6 +383,11 @@ const TYPE_EN: [RegExp, string][] = [
   [/מבנה מסוכן/, "Dangerous building"],
 ];
 export const typeEn = (s?: string) => (s ? TYPE_EN.find(([re]) => re.test(s))?.[1] ?? txLookup(s) ?? s : undefined);
+/** The English headline for a card. Business and plan names stay names, never machine-translated. */
+export const titleEn = (a: Pick<Activity, "kind" | "title" | "detail" | "code">) =>
+  a.kind === "business" ? (txLookup(a.detail) ?? "New business")
+  : a.kind === "plan" ? `Town plan${a.code ? ` ${a.code}` : ""}`
+  : typeEn(a.title) ?? a.title;
 
 /** City-wide totals for the home page. */
 export const fetchCityBuildCounts = async () => {

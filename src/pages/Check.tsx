@@ -5,7 +5,7 @@ import { BellRing, Check as CheckIcon, ChevronDown, ExternalLink, FileText, Link
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
-import { addressEn, fetchActivity, isLive, nearestAddress, stageEn, streetNames, typeEn, type Activity, type ActivityKind } from "@/lib/live/build";
+import { addressEn, fetchActivity, isLive, nearestAddress, stageEn, streetNames, titleEn, typeEn, type Activity, type ActivityKind } from "@/lib/live/build";
 import { IMPACT_STYLE, PERMIT_STEPS, canTranslateOnDevice, googleTranslateUrl, impactOf, permitStep, requestFacts, requestSections, statusCheck, translateOnDevice } from "@/lib/live/buildInsight";
 import { neighbourhoodOf } from "@/lib/live/geo";
 import { hoodSlug } from "@/lib/areas";
@@ -41,9 +41,10 @@ const ItemCard = ({ a, open, onToggle, streets }: { a: Activity; open: boolean; 
   // English side: our own wording first, then the nightly machine translation of the city's text.
   useTx([a.title, a.stage, a.detail, a.hours, a.address], !he);
   const hoursEn = (x?: string) => x?.replace("אישור לעבודת לילה", "Night work approved").replace("עבודות יום", "day works").replace("עבודות לילה", "night works");
-  const title = he ? a.title : a.kind === "business" ? english(a.detail) ?? "New business" : english(a.title, typeEn);
+  // Names (businesses, plans) and addresses are kept as names, never machine-translated.
+  const title = he ? a.title : a.kind === "business" || a.kind === "plan" ? titleEn(a) : english(a.title, typeEn);
   const stage = he ? a.stage : english(a.stage, stageEn);
-  const address = he ? a.address : english(a.address, (x) => addressEn(x, streets) ?? undefined);
+  const address = he ? a.address : addressEn(a.address, streets) ?? a.address;
   const hours = he ? a.hours : english(a.hours, hoursEn);
   const detailEn = !he && a.kind !== "business" ? txLookup(a.detail) : undefined;
   const impact = impactOf(a);
@@ -136,6 +137,7 @@ const ItemCard = ({ a, open, onToggle, streets }: { a: Activity; open: boolean; 
               <ul className="mt-1 flex flex-wrap gap-1.5">{facts.map((f) => <li key={f.en} className="rounded-[4px] bg-secondary px-2 py-1 font-semibold">{T(f)}</li>)}</ul>
             </div>
           )}
+          {!he && a.kind === "plan" && <p><span className="text-muted-foreground">Plan name: </span><span dir="rtl" className="font-semibold">{a.title}</span></p>}
           {!he && a.kind === "business" && <p><span className="text-muted-foreground">Business name: </span><span dir="rtl" className="font-semibold">{a.title}</span></p>}
           {!he && !detailEn && sections.length > 0 && (
             <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1">

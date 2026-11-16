@@ -42,13 +42,13 @@ SOURCES = [
     (772, ["sug_bakasha", "building_stage"], ["tochen_bakasha"]),
     (499, ["sug_bakasha", "matzav_bniya", "status_pikuach"], ["tochen_bakasha"]),
     (479, ["mahut", "shaot_between"], []),
-    (852, ["mahut_avoda", "tzimtzum_netivim", "sivug_yom_layla", "t_ktovet"], ["commnets"]),
+    (852, ["mahut_avoda", "tzimtzum_netivim", "sivug_yom_layla"], ["commnets"]),
     (591, ["t_tzav"], []),
     (858, ["gorem_yozem_rishayon", "taarichim_shaot"], []),
     (761, ["mikta_teor", "plan_name"], []),
     (762, ["mikta_teor", "plan_name"], []),
-    (575, ["shem", "t_sug"], []),
-    (528, ["shem_taba", "t_status"], []),
+    (575, ["t_sug"], []),
+    (528, ["t_status"], []),
 ]
 short, long_ = set(), set()
 for layer, sf, lf in SOURCES:
