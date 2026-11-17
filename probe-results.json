@@ -1,0 +1,40 @@
+[
+ {
+  "url": "https://gvkcoqrlhdjgbfcptphx.supabase.co/functions/v1/alerts-subscribe",
+  "status": 404,
+  "ms": 301,
+  "type": "application/json",
+  "kb": 0,
+  "ldBlocks": 0,
+  "ldEvents": 0,
+  "rssItems": 0,
+  "atomEntries": 0,
+  "ical": false,
+  "nextData": false,
+  "nuxt": false,
+  "icsLinks": 0,
+  "rssLinks": 0,
+  "head": "{\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+  "cloudflare": false,
+  "links": []
+ },
+ {
+  "url": "https://gvkcoqrlhdjgbfcptphx.supabase.co/functions/v1/nonexistent-xyz",
+  "status": 404,
+  "ms": 256,
+  "type": "application/json",
+  "kb": 0,
+  "ldBlocks": 0,
+  "ldEvents": 0,
+  "rssItems": 0,
+  "atomEntries": 0,
+  "ical": false,
+  "nextData": false,
+  "nuxt": false,
+  "icsLinks": 0,
+  "rssLinks": 0,
+  "head": "{\"code\":\"NOT_FOUND\",\"message\":\"Requested function was not found\"}",
+  "cloudflare": false,
+  "links": []
+ }
+]
