@@ -21,7 +21,7 @@ const EN = {
   priv: [
     "We don't use advertising or tracking cookies, and we don't sell or share personal data.",
     "Your preferences (language, light or dark theme, cached map data) are kept in your own browser's storage and never sent to us.",
-    "If you sign up for the newsletter or submit something to us, we keep what you sent (such as your email address) only to provide that service. You can ask us to delete it at any time.",
+    "If you sign up for alerts or the newsletter, or submit something to us, we keep what you gave us (your name, email, the addresses you watch and, if you chose to add it, your mobile number) only to provide that service. We email you about your addresses because you asked; we send the weekly roundup or WhatsApp messages only if you ticked those boxes. Every email has an unsubscribe link, and you can ask us to delete your details at any time.",
     "The site loads map tiles, photos and some live data directly from third parties (OpenFreeMap, Wikimedia, the City of Tel Aviv-Yafo, Open-Meteo). Those services see your IP address, as with any website. When you follow a link to another site, including a partner, that site's own privacy policy applies.",
     "Location: if you tap \"near me\", your browser asks first, and your location is used only on your device to sort results. It is never sent to us.",
   ],
@@ -47,7 +47,7 @@ const HE: typeof EN = {
   priv: [
     "אנחנו לא משתמשים בעוגיות פרסום או מעקב, ולא מוכרים או משתפים מידע אישי.",
     "ההעדפות שלכם (שפה, מצב כהה או בהיר, נתוני מפה שמורים) נשמרות בדפדפן שלכם בלבד ולא נשלחות אלינו.",
-    "אם נרשמתם לניוזלטר או שלחתם לנו משהו, נשמור את מה ששלחתם (כמו כתובת המייל) רק כדי לתת את השירות. אפשר לבקש מחיקה בכל עת.",
+    "אם נרשמתם להתראות או לניוזלטר, או שלחתם לנו משהו, נשמור את מה שמסרתם (שם, מייל, הכתובות שאתם עוקבים אחריהן ואם בחרתם, מספר נייד) רק כדי לתת את השירות. נשלח לכם מיילים על הכתובות שלכם כי ביקשתם; את הסיכום השבועי או הודעות וואטסאפ נשלח רק אם סימנתם זאת. בכל מייל יש קישור להסרה, ואפשר לבקש מאיתנו למחוק את הפרטים בכל עת.",
     "האתר טוען אריחי מפה, תמונות וחלק מהנתונים החיים ישירות מצדדים שלישיים (OpenFreeMap, ויקימדיה, עיריית תל אביב-יפו, Open-Meteo). שירותים אלה רואים את כתובת ה-IP שלכם, כמו בכל אתר. כשעוברים לאתר אחר, כולל שותף, חלה מדיניות הפרטיות שלו.",
     "מיקום: אם לוחצים \"לידי\", הדפדפן שואל קודם, והמיקום משמש רק במכשיר שלכם למיון התוצאות. הוא לא נשלח אלינו.",
   ],

@@ -9,6 +9,7 @@ import { IMPACT_STYLE } from "@/lib/live/buildInsight";
 import { summarize, type Summary } from "@/lib/live/summary";
 import { useTx } from "@/lib/live/tx";
 import { AddressSearch } from "@/components/build/AddressSearch";
+import { MemberGate } from "@/components/build/Signup";
 import { COMPARE, getList, onChange, removeFrom, shareLink, type Spot } from "@/lib/live/saved";
 
 // Two or three apartments side by side: which one will be quieter over the next couple of years?
@@ -78,57 +79,69 @@ const Compare = () => {
               {shared && <p className="text-[15px] font-semibold">{L("Someone shared this comparison with you.", "מישהו שיתף איתך את ההשוואה הזו.")}</p>}
               <button onClick={() => shareLink(`${window.location.origin}/compare?p=${encode(list)}`, document.title)} className="ms-auto h-10 rounded-md bg-foreground text-background px-4 font-bold inline-flex items-center gap-2"><Share2 className="h-4 w-4" aria-hidden />{L("Share this comparison", "שיתוף ההשוואה")}</button>
             </div>
-            <div className="mt-5 overflow-x-auto -mx-4 px-4">
-              <table className="w-full min-w-[560px] border-separate border-spacing-x-2 text-[15px]">
-                <thead>
-                  <tr>
-                    <th className="w-[30%]" />
-                    {list.map((s, i) => (
-                      <th key={`${s.lat},${s.lon}`} className="text-start align-bottom pb-2">
-                        <span className="flex items-start gap-2">
-                          <Link to={`/check?lat=${s.lat}&lon=${s.lon}&r=${s.r ?? 250}&a=${encodeURIComponent(s.label)}`} className="font-display text-[22px] leading-tight hover:underline" dir="auto">{s.label || `${L("Address", "כתובת")} ${i + 1}`}</Link>
-                          {!shared && <button onClick={() => removeFrom(COMPARE, s)} aria-label={L("Remove", "הסרה")} className="mt-1 h-7 w-7 shrink-0 rounded-md hover:bg-secondary inline-flex items-center justify-center"><X className="h-4 w-4" aria-hidden /></button>}
-                        </span>
-                        <span className="block text-[12px] font-semibold text-muted-foreground">{L(`within ${s.r ?? 250} m`, `ברדיוס ${s.r ?? 250} מ'`)}</span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <th className="text-start font-semibold py-2">{L("Noise and disruption score", "ציון רעש והפרעה")}</th>
-                    {sums.map((s, i) => {
-                      const st = IMPACT_STYLE[s?.level ?? "none"];
-                      return (
-                        <td key={i} className="py-2">
-                          {s ? (
-                            <span className="inline-flex items-center gap-3">
-                              <span className="rounded-[8px] px-3 py-1 font-poster text-[36px] leading-none tabular" style={{ background: st.bg, color: st.fg }}>{s.score.toFixed(1)}</span>
-                              {i === best && <span className="rounded-[4px] bg-[#2f9e44] text-white px-2 py-0.5 text-[12px] font-extrabold uppercase">{L("Quietest", "הכי שקט")}</span>}
-                            </span>
-                          ) : <span className="inline-block h-10 w-16 rounded bg-secondary animate-pulse" />}
-                          {s && <span className="mt-1 block text-[13px] leading-snug">{he ? s.headline.he : s.headline.en}</span>}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                  {rows.map((r) => (
-                    <tr key={r.en} className="[&>*]:border-t [&>*]:border-border">
-                      <th className="text-start font-semibold py-2.5">{he ? r.he : r.en}</th>
-                      {sums.map((s, i) => <td key={i} className="py-2.5 font-poster text-[22px] tabular">{s ? r.v(s) : "…"}</td>)}
+            {(() => {
+              const table = (
+              <div className="mt-5 overflow-x-auto -mx-4 px-4">
+                <table className="w-full min-w-[560px] border-separate border-spacing-x-2 text-[15px]">
+                  <thead>
+                    <tr>
+                      <th className="w-[30%]" />
+                      {list.map((s, i) => (
+                        <th key={`${s.lat},${s.lon}`} className="text-start align-bottom pb-2">
+                          <span className="flex items-start gap-2">
+                            <Link to={`/check?lat=${s.lat}&lon=${s.lon}&r=${s.r ?? 250}&a=${encodeURIComponent(s.label)}`} className="font-display text-[22px] leading-tight hover:underline" dir="auto">{s.label || `${L("Address", "כתובת")} ${i + 1}`}</Link>
+                            {!shared && <button onClick={() => removeFrom(COMPARE, s)} aria-label={L("Remove", "הסרה")} className="mt-1 h-7 w-7 shrink-0 rounded-md hover:bg-secondary inline-flex items-center justify-center"><X className="h-4 w-4" aria-hidden /></button>}
+                          </span>
+                          <span className="block text-[12px] font-semibold text-muted-foreground">{L(`within ${s.r ?? 250} m`, `ברדיוס ${s.r ?? 250} מ'`)}</span>
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                  <tr className="[&>*]:border-t [&>*]:border-border align-top">
-                    <th className="text-start font-semibold py-2.5">{L("Loudest nearby", "הכי רועש בסביבה")}</th>
-                    {sums.map((s, i) => (
-                      <td key={i} className="py-2.5">
-                        <ul className="space-y-1 text-[13px]">{s?.top.slice(0, 3).map((a) => <li key={a.id} dir="auto"><b className="tabular">{a.impact}</b> · {he ? a.title : titleEn(a)} <span className="text-muted-foreground">({a.distance} {L("m", "מ'")})</span></li>)}</ul>
-                      </td>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th className="text-start font-semibold py-2">{L("Noise and disruption score", "ציון רעש והפרעה")}</th>
+                      {sums.map((s, i) => {
+                        const st = IMPACT_STYLE[s?.level ?? "none"];
+                        return (
+                          <td key={i} className="py-2">
+                            {s ? (
+                              <span className="inline-flex items-center gap-3">
+                                <span className="rounded-[8px] px-3 py-1 font-poster text-[36px] leading-none tabular" style={{ background: st.bg, color: st.fg }}>{s.score.toFixed(1)}</span>
+                                {i === best && <span className="rounded-[4px] bg-[#2f9e44] text-white px-2 py-0.5 text-[12px] font-extrabold uppercase">{L("Quietest", "הכי שקט")}</span>}
+                              </span>
+                            ) : <span className="inline-block h-10 w-16 rounded bg-secondary animate-pulse" />}
+                            {s && <span className="mt-1 block text-[13px] leading-snug">{he ? s.headline.he : s.headline.en}</span>}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    {rows.map((r) => (
+                      <tr key={r.en} className="[&>*]:border-t [&>*]:border-border">
+                        <th className="text-start font-semibold py-2.5">{he ? r.he : r.en}</th>
+                        {sums.map((s, i) => <td key={i} className="py-2.5 font-poster text-[22px] tabular">{s ? r.v(s) : "…"}</td>)}
+                      </tr>
                     ))}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+                    <tr className="[&>*]:border-t [&>*]:border-border align-top">
+                      <th className="text-start font-semibold py-2.5">{L("Loudest nearby", "הכי רועש בסביבה")}</th>
+                      {sums.map((s, i) => (
+                        <td key={i} className="py-2.5">
+                          <ul className="space-y-1 text-[13px]">{s?.top.slice(0, 3).map((a) => <li key={a.id} dir="auto"><b className="tabular">{a.impact}</b> · {he ? a.title : titleEn(a)} <span className="text-muted-foreground">({a.distance} {L("m", "מ'")})</span></li>)}</ul>
+                        </td>
+                      ))}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              );
+              // A shared comparison opens for anyone; your own needs the free account.
+              return shared ? table : (
+                <MemberGate preview source="compare-gate"
+                  title={L("See the full comparison", "להשוואה המלאה")}
+                  body={L("Free with an account: scores, permits, building sites, night works, light rail and new bars for each address, side by side.", "חינם עם חשבון: ציונים, היתרים, אתרי בניה, עבודות לילה, רכבת קלה וברים חדשים לכל כתובת, זו לצד זו.")}>
+                  {table}
+                </MemberGate>
+              );
+            })()}
             <p className="mt-6 text-[12px] text-muted-foreground">{L("Scores are our estimate from City of Tel Aviv-Yafo open data. A quieter score today can change when new permits are approved, so sign up for alerts on the address you pick.", "הציונים הם הערכה שלנו לפי המידע הפתוח של עיריית תל אביב-יפו. ציון שקט היום יכול להשתנות כשמאשרים היתרים חדשים, אז כדאי להירשם להתראות על הכתובת שבחרתם.")}</p>
           </>
         )}

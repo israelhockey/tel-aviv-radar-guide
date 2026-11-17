@@ -10,6 +10,7 @@ import { summarize } from "@/lib/live/summary";
 import { neighbourhoodOf } from "@/lib/live/geo";
 import { KIND_COLOR } from "@/components/build/ActivityMap";
 import { shareLink } from "@/lib/live/saved";
+import { MemberGate } from "@/components/build/Signup";
 import { useTx } from "@/lib/live/tx";
 
 // A one-page summary of an address, made to be printed, saved as a PDF or sent to a landlord,
@@ -76,6 +77,9 @@ const Report = () => {
               </div>
             </section>
 
+            <MemberGate preview source="report-gate"
+              title={L("See the full address report", "לדוח המלא לכתובת")}
+              body={L("Free with an account: every permit and building site nearby, timelines, questions to ask before you sign, and a PDF you can save or send.", "חינם עם חשבון: כל ההיתרים ואתרי הבניה בסביבה, לוחות זמנים, שאלות לפני חתימה ו-PDF לשמירה או לשליחה.")}>
             <section className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 break-inside-avoid">
               {[
                 { n: sum.review, en: "Permit requests under review", he: "בקשות היתר בבדיקה" },
@@ -145,6 +149,7 @@ const Report = () => {
                 <Link to="/construction-noise-rules" className="mt-2 inline-block font-bold underline print:no-underline">{L("The full rules", "הכללים המלאים")}</Link>
               </div>
             </section>
+            </MemberGate>
           </>
         )}
 

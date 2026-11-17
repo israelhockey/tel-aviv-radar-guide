@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { BellRing, Check as CheckIcon, ChevronDown, ExternalLink, FileText, Link2, Scale, Share2, SquareStack } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { useI18n } from "@/lib/i18n";
-import { supabase } from "@/integrations/supabase/client";
 import { addressEn, fetchActivity, isLive, nearestAddress, stageEn, streetNames, titleEn, typeEn, type Activity, type ActivityKind } from "@/lib/live/build";
 import { IMPACT_STYLE, PERMIT_STEPS, canTranslateOnDevice, googleTranslateUrl, impactOf, permitStep, requestFacts, requestSections, statusCheck, translateOnDevice } from "@/lib/live/buildInsight";
 import { neighbourhoodOf } from "@/lib/live/geo";
@@ -12,6 +11,8 @@ import { hoodSlug } from "@/lib/areas";
 import { AddressSearch, NeighbourhoodChips } from "@/components/build/AddressSearch";
 import { ActivityMap, KIND_COLOR } from "@/components/build/ActivityMap";
 import { english, txLookup, useTx } from "@/lib/live/tx";
+import { SearchNudge, SignupModal, WatchBox } from "@/components/build/Signup";
+import { countSearch } from "@/lib/live/member";
 import { COMPARE, MAX_COMPARE, WATCHED, addTo, getList, has, onChange, removeFrom, shareLink, type Spot } from "@/lib/live/saved";
 
 const KINDS: { id: ActivityKind; en: string; he: string }[] = [
@@ -177,81 +178,6 @@ const ItemCard = ({ a, open, onToggle, streets }: { a: Activity; open: boolean; 
   );
 };
 
-const AlertSignup = ({ lat, lon, label, radius }: { lat: number; lon: number; label: string; radius: number }) => {
-  const { lang } = useI18n();
-  const he = lang === "he";
-  const L = (en: string, h: string) => (he ? h : en);
-  const [email, setEmail] = useState(() => { try { return localStorage.getItem("dtla.email") ?? ""; } catch { return ""; } });
-  const [frequency, setFrequency] = useState<"instant" | "weekly">("instant");
-  const [state, setState] = useState<"idle" | "busy" | "done" | "dupe" | "full" | "error">("idle");
-  const [watched, setWatched] = useState<Spot[]>(() => getList(WATCHED));
-  useEffect(() => onChange(WATCHED, () => setWatched(getList(WATCHED))), []);
-  const here: Spot = { label, lat, lon, r: radius };
-  const already = watched.some((w) => Math.abs(w.lat - lat) < 0.0003 && Math.abs(w.lon - lon) < 0.0003);
-  const kinds = ["permit", "site", "night", "road", "rail", "business", "danger"];
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    const clean = email.trim().toLowerCase();
-    if (!/^\S+@\S+\.\S+$/.test(clean)) return;
-    setState("busy");
-    const alert = { label, lat, lon, radius, kinds };
-    // The alerts function lets one email watch several addresses. If it isn't reachable,
-    // fall back to a plain sign-up, which works for the first address.
-    const fn = await supabase.functions.invoke("alerts-subscribe", { body: { email: clean, alert, frequency, lang } }).catch(() => ({ data: null, error: true }));
-    let result: typeof state;
-    if (!fn.error && fn.data?.ok) result = "done";
-    else if (!fn.error && fn.data?.full) result = "full";
-    else {
-      const { error } = await supabase.from("subscribers").insert({
-        email: clean, source: "build-alerts", preferences: { lang, frequency, alerts: [{ ...alert, created: new Date().toISOString() }] },
-      } as never);
-      result = !error ? "done" : error.code === "23505" ? "dupe" : "error";
-    }
-    if (result === "done") { addTo(WATCHED, here); try { localStorage.setItem("dtla.email", clean); } catch { /* blocked */ } }
-    setState(result);
-  };
-  return (
-    <section className="rounded-[10px] bg-[#ffcb05] text-[#0b1a33] p-5 sm:p-6">
-      <p className="flex items-center gap-2 text-[13px] font-extrabold uppercase tracking-wider"><BellRing className="h-4 w-4" aria-hidden />{L("Free email alerts", "התראות חינם במייל")}</p>
-      <h2 className="mt-2 font-display text-[26px] sm:text-[30px] leading-tight">{L(`Tell me when something new starts within ${radius} m`, `עדכנו אותי כשמשהו חדש מתחיל ברדיוס ${radius} מ'`)}</h2>
-      <p className="mt-2 text-[15px]">{L("New permit requests, approvals, building sites, night works, road closures, light rail works and new bars near this address. Watch up to 5 addresses with one email. No spam, unsubscribe any time.", "בקשות היתר חדשות, אישורים, אתרי בניה, עבודות לילה, חסימות, עבודות הרכבת הקלה וברים חדשים ליד הכתובת. עד 5 כתובות במייל אחד. בלי ספאם, אפשר להסיר בכל עת.")}</p>
-      {state === "done" || already ? (
-        <p className="mt-4 rounded-md bg-white px-4 py-3 font-semibold" role="status">{L(`You're watching ${label || "this address"}. We'll email you when something changes.`, `אתם עוקבים אחרי ${label || "הכתובת"}. נשלח מייל כשמשהו משתנה.`)}</p>
-      ) : (
-        <form onSubmit={submit} className="mt-4 space-y-3">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <label htmlFor="alert-email" className="sr-only">{L("Email", "אימייל")}</label>
-            <input id="alert-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" dir="ltr" className="shrink-0 sm:shrink sm:flex-1 h-12 rounded-md bg-white px-4 text-[16px] outline-none focus-visible:ring-4 focus-visible:ring-[#0b1a33]/30" />
-            <button disabled={state === "busy"} className="h-12 rounded-md bg-[#0b1a33] text-white px-6 font-extrabold disabled:opacity-60">{state === "busy" ? "…" : watched.length ? L("Add this address", "הוספת הכתובת") : L("Alert me", "עדכנו אותי")}</button>
-          </div>
-          <fieldset className="flex flex-wrap gap-2 text-[14px]">
-            <legend className="sr-only">{L("How often", "כל כמה זמן")}</legend>
-            {([["instant", L("As it happens", "מיד כשקורה")], ["weekly", L("Weekly digest (Sundays)", "סיכום שבועי (ימי ראשון)")]] as const).map(([k, t]) => (
-              <label key={k} className={`h-9 inline-flex items-center gap-2 rounded-md px-3 font-semibold cursor-pointer ${frequency === k ? "bg-[#0b1a33] text-white" : "bg-white/70"}`}>
-                <input type="radio" name="freq" value={k} checked={frequency === k} onChange={() => setFrequency(k)} className="sr-only" />{t}
-              </label>
-            ))}
-          </fieldset>
-        </form>
-      )}
-      {watched.length > 0 && (
-        <div className="mt-4">
-          <p className="text-[13px] font-extrabold uppercase tracking-wider">{L("Addresses you watch", "הכתובות שלך")}</p>
-          <ul className="mt-1 space-y-1 text-[14px]">
-            {watched.map((w) => (
-              <li key={`${w.lat},${w.lon}`}><Link to={`/check?lat=${w.lat.toFixed(6)}&lon=${w.lon.toFixed(6)}&a=${encodeURIComponent(w.label)}${w.r ? `&r=${w.r}` : ""}`} className="font-semibold underline underline-offset-2" dir="auto">{w.label || `${w.lat.toFixed(4)}, ${w.lon.toFixed(4)}`}</Link></li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {state === "dupe" && <p className="mt-2 text-[14px] font-semibold" role="status">{L("That email is already signed up for another address. Adding more addresses will work in a moment; please try again a little later.", "המייל הזה כבר רשום לכתובת אחרת. הוספת כתובות נוספות תעבוד בקרוב; נסו שוב מעט מאוחר יותר.")}</p>}
-      {state === "full" && <p className="mt-2 text-[14px] font-semibold" role="status">{L("You're already watching 5 addresses, the most one email can follow.", "אתם כבר עוקבים אחרי 5 כתובות, המקסימום למייל אחד.")}</p>}
-      {state === "error" && <p className="mt-2 text-[14px] font-semibold" role="status">{L("Something went wrong. Please try again.", "משהו השתבש. נסו שוב.")}</p>}
-      <p className="mt-3 text-[12px] opacity-80">{L("We only use your email for these alerts.", "נשתמש במייל רק להתראות האלה.")} <Link to="/about#privacy" className="underline">{L("Privacy", "פרטיות")}</Link></p>
-    </section>
-  );
-};
-
 /** Keep up to 3 addresses to see side by side on /compare. */
 const CompareButton = ({ spot }: { spot: Spot }) => {
   const { lang } = useI18n();
@@ -315,11 +241,18 @@ const Check = () => {
     window.setTimeout(() => document.getElementById(`item-${wanted}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
   }, [wanted, q.data]);
   const spot: Spot = { label, lat, lon, r: radius };
+  const [watchOpen, setWatchOpen] = useState(false);
+  const [searches, setSearches] = useState(0);
+  useEffect(() => { if (valid) setSearches(countSearch(lat, lon)); }, [lat, lon, valid]);
   const reportUrl = `/report?lat=${lat}&lon=${lon}&r=${radius}${label ? `&a=${encodeURIComponent(label)}` : ""}`;
   const select = (id: string) => { setSel(id); window.setTimeout(() => document.getElementById(`item-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 50); };
 
   return (
     <SiteLayout>
+      {valid && <SearchNudge count={searches} spot={spot} />}
+      <SignupModal open={watchOpen} onClose={() => setWatchOpen(false)} spot={spot} source="watch-top"
+        title={L("Watch this address", "עקבו אחרי הכתובת")}
+        body={L("Free email alerts when anything new is filed, approved or starts nearby.", "התראות חינם במייל כשמשהו חדש מוגש, מאושר או מתחיל בסביבה.")} />
       <section className="bg-[#0057ff] text-white">
         <div className="container-page pt-8 pb-8">
           <AddressSearch />
@@ -332,6 +265,7 @@ const Check = () => {
                 {RADII.map((r) => (
                   <button key={r} onClick={() => setRadius(r)} aria-pressed={r === radius} className={`h-10 rounded-md px-4 text-[15px] font-bold ${r === radius ? "bg-[#ffcb05] text-[#0b1a33]" : "bg-white/15 hover:bg-white/25"}`}>{r} {L("m", "מ'")}</button>
                 ))}
+                <button onClick={() => setWatchOpen(true)} className="h-10 rounded-md bg-[#ffcb05] text-[#0b1a33] px-4 text-[15px] font-extrabold inline-flex items-center gap-2"><BellRing className="h-4 w-4" aria-hidden />{L("Watch this address", "עקבו אחרי הכתובת")}</button>
                 <span className="ms-auto inline-flex flex-wrap gap-2">
                 <CompareButton spot={spot} />
                 <Link to={reportUrl} className="h-10 rounded-md bg-white/15 px-4 text-[15px] font-bold inline-flex items-center gap-2 hover:bg-white/25"><FileText className="h-4 w-4" aria-hidden />{L("Address report", "דוח לכתובת")}</Link>
@@ -361,6 +295,13 @@ const Check = () => {
               </div>
             ))}
           </div>
+          {!q.isLoading && (
+            <button onClick={() => setWatchOpen(true)} className="mt-4 w-full rounded-[10px] bg-[#0b1a33] text-white px-5 py-4 text-start flex items-center gap-3 hover:bg-[#13284d]">
+              <BellRing className="h-6 w-6 shrink-0 text-[#ffcb05]" aria-hidden />
+              <span className="min-w-0 flex-1"><span className="block font-extrabold text-[17px]">{L("Get alerts for this address, free", "קבלו התראות לכתובת הזו, חינם")}</span><span className="block text-[14px] text-white/80">{L("Know before the scaffolding goes up: new permit requests, building sites, night works and road closures.", "דעו לפני שהפיגומים עולים: בקשות היתר חדשות, אתרי בניה, עבודות לילה וחסימות.")}</span></span>
+              <span className="hidden sm:inline-flex h-10 items-center rounded-md bg-[#ffcb05] text-[#0b1a33] px-4 font-extrabold">{L("Watch this address", "עקבו אחרי הכתובת")}</span>
+            </button>
+          )}
           {q.isError && <p className="mt-6 rounded-md bg-secondary p-4">{L("The city's map service didn't answer. Please try again in a moment.", "שירות המפות של העירייה לא ענה. נסו שוב בעוד רגע.")}</p>}
 
           <div className="mt-8 grid gap-6 lg:grid-cols-[1fr,minmax(380px,46%)] items-start">
@@ -395,7 +336,7 @@ const Check = () => {
             </div>
             <div className="order-1 lg:order-2 lg:sticky lg:top-20 space-y-4">
               <ActivityMap lat={lat} lon={lon} radius={radius} items={list} selected={sel} onSelect={select} className="h-[340px] sm:h-[460px]" />
-              <AlertSignup lat={lat} lon={lon} label={label} radius={radius} />
+              <WatchBox spot={spot} />
             </div>
           </div>
 
