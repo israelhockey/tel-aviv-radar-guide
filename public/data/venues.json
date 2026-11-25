@@ -42,7 +42,7 @@
  "AMAMA Jazz room": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:32:40.699Z"
+  "checked": "2026-11-25T00:57:59.809Z"
  },
  "AMAMA, תל אביב-יפו": {
   "lat": null,
@@ -72,7 +72,7 @@
  "Bar Giyora - בר גיורא": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:31:55.750Z"
+  "checked": "2026-11-25T00:57:06.851Z"
  },
  "Barby": {
   "lat": 32.0517979,
@@ -147,7 +147,7 @@
  "Gagarin club TLV - גגרין": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:30:57.134Z"
+  "checked": "2026-11-25T00:57:11.446Z"
  },
  "Gan Dubnov": {
   "lat": null,
@@ -237,7 +237,7 @@
  "InterContinental David Tel Aviv, an IHG Hotel": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:32:02.808Z"
+  "checked": "2026-11-25T00:57:48.624Z"
  },
  "Jaffa Port": {
   "lat": 32.053985,
@@ -247,7 +247,7 @@
  "Keoss Studios": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:32:23.311Z"
+  "checked": "2026-11-25T00:57:33.105Z"
  },
  "King George 48, 6433701 Jaffa-Tel Aviv, Israel": {
   "lat": 32.073353,
@@ -312,7 +312,7 @@
  "NBN TLV Center": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:31:28.733Z"
+  "checked": "2026-11-25T00:56:46.213Z"
  },
  "Old City of Jaffa": {
   "lat": 32.0818162,
@@ -367,7 +367,7 @@
  "SHO? - Ukrainian Traditional Food (SHO Tel-Aviv)": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:31:50.350Z"
+  "checked": "2026-11-25T00:56:55.630Z"
  },
  "Soma Studio": {
   "lat": null,
@@ -437,7 +437,7 @@
  "The zone האזור": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:32:07.438Z"
+  "checked": "2026-11-25T00:57:15.902Z"
  },
  "Yom Tov Cafe": {
   "lat": 32.0690546,
@@ -542,7 +542,7 @@
  "אולם אסיא, מוזיאון תל אביב לאמנות, Sderot Sha'ul HaMelech 27, Tel Aviv-Jaffa": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:31:39.495Z"
+  "checked": "2026-11-25T00:57:54.767Z"
  },
  "אולם אסיא, מוזיאון תל אביב לאמנות, Sderot Sha'ul HaMelech 27, Tel Aviv-Jaffa// 6423931": {
   "lat": null,
@@ -569,6 +569,11 @@
   "lon": 34.777575,
   "checked": "2026-10-18T16:30:48.510Z"
  },
+ "אולפני המוג'ו": {
+  "lat": null,
+  "lon": null,
+  "checked": "2026-11-25T00:56:50.572Z"
+ },
  "אוניברסיטת רייכמן | מרכז חוסידמן": {
   "lat": null,
   "lon": null,
@@ -587,7 +592,7 @@
  "אנטאקראנה - פילוסופיה / קהילה / דרך": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:32:18.626Z"
+  "checked": "2026-11-25T00:57:28.213Z"
  },
  "אצטדיון בלומפילד": {
   "lat": 32.0518369,
@@ -648,6 +653,11 @@
   "lat": 32.0507487,
   "lon": 34.7487999,
   "checked": "2026-10-23T00:46:38.823Z"
+ },
+ "בית יד לבנים תל אביב": {
+  "lat": 32.0917878,
+  "lon": 34.7930017,
+  "checked": "2026-11-25T00:57:23.890Z"
  },
  "בית ציוני אמריקה": {
   "lat": 32.0745982,
@@ -987,7 +997,7 @@
  "מוזיאון תל אביב לאמנות - Tel Aviv Museum of Art": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:32:28.603Z"
+  "checked": "2026-11-25T00:57:01.397Z"
  },
  "מון צ׳ילד - Moon Child, תל אביב-יפו, ישראל": {
   "lat": null,
@@ -1237,7 +1247,12 @@
  "שלמה אבן גבירול 30, תל אביב-יפו": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:32:14.181Z"
+  "checked": "2026-11-25T00:57:22.415Z"
+ },
+ "תאטרון הבית - תל אביב יפו": {
+  "lat": null,
+  "lon": null,
+  "checked": "2026-11-25T00:57:38.368Z"
  },
  "תיאטרון אלפא לאמנויות המופע": {
   "lat": null,
@@ -1277,7 +1292,7 @@
  "תיאטרון תמונע": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:32:33.831Z"
+  "checked": "2026-11-25T00:57:42.795Z"
  },
  "תל אביב": {
   "lat": 32.0877172,
