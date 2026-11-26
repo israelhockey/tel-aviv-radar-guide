@@ -29,6 +29,11 @@
   "lon": 34.7676781,
   "checked": "2026-10-21T14:00:07.547Z"
  },
+ "Allenby 22 Tel Aviv": {
+  "lat": 32.0730551,
+  "lon": 34.7671736,
+  "checked": "2026-11-26T23:08:19.988Z"
+ },
  "Allenby 94, תל אביב-יפו": {
   "lat": 32.0662066,
   "lon": 34.7715274,
@@ -92,7 +97,7 @@
  "Callas Bar TLV": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-17T22:31:33.507Z"
+  "checked": "2026-11-26T23:08:16.820Z"
  },
  "Cappella תל אביב": {
   "lat": null,
@@ -123,6 +128,11 @@
   "lat": null,
   "lon": null,
   "checked": "2026-11-05T07:06:29.583Z"
+ },
+ "Desire Club TLV": {
+  "lat": null,
+  "lon": null,
+  "checked": "2026-11-26T23:08:24.933Z"
  },
  "Diddy mansion": {
   "lat": null,
