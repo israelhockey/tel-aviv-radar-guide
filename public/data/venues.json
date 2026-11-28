@@ -374,6 +374,11 @@
   "lon": null,
   "checked": "2026-10-20T11:07:28.265Z"
  },
+ "Querido - Argentine Tango in Tel Aviv": {
+  "lat": null,
+  "lon": null,
+  "checked": "2026-11-28T02:50:53.772Z"
+ },
  "Ravnitski , Florentin Tel Aviv, Israel": {
   "lat": null,
   "lon": null,
@@ -388,6 +393,11 @@
   "lat": 32.0698483,
   "lon": 34.7784402,
   "checked": "2026-11-25T21:52:40.366Z"
+ },
+ "Saadia Gaon 24": {
+  "lat": 32.068118,
+  "lon": 34.782365,
+  "checked": "2026-11-28T02:50:43.942Z"
  },
  "Sarona": {
   "lat": null,
@@ -479,10 +489,20 @@
   "lon": null,
   "checked": "2026-11-25T11:31:11.476Z"
  },
+ "The Zone - מועדון האזור": {
+  "lat": null,
+  "lon": null,
+  "checked": "2026-11-28T02:51:08.811Z"
+ },
  "The zone האזור": {
   "lat": null,
   "lon": null,
   "checked": "2026-11-25T00:57:15.902Z"
+ },
+ "Tmuna Music - תמונע מוסיקה": {
+  "lat": null,
+  "lon": null,
+  "checked": "2026-11-28T02:51:03.949Z"
  },
  "Ukrainian Cultural Center in Tel Aviv": {
   "lat": null,
@@ -767,7 +787,7 @@
  "בית תמי - מרכז קהילתי לב תל-אביב": {
   "lat": null,
   "lon": null,
-  "checked": "2026-11-20T21:54:05.247Z"
+  "checked": "2026-11-28T02:50:37.542Z"
  },
  "בית תמי מרכז קהילתי לב תל אביב": {
   "lat": null,
@@ -944,6 +964,11 @@
   "lon": 34.7847985,
   "checked": "2026-10-18T12:16:34.988Z"
  },
+ "הנסיך הקטן תל אביב - The Little Prince TLV": {
+  "lat": null,
+  "lon": null,
+  "checked": "2026-11-28T02:50:48.659Z"
+ },
  "הרכבת 4, 6511602 תל אביב - יפו, ישראל": {
   "lat": 32.062894,
   "lon": 34.775667,
@@ -1082,7 +1107,7 @@
  "מון צ׳ילד - Moon Child, תל אביב-יפו, ישראל": {
   "lat": null,
   "lon": null,
-  "checked": "2026-10-29T13:26:22.564Z"
+  "checked": "2026-11-28T02:50:59.801Z"
  },
  "מועדון בראסקו Brasco": {
   "lat": null,
@@ -1118,6 +1143,11 @@
   "lat": 32.062806,
   "lon": 34.777994,
   "checked": "2026-11-04T23:48:38.519Z"
+ },
+ "‎מרכז בעלי מלאכה 16 א'‎, Tel Aviv, Israel": {
+  "lat": 32.069848,
+  "lon": 34.772771,
+  "checked": "2026-11-28T02:50:40.697Z"
  },
  "מרכז דוהל, תל אביב": {
   "lat": 32.0494956,
